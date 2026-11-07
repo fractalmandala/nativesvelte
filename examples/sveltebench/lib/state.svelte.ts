@@ -25,7 +25,7 @@ export const INITIAL_FILES: ProjectFile[] = [
       console.log(\`[Benchmark] Milestone reached: \${count}\`);
     }
   });
-</script>
+<\/script>
 
 <View class="p-6 gap-4 bg-background">
   <Text class="text-xl font-bold text-foreground">

@@ -1732,4 +1732,22 @@ mount(App);
         assert!(bundle.code.contains("NativeSvelte Components"), "{}", bundle.code);
         assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
     }
+
+    #[test]
+    fn bundle_sveltebench_example() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let entry = manifest_dir.join("../../examples/sveltebench/App.svelte");
+        if !entry.exists() {
+            return;
+        }
+        let bundle = bundle(&BundleOptions {
+            entry,
+            minify: false,
+            split: false,
+            ui_sets: vec![nsh_base::registry().into()],
+        })
+        .unwrap();
+        assert!(bundle.code.contains("Sveltebench"), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
+    }
 }

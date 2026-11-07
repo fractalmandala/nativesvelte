@@ -22,7 +22,7 @@
     { type: "add", text: "+      console.log(`[Benchmark] Milestone: ${count}`);" },
     { type: "add", text: "+    }" },
     { type: "add", text: "+  });" },
-    { type: "context", text: " </script>" }
+    { type: "context", text: " <" + "/script>" }
   ];
 </script>
 
