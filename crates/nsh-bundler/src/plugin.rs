@@ -387,8 +387,9 @@ impl Plugin for NshPlugin {
                 ..HookResolveIdOutput::from_id(spec)
             }));
         }
-        if spec == "$app/navigation" || spec == "$app/stores" || spec == "svelte" {
-            return Ok(Some(HookResolveIdOutput::from_id(format!("\0{spec}"))));
+        if spec == "$app/navigation" || spec == "$app/stores" || spec == "svelte" || spec == "\0sveltekit-root-page" {
+            let id = if spec.starts_with('\0') { spec.to_string() } else { format!("\0{spec}") };
+            return Ok(Some(HookResolveIdOutput::from_id(id)));
         }
         let from = args
             .importer
@@ -445,11 +446,36 @@ impl Plugin for NshPlugin {
                 ..Default::default()
             }));
         }
+        if args.id == "\0sveltekit-root-page" {
+            let source = std::fs::read_to_string(&self.entry).map_err(|e| self.fail(&self.entry, &e.to_string()))?;
+            let tsx = crate::svelte::compile_svelte(&self.entry, &source, false)
+                .map_err(|e| self.fail(&self.entry, &e))?;
+            return Ok(Some(HookLoadOutput {
+                code: tsx.into(),
+                module_type: Some(ModuleType::Tsx),
+                ..Default::default()
+            }));
+        }
         let path = Path::new(args.id);
         let rel = self.rel(path);
         if has_extension(path, &["svelte"]) {
-            let source = std::fs::read_to_string(path).map_err(|e| self.fail(path, &e.to_string()))?;
             let is_entry = path == self.entry;
+            if is_entry && path.file_name().and_then(|n| n.to_str()) == Some("+page.svelte") {
+                let candidate_root = path
+                    .ancestors()
+                    .find(|p| p.join("src/routes").is_dir() || p.join("routes").is_dir())
+                    .unwrap_or(&self.root);
+                let routes = crate::svelte::kit::discover_routes(candidate_root);
+                if !routes.is_empty() {
+                    let router_tsx = crate::svelte::kit::generate_kit_router(&routes);
+                    return Ok(Some(HookLoadOutput {
+                        code: router_tsx.into(),
+                        module_type: Some(ModuleType::Tsx),
+                        ..Default::default()
+                    }));
+                }
+            }
+            let source = std::fs::read_to_string(path).map_err(|e| self.fail(path, &e.to_string()))?;
             let tsx = crate::svelte::compile_svelte(path, &source, is_entry)
                 .map_err(|e| self.fail(path, &e))?;
             return Ok(Some(HookLoadOutput {

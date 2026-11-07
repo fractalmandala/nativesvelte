@@ -136,15 +136,18 @@ pub(crate) fn lower_to_tsx(
     used_nsh_primitives.insert("View");
     used_nsh_primitives.insert("Text");
 
+    let all_user_imports = format!("{module_code}\n{top_level_imports}");
     let mut import_items: Vec<_> = used_nsh_primitives
         .into_iter()
-        .filter(|&p| p != "If" && p != "Each")
+        .filter(|&p| p != "If" && p != "Each" && !is_already_imported(p, &all_user_imports))
         .collect();
     import_items.sort();
-    imports.push(format!(
-        "import {{ {} }} from \"nsh\";",
-        import_items.join(", ")
-    ));
+    if !import_items.is_empty() {
+        imports.push(format!(
+            "import {{ {} }} from \"nsh\";",
+            import_items.join(", ")
+        ));
+    }
     imports.push("import { signal as __nsh_signal, computed as __nsh_computed, effect as __nsh_effect } from \"nsh\";".to_string());
 
     let mut final_code = String::new();
@@ -164,6 +167,33 @@ pub(crate) fn lower_to_tsx(
         tsx: final_code,
         component_name,
     })
+}
+
+fn is_already_imported(ident: &str, imports: &str) -> bool {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, imports, SourceType::ts()).parse();
+    for stmt in &parsed.program.body {
+        if let oxc::ast::ast::Statement::ImportDeclaration(decl) = stmt {
+            if let Some(specifiers) = &decl.specifiers {
+                for spec in specifiers {
+                    match spec {
+                        oxc::ast::ast::ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                            if s.local.name.as_str() == ident {
+                                return true;
+                            }
+                        }
+                        oxc::ast::ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                            if s.local.name.as_str() == ident {
+                                return true;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 fn derive_component_name(file_name: &str) -> String {
@@ -265,10 +295,20 @@ fn lower_nodes(
     }
 }
 
+fn is_render_expression(e: &str) -> bool {
+    let t = e.trim();
+    t == "children"
+        || t.ends_with(".children")
+        || (t.starts_with('(') && t.contains("=>"))
+        || t.starts_with("function")
+        || (t.starts_with('<') && t.ends_with('>'))
+        || t.starts_with("__props.children")
+}
+
 fn is_loose_inline(node: &Node) -> bool {
     match node {
         Node::Text(t) => !t.trim().is_empty(),
-        Node::Expr(_) => true,
+        Node::Expr(e) => !is_render_expression(e),
         _ => false,
     }
 }
@@ -303,7 +343,7 @@ fn lower_node(
             }
         }
         Node::Expr(e) => {
-            if in_text {
+            if in_text || is_render_expression(e) {
                 out.push('{');
                 out.push_str(e);
                 out.push('}');
@@ -378,7 +418,7 @@ fn lower_node(
             let pattern = pattern.as_deref().unwrap_or("item");
             let index = index.as_deref().unwrap_or("index");
 
-            out.push_str(&format!("<Each of={{{of}}}"));
+            out.push_str(&format!("<Each of={{typeof __nsh_unwrap === \"function\" ? __nsh_unwrap({of}) : {of}}}"));
             if let Some(k) = key {
                 // If key is a simple ident e.g. (id) or (item.id)
                 if k.contains('(') || k.contains('.') {
@@ -387,11 +427,9 @@ fn lower_node(
                     out.push_str(&format!(" key={{({pattern}) => {pattern}.{k}}}"));
                 }
             }
-            out.push_str(&format!(">{{({pattern}, {index}) => (\n"));
-            out.push_str("<>\n");
+            out.push_str(&format!(">{{({pattern}, {index}) => (\n<>\n"));
             lower_nodes(body, out, used, in_text);
-            out.push_str("</>\n");
-            out.push_str(")}</Each>\n");
+            out.push_str("</>\n)}</Each>\n");
         }
         Node::Render(expr) => {
             out.push_str(&format!("{{{expr}}}\n"));

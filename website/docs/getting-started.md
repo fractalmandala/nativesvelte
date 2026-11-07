@@ -1,6 +1,6 @@
 ---
 title: Getting started
-description: "Create an app in Rust or TSX with nsh init, run it on iOS, Android, macOS, Windows, Linux or the web, host TSX modules in your app and ship them as signed packages, or package the app on its own."
+description: "Create an app in Svelte 5, SvelteKit, TSX or Rust with nsh init, run it on iOS, Android, macOS, Windows, Linux or the web, host Svelte modules in your app and ship them as signed packages, or package the app on its own."
 order: 4
 group: start
 demo: guide-getting-started
@@ -8,9 +8,9 @@ demo: guide-getting-started
 
 # Getting started
 
-This guide creates an NSH app, runs it on the platforms you target, and ships it. NSH apps are written in Rust or TSX,
-on the same engine: Rust compiles your app into native code with no JavaScript VM, and TSX runs on QuickJS with hot
-updates, as modules a native app can load at run time. The guide follows a Rust app first, then the same app in TSX.
+This guide creates a NativeSvelte app, runs it on the platforms you target, and ships it. NativeSvelte apps are written in Svelte 5, SvelteKit, TSX, or Rust,
+on the same engine: Svelte 5 runes compile into fine-grained native signals and native view operations with zero virtual DOM, and Rust compiles into native code with no JavaScript VM.
+The guide follows a Svelte 5 app first, then TSX and Rust.
 It assumes `nsh` is installed and on your `PATH` ([Installation](./installation.md)); in a checkout, use
 `./target/debug/nsh` instead.
 

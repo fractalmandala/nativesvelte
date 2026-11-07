@@ -121,9 +121,14 @@ pub fn generate_kit_router(routes: &[RouteEntry]) -> String {
 
     for (idx, r) in routes.iter().enumerate() {
         let page_import = format!("RoutePage{}", idx);
+        let import_target = if r.pattern == "/" {
+            "\0sveltekit-root-page".to_string()
+        } else {
+            r.page_path.to_string_lossy().to_string()
+        };
         imports.push_str(&format!(
             "import {page_import} from {:?};\n",
-            r.page_path.to_string_lossy()
+            import_target
         ));
 
         let load_import = if let Some(lp) = &r.load_path {
@@ -207,7 +212,7 @@ export default function SvelteKitApp() {{
 {route_cases}
         return (
           <View style={{{{ flex: 1, padding: 24, justifyContent: "center", alignItems: "center" }}}}>
-            <Text style={{{{ fontSize: 18, color: {not_found_color:?} }}}}>404 - Not Found: {{path()}}</Text>
+            <Text style={{{{ fontSize: 18, color: {not_found_color:?} }}}}>404 - Not Found: {{path}}</Text>
           </View>
         );
       }})()}}

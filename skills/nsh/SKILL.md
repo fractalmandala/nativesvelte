@@ -42,7 +42,7 @@ narrow change, extend the existing system within the requested scope.
 | Read first | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | [rust.md](references/rust.md) |
 | Components | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | tsx.md, `.nsh/types` | [rust-ui.md](references/rust-ui.md) |
 | Tests | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | tsx.md, [testing guide](https://nativesvelte.dev/docs/testing-and-trace) | [rust-testing.md](references/rust-testing.md) |
-| Whole app | `examples/counter-svelte` | `nsh init --template sveltekit` | [tsx-recipe.md](references/tsx-recipe.md) (`examples/tasks`) | [rust-recipe.md](references/rust-recipe.md) (`examples/tasks-rs`) |
+| Whole app | `examples/counter-svelte`, `examples/tasks-svelte`, `examples/components-svelte` | `examples/sveltekit-app` | [tsx-recipe.md](references/tsx-recipe.md) (`examples/tasks`) | [rust-recipe.md](references/rust-recipe.md) (`examples/tasks-rs`) |
 
 In an existing project, stay in its mode unless the user requests a change. For a new
 app, honor the requested mode; otherwise use the table above; a Rust app can gain TSX later, because it already has a

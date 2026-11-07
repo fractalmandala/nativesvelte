@@ -166,7 +166,7 @@ skills/               The skills for coding agents that build apps with NativeSv
 docs/                 Documentation; `docs/dev/`: for developers of NativeSvelte (architecture, internals, Svelte compiler pipeline, decisions, pitfalls)
 website/              The documentation site (Astro; guides, element / component / API reference in English and zh-CN) and its
                       runnable demos (`website/demos/*.tsx`, live on the site through the WebAssembly runtime); see its README
-examples/             Example apps (counter-svelte: Svelte 5 runes counter; gallery: a demo index, one module per demo, `tests/` the reference for `nsh test` (storage,
+examples/             Example apps (counter-svelte: Svelte 5 runes counter; tasks-svelte: complete task manager with runes, bind:value and navigation; sveltekit-app: multi-page file-based SvelteKit routing; desktop-svelte: desktop app with custom window chrome & menus; components-svelte: reusable Svelte 5 component suite; gallery: a demo index, one module per demo, `tests/` the reference for `nsh test` (storage,
                       inputs, a long list, stubbed requests, dark mode, a manual clock); gallery-rs: the same in Rust, the app's crate in `native/`,
                       TypeScript tests of its root (`*.test.tsx`, about a demo each); rust-exports: a TSX app using one of each export of its crate, the reference
                       for exporting components, modules and classes and registering native components, with Rust and TypeScript tests of the TSX entry; counter,

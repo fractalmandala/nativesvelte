@@ -1655,4 +1655,81 @@ mount(App);
 
         let _ = std::fs::remove_dir_all(dir);
     }
+
+    #[test]
+    fn bundle_tasks_svelte_example() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let entry = manifest_dir.join("../../examples/tasks-svelte/App.svelte");
+        if !entry.exists() {
+            return;
+        }
+        let bundle = bundle(&BundleOptions {
+            entry,
+            minify: false,
+            split: false,
+            ui_sets: vec![nsh_base::registry().into()],
+        })
+        .unwrap();
+        assert!(bundle.code.contains("Tasks"), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh/base\""), "{}", bundle.code);
+    }
+
+    #[test]
+    fn bundle_sveltekit_app_example() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let entry = manifest_dir.join("../../examples/sveltekit-app/src/routes/+page.svelte");
+        if !entry.exists() {
+            return;
+        }
+        let bundle = bundle(&BundleOptions {
+            entry,
+            minify: false,
+            split: false,
+            ui_sets: vec![nsh_base::registry().into()],
+        })
+        .unwrap();
+        assert!(bundle.code.contains("NativeSvelteKit"), "{}", bundle.code);
+        assert!(bundle.code.contains("Welcome to SvelteKit Native"), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh/base\""), "{}", bundle.code);
+    }
+
+    #[test]
+    fn bundle_desktop_svelte_example() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let entry = manifest_dir.join("../../examples/desktop-svelte/App.svelte");
+        if !entry.exists() {
+            return;
+        }
+        let bundle = bundle(&BundleOptions {
+            entry,
+            minify: false,
+            split: false,
+            ui_sets: vec![nsh_base::registry().into()],
+        })
+        .unwrap();
+        assert!(bundle.code.contains("NativeSvelte Desktop"), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh/desktop\""), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
+        assert!(bundle.code.contains("element(\"input\")"), "{}", bundle.code);
+    }
+
+    #[test]
+    fn bundle_components_svelte_example() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let entry = manifest_dir.join("../../examples/components-svelte/App.svelte");
+        if !entry.exists() {
+            return;
+        }
+        let bundle = bundle(&BundleOptions {
+            entry,
+            minify: false,
+            split: false,
+            ui_sets: vec![nsh_base::registry().into()],
+        })
+        .unwrap();
+        assert!(bundle.code.contains("NativeSvelte Components"), "{}", bundle.code);
+        assert!(bundle.code.contains("from \"nsh:rt\""), "{}", bundle.code);
+    }
 }

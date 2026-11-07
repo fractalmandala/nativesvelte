@@ -173,12 +173,16 @@ Logs and errors show in the terminal. What each platform needs:
 | Example | What it shows |
 |---|---|
 | [`examples/counter-svelte`](examples/counter-svelte) | Svelte 5 counter app: runes (`$state`), Tailwind utility classes, and direct native view compilation |
-| [`examples/gallery-rs`](examples/gallery-rs) | The gallery written in Rust: an app with no TSX and no QuickJS |
-| [`examples/rust-exports`](examples/rust-exports) | A TSX/Svelte app using a component, a module and a class of its own Rust crate |
-| [`examples/gallery`](examples/gallery) | A tour of what NativeSvelte supports: lists, navigation, forms, controls, gestures, animation, images, styles, text, web view and video, `fetch` |
-| [`examples/counter`](examples/counter) | The smallest TSX app |
+| [`examples/tasks-svelte`](examples/tasks-svelte) | Complete task manager in pure Svelte 5: runes (`$state`, `$derived`, `$props`), `bind:value`, navigation, dialogs, and native list recycling |
+| [`examples/components-svelte`](examples/components-svelte) | Reusable Svelte 5 component suite: custom Button, Card, Badge, Switch, TextInput, and Segmented controls with `$props()`, `$state()`, slots, and reactivity |
+| [`examples/desktop-svelte`](examples/desktop-svelte) | Desktop app in Svelte 5: custom draggable title bar (`desktop={{ windowDrag: true }}`), window control insets (`titleBar()`), system title bar style toggling, top-level application menu, and popup context menus |
+| [`examples/sveltekit-app`](examples/sveltekit-app) | Multi-page SvelteKit app: file-based routing (`src/routes/+layout.svelte`, `+page.svelte`), dynamic params (`[id]`), client `load()`, `$app/navigation`, `$app/stores` |
 | [`examples/tasks-rs`](examples/tasks-rs) | A small Rust app with a store, pages, a list, a system alert and tests, laid out as the Coding Guides say |
 | [`examples/tasks`](examples/tasks) | The same app in TSX |
+| [`examples/gallery-rs`](examples/gallery-rs) | The gallery written in Rust: an app with no TSX and no QuickJS |
+| [`examples/gallery`](examples/gallery) | A tour of what NativeSvelte supports: lists, navigation, forms, controls, gestures, animation, images, styles, text, web view and video, `fetch` |
+| [`examples/rust-exports`](examples/rust-exports) | A TSX/Svelte app using a component, a module and a class of its own Rust crate |
+| [`examples/counter`](examples/counter) | The smallest TSX app |
 | [`examples/hopper`](examples/hopper) | A dark, tabbed dashboard built only from primitives: interactive canvas charts, sliders, menus, animation |
 | [`examples/desktop`](examples/desktop) | A desktop app with a title bar and menus of its own (`nsh/desktop`) |
 | [`examples/embed-ios`](examples/embed-ios), [`examples/embed-android`](examples/embed-android) | NativeSvelte inside existing native apps, with a native component the app registers |
