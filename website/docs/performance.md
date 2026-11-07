@@ -82,20 +82,15 @@ fn price(quote: Signal<Quote>) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import type { Accessor } from "nsh";
-import { Text } from "nsh";
+```svelte tabs
+<script>
+  let { quote }: { quote: { price: number; change: number } } = $props();
+</script>
 
-type Quote = { price: number; change: number };
-
-function Price(props: { quote: Accessor<Quote> }) {
-  // Runs once. When quote() changes, only the text and the color update.
-  return (
-    <Text style={{ color: props.quote().change < 0 ? "#cf222e" : "#1a7f37" }}>
-      {props.quote().price.toFixed(2)}
-    </Text>
-  );
-}
+<!-- Fine-grained reactivity: only text and color update when quote changes -->
+<span class={quote.change < 0 ? "text-[#cf222e]" : "text-[#1a7f37]"}>
+  {quote.price.toFixed(2)}
+</span>
 ```
 
 **For your code:**
@@ -115,9 +110,11 @@ dynamic(move || items.get().into_iter().map(|n| text(format!("row {n}"))).collec
 each(move || items.get(), |n: &u32| *n, |n, _| text(move || format!("row {}", n.get())))
 ```
 
-```tsx tabs
-{items().map((n) => <Text>{`row ${n}`}</Text>)}                   // 22 mount items: 3 views removed, 4 created
-<Each of={items()}>{(n) => <Text>{`row ${n()}`}</Text>}</Each>      // 4 mount items: 1 view created
+```svelte tabs
+<!-- Keyed each block: rows are updated or appended with minimal dom operations -->
+{#each items as n (n)}
+  <span>row {n}</span>
+{/each}
 ```
 
 See [Reactivity](./reactivity.md).
@@ -148,21 +145,24 @@ virtual_list(move || photos.with(Vec::len), move |at| photo_row(photos, at))
     .flex_1();
 ```
 
-```tsx tabs
-import { List, View } from "nsh";
-import { createAnimatedValue } from "nsh";
+```svelte tabs
+<script>
+  import { List } from "nsh";
+  import { createAnimatedValue } from "nsh";
 
-const scrollY = createAnimatedValue(0);
+  const scrollY = createAnimatedValue(0);
+</script>
 
-<View
-  style={{
-    opacity: scrollY.interpolate({ inputRange: [0, 120], outputRange: [1, 0.35] }),
-    translate: [0, scrollY.interpolate({ inputRange: [0, 120], outputRange: [0, -6] })],
-  }}
-/>;
-<List each={photos()} scrollValue={scrollY} estimatedItemSize={64} style={{ flex: 1 }}>
-  {(photo) => <Row photo={photo()} />}
-</List>;
+<div
+  style:opacity={scrollY.interpolate({ inputRange: [0, 120], outputRange: [1, 0.35] })}
+  style:transform="translateY({scrollY.interpolate({ inputRange: [0, 120], outputRange: [0, -6] })}px)"
+></div>
+
+<List items={photos} scrollValue={scrollY} estimatedItemSize={64} class="flex-1">
+  {#snippet children(photo)}
+    <Row {photo} />
+  {/snippet}
+</List>
 ```
 
 - `timing`, `spring` and `decay` run on the platform's UI thread, frame by frame, with no work on the engine thread

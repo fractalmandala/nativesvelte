@@ -42,17 +42,25 @@ runs (`nsh keygen keys/update`, keep the `.secret` out of your repository):
 
 ## Use it
 
-```tsx
-import { checkForUpdate, downloadUpdate, installAndRestart } from "nsh/updater";
-import { openUrl } from "nsh";
+```svelte
+<script>
+  import { checkForUpdate, downloadUpdate, installAndRestart } from "nsh/updater";
+  import { openUrl } from "nsh";
 
-const update = await checkForUpdate(); // null when up to date
-if (update?.canInstall) {
-  await downloadUpdate(({ received, total }) => setProgress(received / (total ?? 1)));
-  await installAndRestart();
-} else if (update) {
-  await openUrl(update.url);
-}
+  let progress = $state(0);
+
+  async function check() {
+    const update = await checkForUpdate(); // null when up to date
+    if (update?.canInstall) {
+      await downloadUpdate(({ received, total }) => {
+        progress = received / (total ?? 1);
+      });
+      await installAndRestart();
+    } else if (update) {
+      await openUrl(update.url);
+    }
+  }
+</script>
 ```
 
 `update` has `version`, `notes`, `url` and `canInstall`. `canInstall` is false on iOS and Android, and on the desktop when

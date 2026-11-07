@@ -40,15 +40,13 @@ The rules that keep it:
    an app reads grow the same way: `platform.os` gains a platform, a state or a reason gains a case. A case the app
    saw keeps its value, and the app handles a value it does not know, with a `switch`'s `default`:
 
-   ```tsx
-   switch (platform.os) {
-     case "ios":
-     case "android":
-       return <MobileLayout />;
-     default:
-       // The desktops, the web, and platforms NSH adds later.
-       return <WideLayout />;
-   }
+   ```svelte
+   {#if platform.os === "ios" || platform.os === "android"}
+     <MobileLayout />
+   {:else}
+     <!-- The desktops, the web, and platforms NativeSvelte adds later. -->
+     <WideLayout />
+   {/if}
    ```
 4. **Behavior is kept.** New behavior is opt-in, through a new prop, option or value.
 5. **`nsh:rt` only grows**, each function keeping its signature and meaning.

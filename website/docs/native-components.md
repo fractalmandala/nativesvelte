@@ -82,40 +82,37 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, type NativeComponentRef, signal, Text, View } from "nsh";
-import { nativeComponent } from "nsh";
+```svelte tabs
+<script>
+  import { nativeComponent } from "nsh";
+  import type { NativeComponentRef } from "nsh";
 
-/** The host app's badge: a label it draws, sized to its text. */
-const Badge = nativeComponent<{ text: string; color?: string }, { tap: { count: number } }>("embed.badge", {
-  props: ["text", "color"],
-  events: ["tap"],
-});
+  /** The host app's badge: a label it draws, sized to its text. */
+  const Badge = nativeComponent<{ text: string; color?: string }, { tap: { count: number } }>("embed.badge", {
+    props: ["text", "color"],
+    events: ["tap"],
+  });
 
-const colors = ["#8250df", "#0969da", "#1a7f37", "#cf222e"];
+  const colors = ["#8250df", "#0969da", "#1a7f37", "#cf222e"];
 
-function App() {
-  const taps = signal(0);
-  let badge: NativeComponentRef | undefined;
-  return (
-    <View style={{ flex: 1, padding: 20, paddingTop: "calc(env(safe-area-inset-top) + 20px)", paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)", gap: 16, backgroundColor: "#f6f8fa" }}>
-      <Text style={{ fontSize: 22, fontWeight: "700" }}>Rendered by nsh</Text>
-      <Badge
-        ref={(node) => (badge = node)}
-        text={taps() === 0 ? "Tap the native badge" : `Tapped ${taps()}×`}
-        color={colors[taps() % colors.length]}
-        onTap={(e) => {
-          taps.set(e.count);
-          badge?.command("pulse");
-        }}
-        style={{ alignSelf: "flex-start", borderRadius: 8, overflow: "hidden" }}
-      />
-      <Text>{`JS saw ${taps()} taps`}</Text>
-    </View>
-  );
-}
+  let taps = $state(0);
+  let badge: NativeComponentRef | undefined = $state();
+</script>
 
-mount(App);
+<div class="flex-1 p-5 pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+20px)] gap-4 bg-[#f6f8fa]">
+  <span class="text-[22px] font-bold">Rendered by NativeSvelte</span>
+  <Badge
+    bind:this={badge}
+    text={taps === 0 ? "Tap the native badge" : `Tapped ${taps}×`}
+    color={colors[taps % colors.length]}
+    ontap={(e) => {
+      taps = e.count;
+      badge?.command("pulse");
+    }}
+    class="self-start rounded-lg overflow-hidden"
+  />
+  <span>Svelte saw {taps} taps</span>
+</div>
 ```
 
 The TSX version is `examples/embedded/App.tsx`, which both embedding samples in the repository run.
@@ -166,9 +163,20 @@ A prop can also be an animated value: an `AnimatedValue`, or a node derived from
 `scrollValue` or `pullValue`). It is then not sent as JSON: NSH binds it, and the component is handed the value on the UI
 thread on every frame it changes, without going through JS, so it can follow a drag or a pull to refresh.
 
-```tsx
-const pull = createAnimatedValue(0);
-<Scroll pullValue={pull} refreshIndicator={{ height: 72 }} refreshing={refreshing()} onRefresh={refresh}>
+```svelte
+<script>
+  import { Scroll, createAnimatedValue } from "nsh";
+
+  let refreshing = $state(false);
+  const pull = createAnimatedValue(0);
+
+  function refresh() {
+    refreshing = true;
+    // ...
+  }
+</script>
+
+<Scroll pullValue={pull} refreshIndicator={{ height: 72 }} {refreshing} onrefresh={refresh}>
   <Spinner progress={pull.interpolate({ inputRange: [0, 72], outputRange: [0, 1] })} />
 </Scroll>
 ```
@@ -201,22 +209,26 @@ native("acme.map")
     .flex_1()
 ```
 
-```tsx tabs
-const MapView = nativeComponent<
-  { latitude: number; longitude: number; zoom?: number },
-  { regionChange: { latitude: number; longitude: number }; markerPress: { id: string } }
->("acme.map", {
-  props: ["latitude", "longitude", "zoom"],
-  events: ["regionChange", "markerPress"],
-});
+```svelte tabs
+<script>
+  import { nativeComponent } from "nsh";
+
+  const MapView = nativeComponent<
+    { latitude: number; longitude: number; zoom?: number },
+    { regionChange: { latitude: number; longitude: number }; markerPress: { id: string } }
+  >("acme.map", {
+    props: ["latitude", "longitude", "zoom"],
+    events: ["regionChange", "markerPress"],
+  });
+</script>
 
 <MapView
   latitude={52.52}
   longitude={13.405}
-  onRegionChange={(region) => center.set(region)}
-  onMarkerPress={({ id }) => open(id)}
-  style={{ flex: 1 }}
-/>;
+  onregionChange={(region) => (center = region)}
+  onmarkerPress={({ id }) => open(id)}
+  class="flex-1"
+/>
 ```
 
 Events are asynchronous: the main thread never waits for the app's code. A component that must decide something on the spot (may
@@ -238,12 +250,16 @@ native("acme.map")
 map.command("zoomTo", json!({ "level": 3 }));
 ```
 
-```tsx tabs
-let map: NativeComponentRef | undefined;
+```svelte tabs
+<script>
+  import type { NativeComponentRef } from "nsh";
 
-<MapView ref={(node) => (map = node)} latitude={52.52} longitude={13.405} style={{ flex: 1 }} />;
+  let map: NativeComponentRef | undefined = $state();
+</script>
 
-map?.command("zoomTo", { level: 3 });
+<MapView bind:this={map} latitude={52.52} longitude={13.405} class="flex-1" />
+
+<button onclick={() => map?.command("zoomTo", { level: 3 })}>Zoom</button>
 ```
 
 `command(name, args)` (TSX: `command(name, args?)`) sends the name and the arguments (any JSON value) to the component's `command` method. Commands

@@ -155,29 +155,6 @@ pub fn App() -> impl IntoElement {
 </div>
 ```
 
-```tsx tabs
-// App.tsx
-import { mount, signal, Text, View } from "nsh";
-
-function App() {
-  const count = signal(0);
-  return (
-    <View class="flex-1 items-center justify-center gap-4 bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <Text class="text-3xl font-semibold text-foreground">{count()}</Text>
-      <View
-        onPress={() => count.update((c) => c + 1)}
-        role="button"
-        class="rounded-(--radius) bg-primary px-5 py-3 active:bg-primary/90"
-      >
-        <Text class="text-lg text-primary-foreground">Tap</Text>
-      </View>
-    </View>
-  );
-}
-
-mount(App);
-```
-
 In Rust:
 
 - **`use nsh_core::prelude::*`** brings the primitives (`view()`, `text()`, `scroll()`, `input()`, `image()`, ...),
@@ -318,13 +295,13 @@ text("Add one")
     .text_color(move || theme().primary_foreground)
 ```
 
-```tsx tabs
-<Text style={{ color: "white", fontSize: 17 }}>Add one</Text>
+```svelte tabs
+<span class="text-[17px] text-white">Add one</span>
 ```
 
-Save. A Rust app is built again and restarts with the new label; the count starts over. A TSX app gets a hot update:
+Save. A Rust app is built again and restarts with the new label; the count starts over. A NativeSvelte app gets a hot update:
 the CLI rebuilds and sends a patch, and the host runs the changed module again and renders again only the components
-whose code changed. Here that is `App`, which owns the `count` signal, so the count starts over too.
+whose code changed. Here that is `App`, which owns the `count` state, so the count starts over too.
 
 Pieces of UI move into components of their own, or plain functions that return elements:
 
@@ -343,21 +320,24 @@ fn tap_button(on_press: impl Fn() + 'static) -> impl IntoElement {
 // In App: .child(tap_button(move || count.update(|value| *value += 1)))
 ```
 
-```tsx tabs
-function TapButton(props: { onPress: () => void }) {
-  return (
-    <View onPress={props.onPress} activeStyle={{ opacity: 0.6 }} style={{ padding: 12, borderRadius: 10, backgroundColor: "#0969da" }}>
-      <Text style={{ color: "white", fontSize: 17 }}>Tap</Text>
-    </View>
-  );
-}
+```svelte tabs
+<!-- TapButton.svelte -->
+<script>
+  let { onclick }: { onclick: () => void } = $props();
+</script>
 
-// In App: <TapButton onPress={() => count.update((c) => c + 1)} />
+<button
+  {onclick}
+  class="rounded-[10px] bg-[#0969da] p-3 active:opacity-60"
+>
+  <span class="text-[17px] text-white">Tap</span>
+</button>
+
+<!-- In App.svelte: <TapButton onclick={() => count++} /> -->
 ```
 
-In TSX, state survives when you edit a component that does not own it: tap a few times, then change `TapButton`'s
-color, and the button updates while the count stays. Hot replacement works per top-level component: a function with a
-capitalized name whose body contains JSX. A component renders again when its own code changes, or when the module's
+In NativeSvelte, state survives when you edit a component that does not own it: tap a few times, then change `TapButton`'s
+color, and the button updates while the count stays. Hot replacement works per component. A component renders again when its own code changes, or when the module's
 code outside components changes (a constant it uses, a helper). If an edit cannot be applied in place (for example, it
 imports an NSH module the running app did not import yet, or changes `nsh.json`'s capabilities), the host reloads the
 whole app.

@@ -63,29 +63,44 @@ fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, resource, Scroll, Text, View } from "nsh";
+```svelte tabs
+<script>
+  import { Scroll } from "nsh";
 
-type Post = { id: number; title: string };
+  type Post = { id: number; title: string };
 
-function App() {
-  const posts = resource(async ({ signal }) => {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5", { signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return (await response.json()) as Post[];
+  let posts = $state<Post[]>([]);
+  let loading = $state(true);
+  let error = $state<string | null>(null);
+
+  $effect(() => {
+    const controller = new AbortController();
+    fetch("https://jsonplaceholder.typicode.com/posts?_limit=5", { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        posts = data;
+        loading = false;
+      })
+      .catch((err) => {
+        error = String(err);
+        loading = false;
+      });
+
+    return () => controller.abort();
   });
+</script>
 
-  return (
-    <Scroll style={{ flex: 1 }}>
-      <View style={{ padding: 16, paddingTop: 60, gap: 8 }}>
-        <Text style={{ color: "#57606a" }}>{posts.loading() ? "loading…" : String(posts.error() ?? "")}</Text>
-        <Each of={posts() ?? []}>{(post) => <Text style={{ numberOfLines: 1 }}>{post().title}</Text>}</Each>
-      </View>
-    </Scroll>
-  );
-}
-
-mount(App);
+<Scroll class="flex-1">
+  <div class="p-4 pt-[60px] gap-2">
+    <span class="text-[#57606a]">{loading ? "loading…" : (error ?? "")}</span>
+    {#each posts as post (post.id)}
+      <span class="truncate">{post.title}</span>
+    {/each}
+  </div>
+</Scroll>
 ```
 
 [`resource`](./reactivity.md#resource) keeps the value, the error and whether a load runs, loads again from a source that changes (or on `refetch()`), and cancels a load that no longer counts (the component goes away, or a newer load starts): in Rust by dropping the load's task, which cancels its request, in TSX through the `signal` it passes on. Rust's `fetch` takes absolute URLs; JSON is parsed with a crate such as `serde_json`.
@@ -117,7 +132,7 @@ fetch(
 fetch(HttpRequest::new("DELETE", "https://api.example.com/notes/1")).await?;
 ```
 
-```tsx tabs
+```ts tabs
 // JSON
 const created = await fetch("https://api.example.com/notes", {
   method: "POST",
@@ -174,15 +189,21 @@ spawn(async move {
 });
 ```
 
-```tsx tabs
-import { Picker } from "nsh";
+```svelte tabs
+<script>
+  import { Picker } from "nsh";
 
-const [photo] = await Picker.pickImages({ maxDimension: 2048 });
-if (photo) {
-  const form = new FormData();
-  form.append("photo", photo.file);
-  await fetch("https://api.example.com/photos", { method: "POST", body: form });
-}
+  async function pickAndUpload() {
+    const [photo] = await Picker.pickImages({ maxDimension: 2048 });
+    if (photo) {
+      const form = new FormData();
+      form.append("photo", photo.file);
+      await fetch("https://api.example.com/photos", { method: "POST", body: form });
+    }
+  }
+</script>
+
+<button onclick={pickAndUpload} class="btn">Upload Photo</button>
 ```
 
 ## Streaming
@@ -261,7 +282,7 @@ let task = spawn(async move {
 task.cancel();
 ```
 
-```tsx tabs
+```ts tabs
 const controller = new AbortController();
 const request = fetch("https://api.example.com/search?q=" + encodeURIComponent(query), { signal: controller.signal });
 
@@ -292,19 +313,23 @@ fn weather(city: String) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { cleanup, signal, Text } from "nsh";
+```svelte tabs
+<script>
+  let { city }: { city: string } = $props();
+  let data = $state<unknown>(null);
 
-function Weather(props: { city: string }) {
-  const data = signal<unknown>(null);
-  const controller = new AbortController();
-  cleanup(() => controller.abort());
-  fetch(`https://api.example.com/weather?city=${encodeURIComponent(props.city)}`, { signal: controller.signal })
-    .then((r) => r.json())
-    .then((d) => data.set(d))
-    .catch(() => {});
-  return <Text>{JSON.stringify(data())}</Text>;
-}
+  $effect(() => {
+    const controller = new AbortController();
+    fetch(`https://api.example.com/weather?city=${encodeURIComponent(city)}`, { signal: controller.signal })
+      .then((r) => r.json())
+      .then((d) => (data = d))
+      .catch(() => {});
+
+    return () => controller.abort();
+  });
+</script>
+
+<span>{JSON.stringify(data)}</span>
 ```
 
 ## Errors
@@ -319,7 +344,7 @@ match fetch(url).await {
 }
 ```
 
-```tsx tabs
+```ts tabs
 try {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Server answered ${response.status}`);

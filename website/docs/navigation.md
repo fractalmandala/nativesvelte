@@ -82,70 +82,44 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, Scroll, Text, View } from "nsh";
-import { createNavStack, NavPage, NavStack } from "nsh/base";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { Scroll } from "nsh";
+  import { createNavStack, NavPage, NavStack } from "nsh/base";
 
-type Route = { name: "inbox" } | { name: "message"; id: number };
+  const nav = createNavStack([{ name: "inbox" }]);
+</script>
 
-const nav = createNavStack<Route>([{ name: "inbox" }]);
-
-// The page's header on the desktops and the web; iOS and Android show the system's, from `title`.
-function Header(props: { title: string }) {
-  return (
-    <View class="h-12 flex-row items-center gap-3 border-b border-gray-200 px-4">
-      <If when={nav.routes().length > 1}>
-        <Text role="button" onPress={() => nav.pop()} class="text-blue-600 active:opacity-60">
-          Back
-        </Text>
-      </If>
-      <Text style={{ fontSize: 17, fontWeight: "600" }}>{props.title}</Text>
-    </View>
-  );
-}
-
-function Inbox() {
-  return (
-    <NavPage title="Inbox" header={<Header title="Inbox" />}>
-      <Scroll style={{ flex: 1 }}>
-        <Each of={[1, 2, 3, 4, 5]}>
-          {(id) => (
-            <View onPress={() => nav.push({ name: "message", id: id() })} class="p-4 active:bg-gray-100">
-              <Text>Message {id()}</Text>
-            </View>
-          )}
-        </Each>
-      </Scroll>
-    </NavPage>
-  );
-}
-
-function Message(props: { id: number }) {
-  return (
-    <NavPage title={`Message ${props.id}`} header={<Header title={`Message ${props.id}`} />}>
-      <View style={{ flex: 1, padding: 16 }}>
-        <Text>The body of message {props.id}.</Text>
-      </View>
-    </NavPage>
-  );
-}
-
-function App() {
-  return (
-    <NavStack state={nav} style={{ flex: 1 }}>
-      {(route) => {
-        switch (route.name) {
-          case "inbox":
-            return <Inbox />;
-          case "message":
-            return <Message id={route.id} />;
-        }
-      }}
-    </NavStack>
-  );
-}
-
-mount(App);
+<NavStack state={nav} class="flex-1">
+  {(route) => {
+    switch (route.name) {
+      case "inbox":
+        return (
+          <NavPage title="Inbox">
+            <Scroll class="flex-1">
+              {#each [1, 2, 3, 4, 5] as id}
+                <button
+                  onclick={() => nav.push({ name: "message", id })}
+                  class="p-4 active:bg-muted text-left border-b border-border"
+                >
+                  <p>Message {id}</p>
+                </button>
+              {/each}
+            </Scroll>
+          </NavPage>
+        );
+      case "message":
+        return (
+          <NavPage title="Message {route.id}">
+            <div class="flex-1 p-4">
+              <p>The body of message {route.id}.</p>
+            </div>
+          </NavPage>
+        );
+    }
+  }}
+</NavStack>
 ```
 
 ## The stack's state
@@ -300,39 +274,24 @@ fn compose(routes: Signal<Vec<Route>>) -> Screen {
 }
 ```
 
-```tsx tabs
-function Compose() {
-  const text = signal("");
-  const cancel = () => (
-    <Text onPress={() => nav.pop()} style={{ fontSize: 17, color: "#0969da" }}>
-      Cancel
-    </Text>
-  );
-  const sendButton = () => (
-    <Text
-      onPress={() => send(text())}
-      style={{ fontSize: 17, fontWeight: "600", color: text() ? "#0969da" : "#8c959f" }}
-    >
-      Send
-    </Text>
-  );
-  return (
-    <NavPage
-      title="New message"
-      headerLeft={cancel()}
-      headerRight={sendButton()}
-      header={
-        <View class="h-12 flex-row items-center justify-between px-4">
-          {cancel()}
-          <Text style={{ fontSize: 17, fontWeight: "600" }}>New message</Text>
-          {sendButton()}
-        </View>
-      }
-    >
-      <Input multiline value={text()} onChange={({ value }) => text.set(value)} style={{ flex: 1, padding: 16, fontSize: 17 }} />
-    </NavPage>
-  );
-}
+```svelte tabs
+<!-- Compose.svelte -->
+<script>
+  import { NavPage, Input } from "nsh/base";
+
+  let draft = $state("");
+</script>
+
+<NavPage title="New message">
+  <div class="flex-1 p-4">
+    <Input
+      multiline
+      bind:value={draft}
+      placeholder="Write a message..."
+      class="flex-1 text-[17px]"
+    />
+  </div>
+</NavPage>
 ```
 
 A colored system header (in Rust, `header_style_with` takes typed styles: `bg`, `text_color` and `tint_color`, the color of the header's buttons; theme colors follow the appearance):
@@ -343,7 +302,7 @@ nav_page()
     .header_style_with(|s| s.bg(rgb(0x1a7f37)).text_color(rgb(0xffffff)).tint_color(rgb(0xffffff)))
 ```
 
-```tsx tabs
+```svelte tabs
 <NavPage title="Profile" headerStyle={{ backgroundColor: "#1a7f37", color: "#ffffff", tintColor: "#ffffff" }}>
   …
 </NavPage>
@@ -359,9 +318,9 @@ nav_page()
     .child(view().flex_1().p_safe_area() /* … */)
 ```
 
-```tsx tabs
+```svelte tabs
 <NavPage headerVisible={false}>
-  <View class="flex-1 pt-[calc(env(safe-area-inset-top)+16px)] pb-[calc(env(safe-area-inset-bottom)+16px)] px-4">…</View>
+  <div class="flex-1 pt-[calc(env(safe-area-inset-top)+16px)] pb-[calc(env(safe-area-inset-bottom)+16px)] px-4">…</div>
 </NavPage>
 ```
 
@@ -411,14 +370,15 @@ fn edit_note(routes: Signal<Vec<Route>>) -> Screen {
 }
 ```
 
-```tsx tabs
-import { signal } from "nsh";
-import { AlertDialog, NavPage, Input } from "nsh/base";
+```svelte tabs
+<!-- EditNote.svelte -->
+<script>
+  import { AlertDialog, NavPage, Input } from "nsh/base";
 
-function EditNote() {
-  const text = signal("");
-  const dirty = () => text().length > 0;
-  const confirm = async () => {
+  let text = $state("");
+  let dirty = $derived(text.length > 0);
+
+  async function confirm() {
     const { action } = await AlertDialog.show({
       title: "Discard your changes?",
       actions: [
@@ -427,13 +387,12 @@ function EditNote() {
       ],
     });
     if (action === "discard") nav.pop();
-  };
-  return (
-    <NavPage title="Edit" popOnBack={!dirty()} onBackPress={() => dirty() && confirm()}>
-      <Input value={text()} onChange={({ value }) => text.set(value)} placeholder="A note" style={{ margin: 16, fontSize: 17 }} />
-    </NavPage>
-  );
-}
+  }
+</script>
+
+<NavPage title="Edit" popOnBack={!dirty} onBackPress={() => dirty && confirm()}>
+  <Input bind:value={text} placeholder="A note" class="m-4 text-[17px]" />
+</NavPage>
 ```
 
 With `pop_on_back(false)` (`popOnBack={false}`), the page stays on every way back (the back buttons, Android's back button and gesture, the desktops' back keys, the browser's back button, the swipe), and the back press event tells you the user tried. Popping from code (removing the route, `nav.pop()`) pops as always.
@@ -492,32 +451,31 @@ pub fn files() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { signal, Text, View } from "nsh";
-import { Dialog } from "nsh/base";
+```svelte tabs
+<!-- Files.svelte -->
+<script>
+  import { Dialog } from "nsh/base";
 
-function Files() {
-  const open = signal(false);
-  return (
-    <View style={{ flex: 1 }}>
-      <View onPress={() => open.set(true)} style={{ padding: 16 }}>
-        <Text>Delete the file</Text>
-      </View>
-      <Dialog
-        open={open()}
-        animation="fade"
-        onOpenChange={(e) => open.set(e.open)}
-        backdropClass="bg-black/40"
-        class="m-auto w-80 gap-3 rounded-2xl bg-white p-5"
-      >
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>Delete the file?</Text>
-        <View onPress={() => open.set(false)}>
-          <Text style={{ color: "#cf222e" }}>Delete</Text>
-        </View>
-      </Dialog>
-    </View>
-  );
-}
+  let open = $state(false);
+</script>
+
+<div class="flex-1 p-4">
+  <button onclick={() => (open = true)} class="p-4 bg-muted rounded-xl">
+    Delete the file
+  </button>
+  <Dialog
+    {open}
+    animation="fade"
+    onOpenChange={(e) => (open = e.open)}
+    backdropClass="bg-black/40"
+    class="m-auto w-80 gap-3 rounded-2xl bg-card p-5"
+  >
+    <p class="text-xl font-bold">Delete the file?</p>
+    <button onclick={() => (open = false)} class="text-destructive font-semibold">
+      Delete
+    </button>
+  </Dialog>
+</div>
 ```
 
 Escape, Android's back button, a press on the backdrop (TSX's backdrop, a native sheet's in Rust) and a swipe down on a sheet close it natively (`close_on_escape`, `close_on_backdrop_press` and `close_on_swipe`, TSX `closeOnEscape`, `closeOnBackdropPress` and `closeOnSwipe`, each true by default). In Rust, `on_cancel` reports every attempt and `on_close` the close, so leave the dialog out of the view there; a backdrop your app draws closes it with its own press handler, as above. In TSX, `onOpenChange({ open: false, reason })` tells you, so set `open` to `false` there. To confirm first, set a flag to false and handle the cancel event (`on_cancel`, `onCancel`), which reports every attempt, then close the dialog yourself. On iOS, `.presentation(ModalPresentation::PageSheet)` or `FormSheet` (`presentation="pageSheet"` or `"formSheet"`) presents a sheet that keeps what is behind visible.
@@ -556,23 +514,21 @@ pub fn editor() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { effect, signal } from "nsh";
-import { BackHandler } from "nsh/mobile";
+```svelte tabs
+<script>
+  import { BackHandler } from "nsh/mobile";
 
-function Editor() {
-  const selecting = signal(false);
-  // Listening only while selecting: otherwise the stack pops, with the gesture's preview.
-  effect(() => {
-    if (selecting()) {
-      BackHandler.on("press", () => {
-        selecting.set(false);
+  let selecting = $state(false);
+
+  $effect(() => {
+    if (selecting) {
+      return BackHandler.on("press", () => {
+        selecting = false;
         return true;
       });
     }
   });
-  // …
-}
+</script>
 ```
 
 A listener made in an effect lasts until the effect runs again or its component goes; in TSX, the function

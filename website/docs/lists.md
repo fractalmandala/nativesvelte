@@ -1,6 +1,6 @@
 ---
 title: Lists
-description: Long and endless lists in Rust and TSX - recycling, row identity, columns, sticky headers, inverted chat lists, horizontal lists, lists in a page, loading more, viewability and scrolling to an item.
+description: Long and endless lists in Svelte and Rust - recycling, row identity, columns, sticky headers, inverted chat lists, horizontal lists, lists in a page, loading more, viewability and scrolling to an item.
 order: 40
 group: ui
 demo: guide-lists
@@ -8,7 +8,7 @@ demo: guide-lists
 
 # Lists
 
-For collections that can grow, including chat timelines, feeds and history, prefer a virtualized list from the start. Use a scroll view with ordinary children for small, bounded content. A list (`virtual_list(..)` in Rust, `List` from `nsh` in TSX) renders long data on a native scroll view while only creating the rows near the screen. Which rows exist, where they go, the columns, sticky headers and which items are visible are all computed natively; your code only fills cells with content when the native side asks for one. A list of a million items costs about as much as a list of thirty.
+For collections that can grow, including chat timelines, feeds and history, prefer a virtualized list from the start. Use a scroll view with ordinary children for small, bounded content. A list (`virtual_list(..)` in Rust, `<List>` in Svelte) renders long data on a native scroll view while only creating the rows near the screen. Which rows exist, where they go, the columns, sticky headers and which items are visible are all computed natively; your code only fills cells with content when the native side asks for one. A list of a million items costs about as much as a list of thirty.
 
 ```rust tabs
 use std::rc::Rc;
@@ -32,24 +32,21 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { List, mount, Text, View } from "nsh";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { List } from "nsh";
 
-const items = Array.from({ length: 10_000 }, (_, i) => ({ id: i, title: `Item ${i + 1}` }));
+  const items = Array.from({ length: 10_000 }, (_, i) => ({ id: i, title: `Item ${i + 1}` }));
+</script>
 
-function App() {
-  return (
-    <List each={items} estimatedItemSize={52} style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      {(item) => (
-        <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: "#eaeef2" }}>
-          <Text style={{ fontSize: 16 }}>{item().title}</Text>
-        </View>
-      )}
-    </List>
-  );
-}
-
-mount(App);
+<List each={items} estimatedItemSize={52} class="flex-1 bg-white">
+  {(item) => (
+    <div class="p-4 border-b border-[#eaeef2]">
+      <p class="text-base">{item().title}</p>
+    </div>
+  )}
+</List>
 ```
 
 In Rust, `virtual_list(count, row)` takes the number of rows (a value, a signal or a closure) and a function that builds a row from its position (`at.index()`); the rows read your data by that index. In TSX, `each` takes the items and the row function gets the item. Like a [scroll view](./scrolling.md), the list is the viewport and needs a size from its parent (`.flex_1()`, `flex: 1` or a height).
@@ -76,15 +73,15 @@ virtual_list(count, move |at| {
 })
 ```
 
-```tsx tabs
+```svelte tabs
 // Wrong: `title` stays the first item's title when the cell is reused.
 {(item) => {
   const title = item().title;
-  return <Text>{title}</Text>;
+  return <p>{title}</p>;
 }}
 
 // Right: the text follows the cell's current item.
-{(item) => <Text>{item().title}</Text>}
+{(item) => <p>{item().title}</p>}
 ```
 
 **Keep per-item state in your data, not in the row.** A signal created inside the row belongs to the cell and travels with it to the next item. Store "is this row expanded / selected / liked" in the items or in a set keyed by id:
@@ -114,21 +111,27 @@ virtual_list(move || posts.with(Vec::len), move |at| {
 .flex_1()
 ```
 
-```tsx tabs
-const liked = signal<Set<number>>(new Set());
-const toggle = (id: number) =>
-  liked.update((s) => {
-    const next = new Set(s);
-    next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-<List each={posts()} estimatedItemSize={64} style={{ flex: 1 }}>
+  let { posts } = $props();
+  let liked = $state(new Set());
+
+  function toggle(id) {
+    if (liked.has(id)) liked.delete(id);
+    else liked.add(id);
+  }
+</script>
+
+<List each={posts} estimatedItemSize={64} class="flex-1">
   {(post) => (
-    <View style={{ flexDirection: "row", padding: 16 }}>
-      <Text style={{ flex: 1 }}>{post().title}</Text>
-      <Text onPress={() => toggle(post().id)}>{liked().has(post().id) ? "♥" : "♡"}</Text>
-    </View>
+    <div class="flex-row p-4">
+      <p class="flex-1">{post().title}</p>
+      <button onclick={() => toggle(post().id)}>
+        {liked.has(post().id) ? "♥" : "♡"}
+      </button>
+    </div>
   )}
 </List>
 ```
@@ -205,15 +208,15 @@ virtual_list(count, move |at| {
 .flex_1()
 ```
 
-```tsx tabs
+```svelte tabs
 <List
   each={photos}
   numColumns={3}
   estimatedItemSize={120}
-  style={{ flex: 1 }}
+  class="flex-1"
   contentStyle={{ padding: 12, gap: 8 }}
 >
-  {(photo) => <Image src={photo().thumb} style={{ aspectRatio: 1, borderRadius: 8 }} />}
+  {(photo) => <img src={photo().thumb} class="aspect-square rounded-lg object-cover" alt="" />}
 </List>
 ```
 
@@ -255,25 +258,27 @@ virtual_list(count, move |at| {
 .flex_1()
 ```
 
-```tsx tabs
-type Row = { header: string } | { name: string };
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-const rows: Row[] = [];
-const headers: number[] = [];
-for (const [letter, names] of groups) {
-  headers.push(rows.length);
-  rows.push({ header: letter });
-  for (const name of names) rows.push({ name });
-}
+  let { groups } = $props();
+  const rows = [];
+  const headers = [];
+  for (const [letter, names] of groups) {
+    headers.push(rows.length);
+    rows.push({ header: letter });
+    for (const name of names) rows.push({ name });
+  }
+</script>
 
-<List each={rows} stickyHeaderIndices={headers} estimatedItemSize={44} style={{ flex: 1 }}>
+<List each={rows} stickyHeaderIndices={headers} estimatedItemSize={44} class="flex-1">
   {(row) => (
-    <If
-      when={"header" in row()}
-      else={<Text style={{ padding: 12 }}>{(row() as { name: string }).name}</Text>}
-    >
-      <Text style={{ padding: 6, backgroundColor: "#eaeef2", fontWeight: "700" }}>{(row() as { header: string }).header}</Text>
-    </If>
+    "header" in row() ? (
+      <div class="p-1.5 bg-[#eaeef2] font-bold">{row().header}</div>
+    ) : (
+      <div class="p-3">{row().name}</div>
+    )
   )}
 </List>
 ```
@@ -297,15 +302,21 @@ view().flex_1().overflow_hidden().child(
 ).child(view().absolute().top_0().left_0().right_0().h(px(56.0)).bind_translate_y(&hidden.mul(-1.0)))
 ```
 
-```tsx tabs
-const scroll = createAnimatedValue(0);
-const hidden = scroll.diffClamp(0, 56);
-const shown = hidden.mul(-1).add(56);
+```svelte tabs
+<script>
+  import { createAnimatedValue, List } from "nsh";
 
-<View style={{ flex: 1, overflow: "hidden" }}>
-  <List each={rows} scrollValue={scroll} stickyHeaderIndices={headers} stickyHeaderOffset={shown}>…</List>
-  <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: 56, translate: [0, hidden.mul(-1)] }}>…</View>
-</View>
+  const scroll = createAnimatedValue(0);
+  const hidden = scroll.diffClamp(0, 56);
+  const shown = hidden.mul(-1).add(56);
+</script>
+
+<div class="flex-1 overflow-hidden relative">
+  <List each={rows} scrollValue={scroll} stickyHeaderIndices={headers} stickyHeaderOffset={shown}>
+    {(row) => <p class="p-3">{row().name}</p>}
+  </List>
+  <div class="absolute top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur-md">…</div>
+</div>
 ```
 
 ## Chat: inverted lists
@@ -402,67 +413,59 @@ pub fn chat() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { List, mount, signal, Text, View } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<!-- Chat.svelte -->
+<script>
+  import { List } from "nsh";
+  import { Input } from "nsh/base";
 
-type Message = { id: number; text: string; mine: boolean };
-
-function Chat() {
   let next = 0;
-  const message = (text: string, mine: boolean): Message => ({ id: next++, text, mine });
-  const messages = signal(Array.from({ length: 30 }, (_, i) => message(`Message ${30 - i}`, i % 3 === 0)));
-  const draft = signal("");
-  const send = () => {
-    if (!draft().trim()) return;
-    messages.update((m) => [message(draft(), true), ...m]); // newest first
-    draft.set("");
-  };
-  const loadOlder = () => messages.update((m) => [...m, ...Array.from({ length: 20 }, (_, i) => message(`Older ${i}`, false))]);
-  return (
-    <View style={{ flex: 1, paddingBottom: "env(keyboard-inset-height)" }}>
-      <List
-        each={messages()}
-        inverted
-        estimatedItemSize={44}
-        style={{ flex: 1 }}
-        contentStyle={{ padding: 12, gap: 6 }}
-        keyboardDismissMode="interactive"
-        onLoadMore={loadOlder}
-        loadMoreThreshold={0.5}
-      >
-        {(m) => (
-          <View
-            style={{
-              alignSelf: m().mine ? "flex-end" : "flex-start",
-              maxWidth: "75%",
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 14,
-              backgroundColor: m().mine ? "#0969da" : "#eaeef2",
-            }}
-          >
-            <Text style={{ color: m().mine ? "#ffffff" : "#1f2328" }}>{m().text}</Text>
-          </View>
-        )}
-      </List>
-      <View style={{ flexDirection: "row", gap: 8, padding: 8 }}>
-        <Input
-          value={draft()}
-          onChange={({ value }) => draft.set(value)}
-          onSubmit={send}
-          multiline
-          submitBehavior="submit"
-          returnKeyType="send"
-          placeholder="Message"
-          style={{ flex: 1, maxHeight: 120, borderWidth: 1, borderColor: "#d0d7de", borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8 }}
-        />
-      </View>
-    </View>
-  );
-}
+  const createMsg = (text, mine) => ({ id: next++, text, mine });
+  let messages = $state(Array.from({ length: 30 }, (_, i) => createMsg(`Message ${30 - i}`, i % 3 === 0)));
+  let draft = $state("");
 
-mount(Chat);
+  function send() {
+    if (!draft.trim()) return;
+    messages = [createMsg(draft, true), ...messages]; // newest first
+    draft = "";
+  }
+
+  function loadOlder() {
+    messages = [...messages, ...Array.from({ length: 20 }, (_, i) => createMsg(`Older ${i}`, false))];
+  }
+</script>
+
+<div class="flex-1 pb-[env(keyboard-inset-height)]">
+  <List
+    each={messages}
+    inverted
+    estimatedItemSize={44}
+    class="flex-1"
+    contentStyle={{ padding: 12, gap: 6 }}
+    keyboardDismissMode="interactive"
+    onLoadMore={loadOlder}
+    loadMoreThreshold={0.5}
+  >
+    {(m) => (
+      <div
+        class="max-w-[75%] px-3 py-2 rounded-2xl {m().mine ? 'self-end bg-primary text-primary-foreground' : 'self-start bg-muted text-foreground'}"
+      >
+        <p>{m().text}</p>
+      </div>
+    )}
+  </List>
+  <div class="flex-row gap-2 p-2">
+    <Input
+      bind:value={draft}
+      onSubmit={send}
+      multiline
+      submitBehavior="submit"
+      returnKeyType="send"
+      placeholder="Message"
+      class="flex-1 max-h-[120px] border border-border rounded-2xl px-3 py-2"
+    />
+  </div>
+</div>
 ```
 
 `scroll_to_end(..)` / `scrollToEnd()` on an inverted list scrolls to its start: the newest message.
@@ -480,8 +483,8 @@ virtual_list(move || messages.with(Vec::len), move |at| bubble(messages, at))
     .flex_1()
 ```
 
-```tsx tabs
-<List each={messages()} keyExtractor={(m) => m.id} alignment="bottom" style={{ flex: 1 }}>
+```svelte tabs
+<List each={messages} keyExtractor={(m) => m.id} alignment="bottom" class="flex-1">
   {(m) => <Bubble message={m()} />}
 </List>
 ```
@@ -497,8 +500,8 @@ virtual_list(move || messages.with(Vec::len), move |at| bubble(messages, at))
     .flex_1()
 ```
 
-```tsx tabs
-<List each={messages()} keyExtractor={(m) => m.id} maintainVisibleContentPosition={{ autoscrollToBottomThreshold: 40 }} style={{ flex: 1 }}>
+```svelte tabs
+<List each={messages} keyExtractor={(m) => m.id} maintainVisibleContentPosition={{ autoscrollToBottomThreshold: 40 }} class="flex-1">
   {(m) => <Bubble message={m()} />}
 </List>
 ```
@@ -527,7 +530,7 @@ virtual_list(count, move |at| {
 .h(px(140.0))
 ```
 
-```tsx tabs
+```svelte tabs
 <List
   each={cards}
   horizontal
@@ -535,10 +538,10 @@ virtual_list(count, move |at| {
   snapToInterval={232}
   decelerationRate="fast"
   scrollbar={false}
-  style={{ height: 140 }}
+  class="h-[140px]"
   contentStyle={{ paddingHorizontal: 16, gap: 12 }}
 >
-  {(card) => <View style={{ width: 220, height: 140, borderRadius: 14, backgroundColor: card().color }} />}
+  {(card) => <div class="w-[220px] h-[140px] rounded-2xl" style:background-color={card().color}></div>}
 </List>
 ```
 
@@ -561,8 +564,8 @@ scroll()
     .child(footer())
 ```
 
-```tsx tabs
-<Scroll style={{ flex: 1 }}>
+```svelte tabs
+<Scroll class="flex-1">
   <Header />
   <List viewport="parent" each={items} estimatedItemSize={56} contentStyle={{ gap: 6 }}>
     {(item) => <Row item={item()} />}
@@ -614,31 +617,39 @@ virtual_list(move || posts.with(Vec::len), move |at| post_row(posts, at))
     .flex_1()
 ```
 
-```tsx tabs
-const posts = signal<Post[]>([]);
-let loading = false;
-let page = 0;
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-const loadMore = async () => {
-  if (loading) return;
-  loading = true;
-  try {
-    const next: Post[] = await (await fetch(`https://api.example.com/posts?page=${++page}`)).json();
-    posts.set([...posts(), ...next]);
-  } finally {
-    loading = false;
+  let posts = $state([]);
+  let loading = false;
+  let page = 0;
+
+  async function loadMore() {
+    if (loading) return;
+    loading = true;
+    try {
+      const res = await fetch(`https://api.example.com/posts?page=${++page}`);
+      const next = await res.json();
+      posts = [...posts, ...next];
+    } finally {
+      loading = false;
+    }
   }
-};
-loadMore();
+
+  loadMore();
+</script>
 
 <List
-  each={posts()}
+  each={posts}
   estimatedItemSize={72}
-  style={{ flex: 1 }}
+  class="flex-1"
   onLoadMore={loadMore}
   loadMoreThreshold={0.5}
-  footer={<Text style={{ padding: 16, textAlign: "center", color: "#8c959f" }}>Loading…</Text>}
 >
+  {#snippet footer()}
+    <p class="p-4 text-center text-muted-foreground">Loading…</p>
+  {/snippet}
   {(post) => <PostRow post={post()} />}
 </List>
 ```
@@ -679,26 +690,31 @@ virtual_list(move || messages.with(Vec::len), move |at| message_row(messages, at
     .flex_1()
 ```
 
-```tsx tabs
-const messages = signal<Message[]>(pageAround(target)); // newest first, ending at an old message
-let loading = false;
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-const loadNewer = async () => {
-  if (loading) return;
-  loading = true;
-  try {
-    const newest = messages()[0].id;
-    const newer: Message[] = await (await fetch(`https://api.example.com/messages?after=${newest}`)).json();
-    messages.set([...newer, ...messages()]);
-  } finally {
-    loading = false;
+  let messages = $state(pageAround(target));
+  let loading = false;
+
+  async function loadNewer() {
+    if (loading) return;
+    loading = true;
+    try {
+      const newest = messages[0].id;
+      const res = await fetch(`https://api.example.com/messages?after=${newest}`);
+      const newer = await res.json();
+      messages = [...newer, ...messages];
+    } finally {
+      loading = false;
+    }
   }
-};
+</script>
 
 <List
-  each={messages()}
+  each={messages}
   inverted
-  style={{ flex: 1 }}
+  class="flex-1"
   onLoadMore={loadOlder}
   onLoadMoreAtStart={loadNewer}
   loadMoreAtStartThreshold={0.5}
@@ -737,14 +753,14 @@ virtual_list(count, move |at| video_card(videos.clone(), at))
     .flex_1()
 ```
 
-```tsx tabs
+```svelte tabs
 <List
   each={videos}
   estimatedItemSize={300}
-  style={{ flex: 1 }}
+  class="flex-1"
   keyExtractor={(v) => v.slug}
   viewabilityConfig={{ itemVisibleThreshold: 0.6, minimumViewTime: 250 }}
-  onViewableItemsChange={({ viewableItems }) => playing.set(viewableItems[0]?.key ?? null)}
+  onViewableItemsChange={({ viewableItems }) => (playing = viewableItems[0]?.key ?? null)}
 >
   {(v) => <VideoCard video={v()} />}
 </List>
@@ -769,14 +785,20 @@ virtual_list(count, row).estimated_item_size(px(48.0)).flex_1().element_ref(&lis
 list.scroll_to_index(120, percentage(0.5), px(0.0), true);
 ```
 
-```tsx tabs
-import { List, type ListRef } from "nsh";
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-let list!: ListRef;
+  let listRef = $state();
 
-<List ref={list} each={items} estimatedItemSize={48} style={{ flex: 1 }}>…</List>
+  function jump() {
+    listRef?.scrollToIndex({ index: 120, viewPosition: 0.5 });
+  }
+</script>
 
-list.scrollToIndex({ index: 120, viewPosition: 0.5 });
+<List bind:this={listRef} each={items} estimatedItemSize={48} class="flex-1">
+  {(item) => <p class="p-3">{item().title}</p>}
+</List>
 ```
 
 Scrolling to an index (and to the end) is resolved natively with the sizes known at that moment: measured rows where they have been measured, the estimated size elsewhere. The list then follows its target while the rows around it are measured, so it lands exactly, until the user scrolls or the items change. To open a list at an item, use `initialScrollIndex` (`.initial_scroll_index(..)`) rather than scrolling after the first frame.
@@ -826,39 +848,36 @@ pub fn settings_list(settings: Rc<Vec<Setting>>, on_select: impl Fn(&Setting) + 
 }
 ```
 
-```tsx tabs
-import { List, Text, View } from "nsh";
+```svelte tabs
+<!-- SettingsList.svelte -->
+<script>
+  import { List } from "nsh";
 
-type Setting = { id: string; label: string };
+  let { each, onSelect } = $props();
+</script>
 
-function SettingsList(props: { each: Setting[]; onSelect: (s: Setting) => void }) {
-  return (
-    <View class="flex-1 bg-neutral-100 dark:bg-neutral-950">
-      <List
-        each={props.each}
-        estimatedItemSize={48}
-        style={{ flex: 1 }}
-        contentStyle={{ padding: 16 }}
-        separator={() => (
-          <View class="bg-white dark:bg-neutral-900">
-            <View class="ml-4 h-px bg-neutral-200 dark:bg-neutral-800" />
-          </View>
-        )}
+<div class="flex-1 bg-neutral-100 dark:bg-neutral-950">
+  <List
+    {each}
+    estimatedItemSize={48}
+    class="flex-1"
+    contentStyle={{ padding: 16 }}
+  >
+    {#snippet separator()}
+      <div class="bg-white dark:bg-neutral-900">
+        <div class="ml-4 h-px bg-neutral-200 dark:bg-neutral-800"></div>
+      </div>
+    {/snippet}
+    {(s, i) => (
+      <button
+        onclick={() => onSelect(s())}
+        class="h-12 justify-center bg-white px-4 active:bg-neutral-200 dark:bg-neutral-900 flex-row items-center {i() === 0 ? 'rounded-t-xl' : ''} {i() === each.length - 1 ? 'rounded-b-xl' : ''}"
       >
-        {(s, i) => (
-          <View
-            onPress={() => props.onSelect(s())}
-            role="button"
-            class="h-12 justify-center bg-white px-4 active:bg-neutral-200 dark:bg-neutral-900"
-            classList={{ "rounded-t-xl": i() === 0, "rounded-b-xl": i() === props.each.length - 1 }}
-          >
-            <Text>{s().label}</Text>
-          </View>
-        )}
-      </List>
-    </View>
-  );
-}
+        <p>{s().label}</p>
+      </button>
+    )}
+  </List>
+</div>
 ```
 
 ## Performance notes

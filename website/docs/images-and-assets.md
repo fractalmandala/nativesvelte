@@ -16,12 +16,14 @@ image(LOGO)
 image("https://picsum.photos/seed/nsh/600/400").w_full().h(px(200.0)).rounded(px(12.0))
 ```
 
-```tsx tabs
-import { Image } from "nsh";
-import logo from "./assets/logo@2x.png";
+```svelte tabs
+<script>
+  import { Image } from "nsh";
+  import logo from "./assets/logo@2x.png";
+</script>
 
 <Image src={logo} />
-<Image src="https://picsum.photos/seed/nsh/600/400" style={{ width: "100%", height: 200, borderRadius: 12 }} />
+<Image src="https://picsum.photos/seed/nsh/600/400" class="w-full h-[200px] rounded-xl" />
 ```
 
 The element's props are listed on [image](../elements/image.md).
@@ -41,7 +43,7 @@ fn native(registry: &mut Registry) {
 }
 ```
 
-```tsx tabs
+```ts tabs
 import logo from "./assets/logo@2x.png";
 
 logo; // { url: "asset:/assets/logo@2x.png", size: { width: 64, height: 64 } }
@@ -75,7 +77,7 @@ const LOGO: ImageAsset = asset!("logo.png");
 // LOGO.size: 64 × 64 points, LOGO.scales: [1.0, 2.0, 3.0]
 ```
 
-```tsx tabs
+```ts tabs
 import logo from "./assets/logo.png";
 
 logo; // { url: "asset:/assets/logo.png", size: { width: 64, height: 64 }, scales: [1, 2, 3] }
@@ -94,14 +96,17 @@ One file is fine too: export it at the highest density you need (`@3x` for the s
 
 Import an `.svg` file like any image. Its size in points is its `width` and `height` (or one of them, with the other from the `viewBox`'s aspect ratio), else its `viewBox`: a CSS pixel of the SVG is a point, and `@2x` suffixes leave SVG files as they are.
 
-```tsx
-import logo from "./assets/logo.svg"; // <svg width="120" height="40" …>
-import star from "./assets/star.svg"; // <svg viewBox="0 0 24 24" …>
+```svelte
+<script>
+  import { Image } from "nsh";
+  import logo from "./assets/logo.svg"; // <svg width="120" height="40" …>
+  import star from "./assets/star.svg"; // <svg viewBox="0 0 24 24" …>
 
-logo; // { url: "asset:/assets/logo.svg", size: { width: 120, height: 40 } }
+  // logo: { url: "asset:/assets/logo.svg", size: { width: 120, height: 40 } }
+</script>
 
 <Image src={logo} />
-<Image src={star} style={{ width: 36, height: 36, tintColor: "#0969da" }} />
+<Image src={star} class="w-9 h-9" tintColor="#0969da" />
 ```
 
 An SVG is sharp at the size it is shown. The browser draws it as vectors; iOS, macOS and Android draw it at the size the view shows it, in pixels, when the image loads (as they downsample bitmaps; a view that grows afterwards scales that drawing, until the image loads again); Windows, Linux and GPUI draw it once at four pixels per point (up to 2048 pixels a side) and scale it to each view. Everything else works as for bitmaps: `objectFit`, `tintColor` (through the SVG's opaque shapes, so one-color icons follow the theme), filters, `blurRadius`, placeholders, the load events, `Image.getSize` and `Image.prefetch`. `onLoad` and `Image.getSize` report an SVG's size in whole points; the image lays out at its exact size. Remote SVG files load the same way, through the same downloads and [capability](./sandbox-and-capabilities.md) checks; NSH recognizes an SVG by its content (also gzip-compressed, `.svgz`), whatever its URL ends with.
@@ -123,8 +128,8 @@ image(move || user.with(|u| u.avatar_url.clone()))
     .bg(rgb(0xeaeef2))
 ```
 
-```tsx tabs
-<Image src={user().avatarUrl} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#eaeef2" }} />
+```svelte tabs
+<Image src={user.avatarUrl} class="w-12 h-12 rounded-full bg-[#eaeef2]" />
 ```
 
 - **Give remote images a size.** Their size is unknown until they load, so without a width and height (or one of them and an aspect ratio) they collapse to no height.
@@ -196,8 +201,8 @@ The `objectFit` style, CSS's `object-fit` (`.object_fit(..)` in Rust), decides h
 image(photo).object_fit(ResizeMode::Contain).size(px(140.0)).bg(rgb(0xeaeef2))
 ```
 
-```tsx tabs
-<Image src={photo} style={{ width: 140, height: 140, objectFit: "contain", backgroundColor: "#eaeef2" }} />
+```svelte tabs
+<Image src={photo} class="w-[140px] h-[140px] object-contain bg-[#eaeef2]" />
 ```
 
 The Tailwind classes `object-cover`, `object-contain`, `object-fill`, `object-none` and `object-scale-down` set the same style.
@@ -210,8 +215,8 @@ Where the sized image sits in its box is the `objectPosition` style (`.object_po
 image(photo).object_fit(ResizeMode::Cover).object_top().w(px(220.0)).h(px(160.0)).rounded(px(16.0))
 ```
 
-```tsx tabs
-<Image src={photo} style={{ width: 220, height: 160, borderRadius: 16, objectPosition: "top" }} />
+```svelte tabs
+<Image src={photo} class="w-[220px] h-40 rounded-2xl object-top" />
 ```
 
 The Tailwind classes are Tailwind's: `object-top`, `object-bottom`, `object-left`, `object-right`, `object-center`, `object-top-left`, `object-top-right`, `object-bottom-left`, `object-bottom-right` and arbitrary values (`object-[25%_75%]`).
@@ -224,8 +229,8 @@ Images are views: they take corner radii (also per corner), borders, shadows, op
 image(avatar).size(px(90.0)).rounded(px(45.0)).border(px(3.0)).border_color(rgb(0x8250df))
 ```
 
-```tsx tabs
-<Image src={avatar} style={{ width: 90, height: 90, borderRadius: 45, borderWidth: 3, borderColor: "#8250df" }} />
+```svelte tabs
+<Image src={avatar} class="w-[90px] h-[90px] rounded-full border-[3px] border-[#8250df]" />
 ```
 
 - **Tint** (`.tint_color(..)` in Rust, the `tintColor` style in TSX) recolors the image's opaque pixels: use it for one-color icons that follow the theme.
@@ -235,8 +240,8 @@ image(avatar).size(px(90.0)).rounded(px(45.0)).border(px(3.0)).border_color(rgb(
 image(ICON).size(px(24.0)).tint_color(AdaptiveColor::rgb(0x0969da, 0x58a6ff))
 ```
 
-```tsx tabs
-<Image src={icon} style={{ width: 24, height: 24, tintColor: active() ? "#0969da" : "#6e7781" }} />
+```svelte tabs
+<Image src={icon} class="w-6 h-6" tintColor={active ? "#0969da" : "#6e7781"} />
 ```
 
 ## Placeholders, fading and blur
@@ -256,14 +261,14 @@ image(move || format!("https://picsum.photos/seed/{}/300/300", id.get()))
 image(cover).blur_radius(px(16.0)).absolute().inset_0()
 ```
 
-```tsx tabs
+```svelte tabs
 <Image
-  src={`https://picsum.photos/seed/${id()}/300/300`}
-  placeholder={placeholder}
+  src="https://picsum.photos/seed/{id}/300/300"
+  {placeholder}
   fadeDuration={250}
-  style={{ width: 100, height: 100, borderRadius: 12 }}
+  class="w-[100px] h-[100px] rounded-xl"
 />
-<Image src={cover} blurRadius={16} style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} />
+<Image src={cover} blurRadius={16} class="absolute inset-0" />
 ```
 
 ## Animated images
@@ -290,14 +295,18 @@ image(url)
     .h(px(60.0))
 ```
 
-```tsx tabs
-const status = signal("loading…");
+```svelte tabs
+<script>
+  import { Image } from "nsh";
+
+  let status = $state("loading…");
+</script>
 
 <Image
-  src={url}
-  onLoad={({ size }) => status.set(`${size.width}×${size.height}`)}
-  onError={(e) => status.set(e.message)}
-  style={{ width: 90, height: 60 }}
+  {src}
+  onload={({ size }) => (status = `${size.width}×${size.height}`)}
+  onerror={(e) => (status = e.message)}
+  class="w-[90px] h-[60px]"
 />
 ```
 
@@ -318,7 +327,7 @@ spawn(async move {
 });
 ```
 
-```tsx tabs
+```ts tabs
 import { Image } from "nsh";
 
 const size = await Image.getSize("https://example.com/photo.jpg");   // { width, height } in pixels
@@ -346,12 +355,20 @@ fn remote_image(url: &'static str) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-function RemoteImage(props: { url: string }) {
-  const ratio = signal(1);
-  Image.getSize(props.url).then((s) => ratio.set(s.width / s.height));
-  return <Image src={props.url} style={{ width: "100%", aspectRatio: ratio() }} />;
-}
+```svelte tabs
+<!-- RemoteImage.svelte -->
+<script>
+  import { Image } from "nsh";
+
+  let { url }: { url: string } = $props();
+  let ratio = $state(1);
+
+  $effect(() => {
+    Image.getSize(url).then((s) => (ratio = s.width / s.height));
+  });
+</script>
+
+<Image src={url} style="width: 100%; aspect-ratio: {ratio};" />
 ```
 
 ## Other assets
@@ -384,7 +401,7 @@ fn Greeting() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
+```ts tabs
 import flag from "./images/flag.png";
 
 const bytes = await (await fetch(flag.url)).bytes();

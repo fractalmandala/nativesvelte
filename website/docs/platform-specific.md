@@ -56,22 +56,21 @@ when(shown, || {
 })
 ```
 
-```tsx tabs
-<View
-  onPress={open}
-  activeStyle={{ opacity: 0.6 }}
+```svelte tabs
+<div
+  onclick={open}
+  class="p-4 rounded-xl bg-white active:opacity-60"
   android={{ ripple: { color: "rgba(0,0,0,0.12)" }, elevation: 4 }}
-  style={{ padding: 16, borderRadius: 12, backgroundColor: "#ffffff" }}
 >
-  <Text>Open</Text>
-</View>
+  <span>Open</span>
+</div>
 
 <Input
   placeholder="Code"
   ios={{ textContentType: "oneTimeCode" }}
 />
 
-<Dialog open={open()} ios={{ supportedOrientations: ["portrait"] }} android={{ statusBarTranslucent: true }}>
+<Dialog open={open} ios={{ supportedOrientations: ["portrait"] }} android={{ statusBarTranslucent: true }}>
   …
 </Dialog>
 ```
@@ -136,19 +135,20 @@ fn player() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { BackHandler } from "nsh/mobile";
+```svelte tabs
+<script>
+  import { BackHandler } from "nsh/mobile";
 
-function Player() {
+  let fullScreen = $state(false);
+
   // Back leaves full screen before it leaves the page. The listener goes
   // with the component.
   BackHandler.on("press", () => {
-    if (!fullScreen()) return false;
-    fullScreen.set(false);
+    if (!fullScreen) return false;
+    fullScreen = false;
     return true;
   });
-  // …
-}
+</script>
 ```
 
 The back button is handled by the top dialog first, then the back listeners (most recent first), then the top navigation stack, and the app exits when nothing handled it. See [Navigation](./navigation.md#the-android-back-button).
@@ -192,17 +192,14 @@ fn photo_viewer() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { View } from "nsh";
-import { NavPage } from "nsh/base";
+```svelte tabs
+<script>
+  import { NavPage } from "nsh/base";
+</script>
 
-function PhotoViewer() {
-  return (
-    <NavPage headerVisible={false} statusBar={{ foreground: "light" }}>
-      <View style={{ flex: 1, backgroundColor: "#000000" }}>…</View>
-    </NavPage>
-  );
-}
+<NavPage headerVisible={false} statusBar={{ foreground: "light" }}>
+  <div class="flex-1 bg-black">…</div>
+</NavPage>
 ```
 
 In an app embedded in a native one, the host app's view controller decides the status bar on iOS. An app that declares `"capabilities"` in `nsh.json` needs `"statusBar": true` to change it.
@@ -219,12 +216,14 @@ if os() == Os::Android {
 }
 ```
 
-```tsx tabs
-import { platform } from "nsh";
+```svelte tabs
+<script>
+  import { platform } from "nsh";
 
-if (platform.os === "android") {
-  // …
-}
+  if (platform.os === "android") {
+    // …
+  }
+</script>
 ```
 
 ### platform.select
@@ -250,19 +249,18 @@ let hint = match os() {
 };
 ```
 
-```tsx tabs
-const styles = {
-  card: {
-    borderRadius: 12,
-    backgroundColor: "#ffffff",
-    ...platform.select({
-      ios: { boxShadow: "0px 2px 8px rgb(0 0 0 / 0.12)" },
-      android: { borderWidth: 1, borderColor: "#e5e7eb" },
-    }),
-  },
-};
+```svelte tabs
+<script>
+  import { platform } from "nsh";
 
-const hint = platform.select({ ios: "Swipe down to close", android: "Press back to close", default: "Close" });
+  const cardClass = platform.select({
+    ios: "shadow-md",
+    android: "border border-gray-200",
+    default: "",
+  });
+
+  const hint = platform.select({ ios: "Swipe down to close", android: "Press back to close", default: "Close" });
+</script>
 ```
 
 It returns `undefined` when nothing matches and there is no `default`.
@@ -281,8 +279,14 @@ fn spinner() -> AnyElement {
 }
 ```
 
-```tsx tabs
-const Spinner = platform.select({ ios: IosSpinner, default: MaterialSpinner })!;
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+  import IosSpinner from "./IosSpinner.svelte";
+  import MaterialSpinner from "./MaterialSpinner.svelte";
+
+  const Spinner = platform.select({ ios: IosSpinner, default: MaterialSpinner })!;
+</script>
 ```
 
 or inline with [`when` / `<If>`](../elements/control-flow.md):
@@ -292,10 +296,16 @@ when(os() == Os::Ios, || input_accessory_view("bar").child(…))
     .otherwise(|| text("Android has no input accessories."))
 ```
 
-```tsx tabs
-<If when={platform.os === "ios"} else={<Text>Android has no input accessories.</Text>}>
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+</script>
+
+{#if platform.os === "ios"}
   <InputAccessoryView nativeID="bar">…</InputAccessoryView>
-</If>
+{:else}
+  <span>Android has no input accessories.</span>
+{/if}
 ```
 
 ## Platform variants in Tailwind
@@ -311,9 +321,9 @@ view()
     .when(os() == Os::Android, |v| v.border_1().border_color(rgb(0xe4e4e7)))
 ```
 
-```tsx tabs
-<View class="rounded-xl bg-white p-4 ios:shadow-md android:border android:border-zinc-200">…</View>
-<Text class="text-base android:font-medium">Title</Text>
+```svelte tabs
+<div class="rounded-xl bg-white p-4 ios:shadow-md android:border android:border-zinc-200">…</div>
+<span class="text-base android:font-medium">Title</span>
 ```
 
 ## Prefer shared behavior

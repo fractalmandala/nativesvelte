@@ -198,11 +198,11 @@ view()
     .child(text("Updated just now").text_sm().text_color(move || theme().muted_foreground))
 ```
 
-```tsx tabs
-<View class="gap-1 rounded-(--radius) border border-border bg-background p-4">
-  <Text class="text-foreground">Balance</Text>
-  <Text class="text-sm text-muted-foreground">Updated just now</Text>
-</View>
+```svelte tabs
+<div class="gap-1 rounded-(--radius) border border-border bg-background p-4">
+  <span class="text-foreground">Balance</span>
+  <span class="text-sm text-muted-foreground">Updated just now</span>
+</div>
 ```
 
 Do not use a semantic status color as decoration. Do not encode meaning by color alone. Verify every custom surface in
@@ -533,23 +533,23 @@ fn setting_switch(label: &'static str, on: Signal<bool>) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { Switch } from "nsh/base";
+```svelte tabs
+<!-- SettingSwitch.svelte -->
+<script>
+  import { Switch } from "nsh/base";
 
-function SettingSwitch(props: { label: string; on: boolean; onChange: (e: { checked: boolean }) => void }) {
-  return (
-    <Switch
-      checked={props.on}
-      onChange={props.onChange}
-      class="flex-row items-center gap-3"
-      trackClass="w-11 rounded-full bg-muted p-0.5 transition-colors checked:bg-primary"
-      thumbClass="size-5 rounded-full bg-background shadow-sm transition-transform checked:translate-x-5"
-    >
-      <Text class="text-foreground">{props.label}</Text>
-    </Switch>
-  );
-}
+  let { label, on = $bindable(), onchange }: { label: string; on: boolean; onchange?: (e: { checked: boolean }) => void } = $props();
+</script>
+
+<Switch
+  bind:checked={on}
+  {onchange}
+  class="flex-row items-center gap-3"
+  trackClass="w-11 rounded-full bg-muted p-0.5 transition-colors checked:bg-primary"
+  thumbClass="size-5 rounded-full bg-background shadow-sm transition-transform checked:translate-x-5"
+>
+  <span class="text-foreground">{label}</span>
+</Switch>
 ```
 
 A "select all" checkbox shows a partial selection with its indeterminate state:
@@ -584,28 +584,28 @@ fn mark(selected: usize, total: usize) -> &'static str {
 }
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { Checkbox } from "nsh/base";
+```svelte tabs
+<!-- SelectAll.svelte -->
+<script>
+  import { Checkbox } from "nsh/base";
 
-function SelectAll(props: { selected: number; total: number; onChange: (e: { checked: boolean }) => void }) {
-  return (
-    <Checkbox
-      checked={props.selected === props.total}
-      indeterminate={props.selected > 0 && props.selected < props.total}
-      onChange={props.onChange}
-      class="flex-row items-center gap-2"
-      indicatorClass="size-5 items-center justify-center rounded-(--radius) border-2 border-border checked:border-primary checked:bg-primary indeterminate:border-primary indeterminate:bg-primary"
-      indicator={
-        <Text class="text-primary-foreground">
-          {props.selected === props.total ? "✓" : props.selected > 0 ? "–" : ""}
-        </Text>
-      }
-    >
-      <Text class="text-foreground">Select all</Text>
-    </Checkbox>
-  );
-}
+  let { selected, total, onchange }: { selected: number; total: number; onchange: (e: { checked: boolean }) => void } = $props();
+</script>
+
+<Checkbox
+  checked={selected === total}
+  indeterminate={selected > 0 && selected < total}
+  {onchange}
+  class="flex-row items-center gap-2"
+  indicatorClass="size-5 items-center justify-center rounded-(--radius) border-2 border-border checked:border-primary checked:bg-primary indeterminate:border-primary indeterminate:bg-primary"
+>
+  {#snippet indicator()}
+    <span class="text-primary-foreground">
+      {selected === total ? "✓" : selected > 0 ? "–" : ""}
+    </span>
+  {/snippet}
+  <span class="text-foreground">Select all</span>
+</Checkbox>
 ```
 
 Disable submission while an operation is in flight, keep the user's input, and show the result near the action. Keep
@@ -672,23 +672,22 @@ fn form_actions(cancel: impl Fn() + 'static, create: impl Fn() + 'static) -> imp
 }
 ```
 
-```tsx tabs
-import { Text, View } from "nsh";
-import { Button } from "nsh/base";
+```svelte tabs
+<!-- FormActions.svelte -->
+<script>
+  import { Button } from "nsh/base";
 
-// The footer of a form: a default Cancel and the primary commit.
-function FormActions(props: { onCancel: () => void; onCreate: () => void }) {
-  return (
-    <View class="flex-row justify-end gap-2">
-      <Button onPress={props.onCancel} class="rounded-(--radius) border border-border px-4 py-2 active:bg-muted">
-        <Text class="text-foreground">Cancel</Text>
-      </Button>
-      <Button onPress={props.onCreate} class="rounded-(--radius) bg-primary px-4 py-2 active:bg-primary/90">
-        <Text class="text-primary-foreground">Create</Text>
-      </Button>
-    </View>
-  );
-}
+  let { oncancel, oncreate }: { oncancel: () => void; oncreate: () => void } = $props();
+</script>
+
+<div class="flex-row justify-end gap-2">
+  <Button onclick={oncancel} class="rounded-(--radius) border border-border px-4 py-2 active:bg-muted">
+    <span class="text-foreground">Cancel</span>
+  </Button>
+  <Button onclick={oncreate} class="rounded-(--radius) bg-primary px-4 py-2 active:bg-primary/90">
+    <span class="text-primary-foreground">Create</span>
+  </Button>
+</div>
 ```
 
 ## Interaction states
@@ -751,21 +750,21 @@ fn section_tab(label: &'static str, id: Section, current: Signal<Section>) -> im
 }
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { Tab } from "nsh/base";
+```svelte tabs
+<!-- SectionTab.svelte -->
+<script>
+  import { Tab } from "nsh/base";
 
-function SectionTab(props: { label: string; selected: boolean; onPress: () => void }) {
-  return (
-    <Tab
-      selected={props.selected}
-      onPress={props.onPress}
-      class="group rounded-(--radius) px-3 py-2 selected:bg-muted"
-    >
-      <Text class="text-muted-foreground group-selected:text-foreground">{props.label}</Text>
-    </Tab>
-  );
-}
+  let { label, selected, onclick }: { label: string; selected: boolean; onclick: () => void } = $props();
+</script>
+
+<Tab
+  {selected}
+  {onclick}
+  class="group rounded-(--radius) px-3 py-2 selected:bg-muted"
+>
+  <span class="text-muted-foreground group-selected:text-foreground">{label}</span>
+</Tab>
 ```
 
 In a segmented control, the selected fill and unselected surface must share the container's silhouette. Neither may
@@ -857,33 +856,28 @@ fn more_menu(rename: impl Fn() + 'static, duplicate: impl Fn() + 'static, delete
 }
 ```
 
-```tsx tabs
-import { Text, View } from "nsh";
-import { Menu, MenuItem, MenuSeparator } from "nsh/base";
+```svelte tabs
+<!-- MoreMenu.svelte -->
+<script>
+  import { Menu, MenuItem, MenuSeparator } from "nsh/base";
 
-/** The app's popup surface, shared by its menus, popovers and tooltips. */
-export const popup = "min-w-48 rounded-(--radius) border border-border bg-popover p-1 shadow-lg";
-const item = "rounded-(--radius) px-3 py-2 hover:bg-muted active:bg-muted";
+  let { onrename, onduplicate, ondelete }: { onrename: () => void; onduplicate: () => void; ondelete: () => void } = $props();
 
-function MoreMenu(props: { onRename: () => void; onDuplicate: () => void; onDelete: () => void }) {
-  return (
-    <Menu
-      offset={4}
-      popupClass={popup}
-      backdropClass="bg-black/50"
-      trigger={
-        <View accessibilityLabel="More actions" class="size-11 items-center justify-center rounded-full active:bg-muted">
-          <Text class="text-foreground">⋯</Text>
-        </View>
-      }
-    >
-      <MenuItem onSelect={props.onRename} class={item}><Text class="text-foreground">Rename…</Text></MenuItem>
-      <MenuItem onSelect={props.onDuplicate} class={item}><Text class="text-foreground">Duplicate</Text></MenuItem>
-      <MenuSeparator class="my-1 h-px bg-border" />
-      <MenuItem onSelect={props.onDelete} class={item}><Text class="text-foreground">Delete…</Text></MenuItem>
-    </Menu>
-  );
-}
+  export const popup = "min-w-48 rounded-(--radius) border border-border bg-popover p-1 shadow-lg";
+  const item = "rounded-(--radius) px-3 py-2 hover:bg-muted active:bg-muted";
+</script>
+
+<Menu offset={4} popupClass={popup} backdropClass="bg-black/50">
+  {#snippet trigger()}
+    <div aria-label="More actions" class="size-11 items-center justify-center rounded-full active:bg-muted">
+      <span class="text-foreground">⋯</span>
+    </div>
+  {/snippet}
+  <MenuItem onselect={onrename} class={item}><span class="text-foreground">Rename…</span></MenuItem>
+  <MenuItem onselect={onduplicate} class={item}><span class="text-foreground">Duplicate</span></MenuItem>
+  <MenuSeparator class="my-1 h-px bg-border" />
+  <MenuItem onselect={ondelete} class={item}><span class="text-foreground">Delete…</span></MenuItem>
+</Menu>
 ```
 
 Choose `Menu` when users need a visible indication that more commands exist—for example a toolbar overflow, document
@@ -985,8 +979,8 @@ view()
     .when(!reduce_motion(), |v| v.active(|s| s.scale(0.97)))
 ```
 
-```tsx tabs
-<View onPress={open} class="transition-transform duration-150 active:scale-[0.97] motion-reduce:active:scale-100" />
+```svelte tabs
+<button onclick={open} class="transition-transform duration-150 active:scale-[0.97] motion-reduce:active:scale-100"></button>
 ```
 
 Motion policy belongs to the application layer. `nsh/base` owns the lifecycle mechanism or geometry needed for a
@@ -1015,7 +1009,7 @@ let toggle = load_sound(TOGGLE.uri).await?; // once, ahead of the first press
 toggle.play(0.6, if on { 1.0 } else { 0.9 }); // a little lower turning off
 ```
 
-```tsx tabs
+```ts tabs
 import toggleFile from "./sounds/toggle.wav";
 
 const toggle = await Sound.load(toggleFile); // once, ahead of the first press
@@ -1197,10 +1191,17 @@ nav_page()
     .child(inbox())
 ```
 
-```tsx tabs
-import { NavPage } from "nsh/base";
+```svelte tabs
+<script>
+  import { NavPage } from "nsh/base";
+  import PageHeader from "./PageHeader.svelte";
+  import Inbox from "./Inbox.svelte";
+</script>
 
-<NavPage title="Inbox" header={<PageHeader title="Inbox" />}>
+<NavPage title="Inbox">
+  {#snippet header()}
+    <PageHeader title="Inbox" />
+  {/snippet}
   <Inbox />
 </NavPage>
 ```

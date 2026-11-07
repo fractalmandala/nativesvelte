@@ -42,23 +42,20 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, View } from "nsh";
-import { createMotion } from "nsh";
+```svelte tabs
+<script>
+  import { createMotion } from "nsh";
 
-function App() {
   const card = createMotion({ enter: "fadeInUp" });
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <View
-        onPress={() => card.play("shake")}
-        style={{ width: 120, height: 120, borderRadius: 16, backgroundColor: "#0969da", ...card.style }}
-      />
-    </View>
-  );
-}
+</script>
 
-mount(App);
+<div class="flex-1 items-center justify-center">
+  <button
+    onclick={() => card.play("shake")}
+    class="w-[120px] h-[120px] rounded-2xl bg-[#0969da]"
+    style={card.style}
+  ></button>
+</div>
 ```
 
 A motion has an animated value per channel: `opacity` (0..1), `translateX` and `translateY` (points), `rotate`, `rotateX` and `rotateY` (degrees), `scale`, `scaleX` and `scaleY`. They start at rest (opacity and scales 1, the rest 0) and apply in that order: translations, then rotations, then scales, about the view's transform origin. A motion has no look of its own: it moves what you styled.
@@ -160,7 +157,7 @@ let flip = MotionSpec::new(KeyframeTiming::new(600.0).infinite())
 card.play(flip);
 ```
 
-```tsx tabs
+```ts tabs
 // Channels' keyframes.
 card.play({
   duration: 400,
@@ -196,19 +193,23 @@ each(items, |item: &Item| item.id, |item, index| {
 })
 ```
 
-```tsx tabs
-function Row(props: { title: string; index: number }) {
-  const row = createMotion({ enter: "fadeInUp", delay: Math.min(props.index, 10) * 60 });
-  return (
-    <View class="rounded-xl bg-zinc-100 p-4" style={row.style}>
-      <Text>{props.title}</Text>
-    </View>
-  );
-}
+```svelte tabs
+<!-- Row.svelte -->
+<script>
+  import { createMotion } from "nsh";
 
-<Each of={items()} key={(item) => item.id}>
-  {(item, index) => <Row title={item().title} index={index()} />}
-</Each>
+  let { title, index }: { title: string; index: number } = $props();
+  const row = createMotion({ enter: "fadeInUp", delay: Math.min(index, 10) * 60 });
+</script>
+
+<div class="rounded-xl bg-zinc-100 p-4" style={row.style}>
+  <span>{title}</span>
+</div>
+
+<!-- In parent: -->
+{#each items as item, index (item.id)}
+  <Row title={item.title} {index} />
+{/each}
 ```
 
 Motions also compose: `m.animation(..)` is a motion as a [composite animation](#composite-animations), not started, so `Animated.stagger` runs a group of them natively, counted from the first item, the last, the center or any index. Give them a hidden `initial` (or start them where the motion starts) so nothing shows before its turn.
@@ -224,7 +225,7 @@ let cards: Vec<Motion> = (0..5)
 Animation::stagger_from(60.0, StaggerFrom::Center, cards.iter().map(|m| m.animation(MotionPreset::FadeInUp))).start();
 ```
 
-```tsx tabs
+```ts tabs
 const cards = [0, 1, 2, 3, 4].map(() => createMotion({ initial: { opacity: 0 } }));
 Animated.stagger(60, cards.map((m) => m.animation("fadeInUp")), { from: "center" }).start();
 ```
@@ -243,11 +244,11 @@ let remove = move || {
 };
 ```
 
-```tsx tabs
+```ts tabs
 const remove = async () => {
   await row.play("fadeOutLeft");
   LayoutAnimation.easeInEaseOut();
-  items.set(items().filter((i) => i.id !== id));
+  items = items.filter((i) => i.id !== id);
 };
 ```
 
@@ -276,32 +277,24 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, View } from "nsh";
+```svelte tabs
+<script>
+  let on = $state(false);
+</script>
 
-function App() {
-  const on = signal(false);
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <View
-        onPress={() => on.set(!on())}
-        style={{
-          width: 100,
-          height: 100,
-          borderRadius: on() ? 50 : 16,
-          backgroundColor: on() ? "#8250df" : "#0969da",
-          rotate: on() ? "45deg" : "0deg",
-          scale: on() ? 1.2 : 1,
-          transitionProperty: "all",
-          transitionDuration: 400,
-          transitionTimingFunction: "ease-in-out",
-        }}
-      />
-    </View>
-  );
-}
-
-mount(App);
+<div class="flex-1 items-center justify-center">
+  <button
+    onclick={() => (on = !on)}
+    style="
+      width: 100px;
+      height: 100px;
+      border-radius: {on ? 50 : 16}px;
+      background-color: {on ? '#8250df' : '#0969da'};
+      transform: rotate({on ? '45deg' : '0deg'}) scale({on ? 1.2 : 1});
+      transition: all 400ms ease-in-out;
+    "
+  ></button>
+</div>
 ```
 
 | Style | Rust | Type | Description |
@@ -328,10 +321,10 @@ view()
     .child(text("Save").font_weight(FontWeight::SEMIBOLD).text_color(white()))
 ```
 
-```tsx tabs
-<View onPress={save} class="rounded-xl bg-blue-600 px-5 py-3 transition duration-150 active:scale-95 active:bg-blue-800">
-  <Text class="font-semibold text-white">Save</Text>
-</View>
+```svelte tabs
+<button onclick={save} class="rounded-xl bg-blue-600 px-5 py-3 transition duration-150 active:scale-95 active:bg-blue-800">
+  <span class="font-semibold text-white">Save</span>
+</button>
 ```
 
 A transition starts from the value currently on screen, so changing the target again mid-way turns smoothly.
@@ -351,9 +344,9 @@ view()
 view().h_4().w_40().rounded(px(4.0)).bg(ZINC.shade(200)).animate_pulse()
 ```
 
-```tsx tabs
-<View class="size-8 rounded-full border-4 border-zinc-300 border-t-blue-600 animate-spin" />
-<View class="h-4 w-40 rounded bg-zinc-200 animate-pulse" />
+```svelte tabs
+<div class="size-8 rounded-full border-4 border-zinc-300 border-t-blue-600 animate-spin"></div>
+<div class="h-4 w-40 rounded bg-zinc-200 animate-pulse"></div>
 ```
 
 | Style | Rust | Type | Description |
@@ -401,31 +394,31 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, Text, View } from "nsh";
-import { createAnimatedValue, Easing } from "nsh";
+```svelte tabs
+<script>
+  import { createAnimatedValue, Easing } from "nsh";
 
-function App() {
   const x = createAnimatedValue(0);
   const opacity = createAnimatedValue(1);
-  return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 24, gap: 24 }}>
-      <View style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: "#0969da", opacity, translate: [x, 0] }} />
-      <View
-        onPress={async () => {
-          await x.timing(240, { duration: 600, easing: Easing.out(Easing.cubic) });
-          await opacity.timing(0.3, { duration: 200 });
-          x.spring(0);
-          opacity.timing(1);
-        }}
-      >
-        <Text style={{ color: "#0969da" }}>Play</Text>
-      </View>
-    </View>
-  );
-}
 
-mount(App);
+  async function play() {
+    await x.timing(240, { duration: 600, easing: Easing.out(Easing.cubic) });
+    await opacity.timing(0.3, { duration: 200 });
+    x.spring(0);
+    opacity.timing(1);
+  }
+</script>
+
+<div class="flex-1 justify-center p-6 gap-6">
+  <div
+    class="w-[60px] h-[60px] rounded-xl bg-[#0969da]"
+    style:opacity
+    style:transform="translateX({x}px)"
+  ></div>
+  <button onclick={play} class="text-[#0969da]">
+    Play
+  </button>
+</div>
 ```
 
 **What can be bound:** `opacity` (`.bind_opacity(..)`); `backgroundColor`, `borderColor` (every side) and a text's `color` (the whole text), through an interpolation to colors (`.bind_background(..)`, `.bind_border_color(..)`, `.bind_color(..)`); `translate` (`[x, y]`, a value per axis), `rotate` (degrees) and `scale` (`[x, y]` per axis, or one value for both); and the steps of a `transform` list: `translateX`, `translateY`, `scale`, `scaleX`, `scaleY`, `rotate`, `rotateX`, `rotateY` and `rotateZ` (`.bind_translate_x(..)`, `.bind_translate_y(..)`, `.bind_scale(..)`, `.bind_rotate(..)` in degrees, `.bind_transform(kind, ..)` in Rust). Shadows change with [transitions](#transitions). A focus ring or a price that flashes green is a color interpolation bound to the border or text color:
@@ -438,12 +431,16 @@ text(move || price.get().to_string()).bind_color(&color)
 // On a new price: flash.set(1.0); flash.timing(0.0, 600.0, Easing::EaseInOut);
 ```
 
-```tsx tabs
-const flash = createAnimatedValue(0);
-const color = flash.interpolate({ inputRange: [0, 1], outputRange: ["#1f2328", "#1a7f37"] });
+```svelte tabs
+<script>
+  import { createAnimatedValue } from "nsh";
 
-<Text style={{ color }}>{price()}</Text>
-// On a new price: flash.set(1); flash.timing(0, { duration: 600 });
+  const flash = createAnimatedValue(0);
+  const color = flash.interpolate({ inputRange: [0, 1], outputRange: ["#1f2328", "#1a7f37"] });
+</script>
+
+<span style:color>{price}</span>
+<!-- On a new price: flash.set(1); flash.timing(0, { duration: 600 }); -->
 ```
 
 Animated values also drive [canvas drawings](./canvas.md#driving-drawings-with-animated-values), receive scroll offsets ([`scrollValue`](./scrolling.md#scroll-linked-effects-scrollvalue)) and gestures ([`pan`, `pinch`, `rotation`](./touch-and-gestures.md#native-gestures-pan-pinch-and-rotation)).
@@ -483,19 +480,18 @@ x.decay_within(Some(e.velocity_x), 0.998, (0.0, 300.0), 0.3);
 let at = x.value().await;
 ```
 
-```tsx tabs
-// Spring settings: lower damping overshoots more, higher stiffness is faster.
-x.spring(200, { stiffness: 180, damping: 8 });   // wobbly
-x.spring(200, { stiffness: 400, damping: 30 });  // stiff, no overshoot
+```svelte tabs
+<script>
+  // Spring settings: lower damping overshoots more, higher stiffness is faster.
+  x.spring(200, { stiffness: 180, damping: 8 });   // wobbly
+  x.spring(200, { stiffness: 400, damping: 30 });  // stiff, no overshoot
 
-// A fling that coasts to a stop, from a pan's release velocity.
-<View pan={{ x }} onPanEnd={(e) => x.decay({ velocity: e.velocity.x })} />
+  // Where a value is now (it moves on the UI thread, so the answer is async).
+  const where = await x.getValue();
+</script>
 
-// A fling that stays on its track and bounces softly off its ends.
-x.decay({ velocity: e.velocity.x, clamp: [0, 300], bounce: 0.3 });
-
-// Where a value is now (it moves on the UI thread, so the answer is async).
-const where = await x.getValue();
+<!-- A fling that coasts to a stop, from a pan's release velocity -->
+<div pan={{ x }} onpanend={(e) => x.decay({ velocity: e.velocity.x })}></div>
 ```
 
 ### Keyframes
@@ -517,7 +513,7 @@ hand.keyframes(
 );
 ```
 
-```tsx tabs
+```ts tabs
 const y = createAnimatedValue(0);
 y.keyframes([0, { offset: 0.3, value: -20, easing: "easeIn" }, 0], { duration: 600, easing: "easeOut", iterations: 3 });
 
@@ -564,17 +560,18 @@ view()
     ))
 ```
 
-```tsx tabs
-const t = createAnimatedValue(0);
+```svelte tabs
+<script>
+  import { createAnimatedValue, Easing } from "nsh";
 
-<View
-  style={{
-    backgroundColor: t.interpolate({ inputRange: [0, 1, 2], outputRange: ["#54aeff", "#8250df", "#cf222e"] }),
-    opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
-    rotate: t.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] }),
-    scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2], easing: Easing.out(Easing.back()) }),
-  }}
-/>
+  const t = createAnimatedValue(0);
+</script>
+
+<div
+  style:background-color={t.interpolate({ inputRange: [0, 1, 2], outputRange: ["#54aeff", "#8250df", "#cf222e"] })}
+  style:opacity={t.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] })}
+  style:transform="rotate({t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] })}) scale({t.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2], easing: Easing.out(Easing.back()) })})"
+></div>
 ```
 
 | Option | Rust | Description |
@@ -602,12 +599,19 @@ scroll().flex_1().scroll_value(&offset)
 view().absolute().top_0().left_0().right_0().h(px(56.0)).bind_translate_y(&header.mul(-1.0))
 ```
 
-```tsx tabs
-const scroll = createAnimatedValue(0);
-const header = scroll.diffClamp(0, 56);
+```svelte tabs
+<script>
+  import { Scroll, createAnimatedValue } from "nsh";
 
-<Scroll style={{ flex: 1 }} scrollValue={scroll}>…</Scroll>
-<View style={{ position: "absolute", top: 0, left: 0, right: 0, height: 56, translate: [0, header.mul(-1)] }}>…</View>
+  const scroll = createAnimatedValue(0);
+  const header = scroll.diffClamp(0, 56);
+</script>
+
+<Scroll class="flex-1" scrollValue={scroll}>…</Scroll>
+<div
+  style="height: 56px; transform: translateY({header.mul(-1)}px);"
+  class="absolute top-0 left-0 right-0"
+>…</div>
 ```
 
 With `{ snap: true }` (`diff_clamp_with(min, max, DiffClamp::snapping())`), a header left partly shown when the scrolling stops finishes the move: it settles fully shown or fully hidden, whichever is nearer, in 200 ms on the UI thread. It hides only once the page has scrolled at least its height, so a page scrolled less than that shows the whole header. Scrolling again during the move takes over from where the header is.
@@ -616,7 +620,7 @@ With `{ snap: true }` (`diff_clamp_with(min, max, DiffClamp::snapping())`), a he
 let header = offset.diff_clamp_with(0.0, 56.0, DiffClamp::snapping());
 ```
 
-```tsx tabs
+```ts tabs
 const header = scroll.diffClamp(0, 56, { snap: true });
 ```
 
@@ -650,7 +654,7 @@ spawn(async move {
 });
 ```
 
-```tsx tabs
+```ts tabs
 import { Animated, createAnimatedValue, Easing } from "nsh";
 
 const ys = [0, 1, 2, 3, 4].map(() => createAnimatedValue(0));
@@ -716,7 +720,7 @@ x.timing(1.0, 300.0, Easing::EaseOut);
 x.timing(1.0, 300.0, Easing::Bezier(0.2, 0.8, 0.2, 1.0));
 ```
 
-```tsx tabs
+```ts tabs
 x.timing(1, { easing: Easing.out(Easing.back()) });
 x.timing(1, { easing: "easeOut" });
 x.timing(1, { easing: [0.2, 0.8, 0.2, 1] });
@@ -762,20 +766,19 @@ let remove = move || {
 };
 ```
 
-```tsx tabs
-import { signal } from "nsh";
+```ts tabs
 import { LayoutAnimation } from "nsh";
 
-const items = signal([1, 2, 3]);
+let items = $state([1, 2, 3]);
 let next = 4;
 
 const add = () => {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-  items.set([next++, ...items()]);
+  items = [next++, ...items];
 };
 const remove = () => {
   LayoutAnimation.easeInEaseOut();
-  items.set(items().slice(1));
+  items = items.slice(1);
 };
 ```
 
@@ -802,7 +805,7 @@ animate_layout(LayoutAnimation {
 });
 ```
 
-```tsx tabs
+```ts tabs
 LayoutAnimation.configureNext({
   duration: 300,
   create: { type: "easeOut", property: "opacity" },
@@ -855,14 +858,18 @@ opacity.timing_with(1.0, Timing::new(600.0, Easing::Linear).frame_rate(30.0));
 glow.keyframes([Keyframe::new(0.4), Keyframe::new(1.0), Keyframe::new(0.4)], KeyframeTiming::new(1600.0).infinite().frame_rate(24.0));
 ```
 
-```tsx tabs
-// A spinner that needs 30 frames a second.
-<View style={{ width: 16, height: 16, animationName: "spin", animationFrameRate: 30 }} />
+```svelte tabs
+<!-- A spinner that needs 30 frames a second -->
+<div class="w-4 h-4" style="animation-name: spin; animation-frame-rate: 30;"></div>
 
-// A slow fade, at most 30 Hz.
-opacity.timing(1, { duration: 600, easing: Easing.linear, frameRate: 30 });
-// A loop of keyframes at 24 Hz.
-glow.keyframes([0.4, 1, 0.4], { duration: 1600, iterations: "infinite", frameRate: 24 });
+<script>
+  import { Easing } from "nsh";
+
+  // A slow fade, at most 30 Hz.
+  opacity.timing(1, { duration: 600, easing: Easing.linear, frameRate: 30 });
+  // A loop of keyframes at 24 Hz.
+  glow.keyframes([0.4, 1, 0.4], { duration: 1600, iterations: "infinite", frameRate: 24 });
+</script>
 ```
 
 The screen runs at the highest rate anything on it needs: an animation without `frameRate`, a transition, a scroll, a gesture or a `requestAnimationFrame` loop brings it back to the full rate while it runs, and a composite runs at the highest rate of its steps. The animation's timing is the same at any rate: it ends when it would at the full rate. macOS and iOS lower the screen's rate for these requests; the other platforms run every animation at the screen's rate.
@@ -893,13 +900,14 @@ let open = move || {
 view().style_when(|| !reduce_motion(), |s| s.animate_bounce())
 ```
 
-```tsx tabs
-import { View } from "nsh";
-import { reduceMotion } from "nsh";
+```svelte tabs
+<script>
+  import { reduceMotion } from "nsh";
 
-const open = () => (reduceMotion() ? panel.set(0) : panel.spring(0));
+  const open = () => (reduceMotion() ? panel.set(0) : panel.spring(0));
+</script>
 
-<View class="motion-safe:animate-bounce" />
+<div class="motion-safe:animate-bounce"></div>
 ```
 
 See [Accessibility](./accessibility.md#reduced-motion).

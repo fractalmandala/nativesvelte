@@ -39,11 +39,12 @@ fn native(registry: &mut Registry) {
 text("Custom fonts").font_family(PACIFICO.family).text_size(px(30.0))
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import Pacifico from "./fonts/Pacifico-Regular.ttf";
+```svelte tabs
+<script>
+  import Pacifico from "./fonts/Pacifico-Regular.ttf";
+</script>
 
-<Text style={{ fontFamily: Pacifico, fontSize: 30 }}>Custom fonts</Text>
+<span style:font-family={Pacifico} class="text-[30px]">Custom fonts</span>
 ```
 
 `PACIFICO.family` and the TSX import `Pacifico` are the string `"Pacifico"`: the family name stored in the font file (its typographic family name, or else its family name), not the file name. Using the asset's value instead of writing the name by hand keeps the two in sync; a missing or broken file fails the Rust build, and an imported file is sure to be bundled.
@@ -61,8 +62,8 @@ The files ship with the app like any other [asset](./images-and-assets.md). Font
 text("Brand 品牌").font_family("Brand, 'Noto Sans SC', sans-serif")
 ```
 
-```tsx tabs
-<Text style={{ fontFamily: "Brand, 'Noto Sans SC', sans-serif" }}>Brand 品牌</Text>
+```svelte tabs
+<span style:font-family="Brand, 'Noto Sans SC', sans-serif">Brand 品牌</span>
 ```
 
 Each platform keeps the list's order with its own font machinery: a cascade list on iOS and macOS, a font fallback on Windows (one per paragraph: its first style's list), a Pango family list on Linux, the browser's on the web, GPUI's fallbacks. On Android, text is set in the first family it has; when that one is a font the app registers, the registered fonts after it in the list are its fallbacks (Android 10 and later).
@@ -84,13 +85,15 @@ spawn(async move {
 text("Branded").font_family(move || family.get())
 ```
 
-```tsx tabs
-import { registerFont, signal, Text } from "nsh";
+```svelte tabs
+<script>
+  import { registerFont } from "nsh";
 
-const family = signal("");
-registerFont("https://fonts.example.com/Brand.woff2").then((font) => family.set(font.family));
+  let family = $state("");
+  registerFont("https://fonts.example.com/Brand.woff2").then((font) => (family = font.family));
+</script>
 
-<Text style={{ fontFamily: family() }}>Branded</Text>
+<span style:font-family={family}>Branded</span>
 ```
 
 `registerFont` rejects with an `Error` when the URL does not load or the data is no font, its `code` `"ERR_ACCESS_DENIED"` when the `network` capability does not grant the URL or a redirect of it; Rust's `register_font` resolves to the reason. Registering the same font again is harmless. Like an imported font, a registered one is the app's alone and is not installed on the device.
@@ -114,19 +117,17 @@ text("Regular, ")
     .child(".")
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import Inter from "./fonts/Inter-Regular.ttf";
-import "./fonts/Inter-Medium.ttf";
-import "./fonts/Inter-Bold.ttf";
-import "./fonts/Inter-Italic.ttf";
+```svelte tabs
+<script>
+  import Inter from "./fonts/Inter-Regular.ttf";
+  import "./fonts/Inter-Medium.ttf";
+  import "./fonts/Inter-Bold.ttf";
+  import "./fonts/Inter-Italic.ttf";
+</script>
 
-const body = { fontFamily: Inter, fontSize: 16 } as const;
-
-<Text style={body}>
-  Regular, <Text style={{ fontWeight: "500" }}>medium</Text>, <Text style={{ fontWeight: "bold" }}>bold</Text> and{" "}
-  <Text style={{ fontStyle: "italic" }}>italic</Text>.
-</Text>
+<span style:font-family={Inter} class="text-base">
+  Regular, <span class="font-medium">medium</span>, <span class="font-bold">bold</span> and <span class="italic">italic</span>.
+</span>
 ```
 
 When no registered face has the exact weight asked for, the nearest one is used. The platforms differ when a face is missing:
@@ -157,14 +158,15 @@ text("Custom fonts").font_family(PACIFICO.family).text_3xl().text_color(VIOLET.s
 text("Bold Inter").font_family(INTER.family).font_weight(FontWeight::BOLD)
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import "./fonts/Pacifico-Regular.ttf";
-import "./fonts/Inter-Regular.ttf";
-import "./fonts/Inter-Bold.ttf";
+```svelte tabs
+<script>
+  import "./fonts/Pacifico-Regular.ttf";
+  import "./fonts/Inter-Regular.ttf";
+  import "./fonts/Inter-Bold.ttf";
+</script>
 
-<Text class="font-display text-3xl text-violet-600">Custom fonts</Text>
-<Text class="font-body font-bold">Bold Inter</Text>
+<span class="font-display text-3xl text-violet-600">Custom fonts</span>
+<span class="font-body font-bold">Bold Inter</span>
 ```
 
 An arbitrary family works without a theme entry: `font-[Pacifico]`. Weight classes (`font-light`, `font-semibold`, `font-bold`, ...) select faces as `fontWeight` does. Text styles on a view pass down to the texts inside it, so `.font_family(INTER.family)` on a view, or `<View class="font-body">`, sets the family for a whole screen.
@@ -193,12 +195,14 @@ pub fn Root() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-mount(() => (
-  <View class="flex-1 font-body">
-    <App />
-  </View>
-));
+```svelte tabs
+<script>
+  import App from "./App.svelte";
+</script>
+
+<div class="flex-1 font-body">
+  <App />
+</div>
 ```
 
 ## Font features

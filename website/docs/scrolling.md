@@ -27,26 +27,21 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, Scroll, Text, View } from "nsh";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { Scroll } from "nsh";
+</script>
 
-function App() {
-  return (
-    <Scroll style={{ flex: 1, backgroundColor: "#f6f8fa" }}>
-      <View style={{ padding: 16, gap: 12 }}>
-        <Each of={Array.from({ length: 50 }, (_, i) => i + 1)}>
-          {(n) => (
-            <View style={{ padding: 16, borderRadius: 10, backgroundColor: "#ffffff" }}>
-              <Text>Row {n()}</Text>
-            </View>
-          )}
-        </Each>
-      </View>
-    </Scroll>
-  );
-}
-
-mount(App);
+<Scroll class="flex-1 bg-[#f6f8fa]">
+  <div class="p-4 gap-3">
+    {#each Array(50) as _, i}
+      <div class="p-4 rounded-[10px] bg-white shadow-sm">
+        <p>Row {i + 1}</p>
+      </div>
+    {/each}
+  </div>
+</Scroll>
 ```
 
 The child view above is the scroll view's content container; in TSX, `contentStyle` (or `contentClass`) makes one for you, wrapping the children in a view with that style, which scrolls with them. `flexGrow: 1` (`.flex_grow(1.0)`) makes the content at least as tall as the viewport, so a short content can be centered and a long one still scrolls:
@@ -62,11 +57,15 @@ scroll().flex_1().child(
 )
 ```
 
-```tsx tabs
-<Scroll style={{ flex: 1 }} contentStyle={{ flexGrow: 1, justifyContent: "center", padding: 16 }}>
-  <If when={messages().length > 0} else={<Text>No messages yet</Text>}>
-    <Each of={messages()}>{(m) => <Text>{m().text}</Text>}</Each>
-  </If>
+```svelte tabs
+<Scroll class="flex-1" contentStyle={{ flexGrow: 1, justifyContent: "center", padding: 16 }}>
+  {#if messages.length > 0}
+    {#each messages as m}
+      <p>{m.text}</p>
+    {/each}
+  {:else}
+    <p>No messages yet</p>
+  {/if}
 </Scroll>
 ```
 
@@ -80,13 +79,13 @@ scroll().horizontal().scrollbar(false).child(
 )
 ```
 
-```tsx tabs
+```svelte tabs
 <Scroll horizontal scrollbar={false}>
-  <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16 }}>
-    <Each of={["Today", "This week", "This month", "This year"]}>
-      {(label) => <Text style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, overflow: "hidden", backgroundColor: "#ffffff" }}>{label()}</Text>}
-    </Each>
-  </View>
+  <div class="flex-row gap-2 px-4">
+    {#each ["Today", "This week", "This month", "This year"] as label}
+      <p class="px-3.5 py-2 rounded-2xl bg-white">{label}</p>
+    {/each}
+  </div>
 </Scroll>
 ```
 
@@ -165,45 +164,43 @@ pub fn pager() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, type Point, Scroll, signal, Text, View } from "nsh";
+```svelte tabs
+<!-- Pager.svelte -->
+<script>
+  import { Scroll } from "nsh";
 
-const colors = ["#0969da", "#8250df", "#bf3989", "#1a7f37"];
+  const colors = ["#0969da", "#8250df", "#bf3989", "#1a7f37"];
+  let width = $state(0);
+  let page = $state(0);
 
-function Pager() {
-  const width = signal(0);
-  const page = signal(0);
-  const settle = ({ offset }: { offset: Point }) => page.set(Math.round(offset.x / width()));
-  return (
-    <View style={{ gap: 8, padding: 16 }}>
-      <Scroll
-        horizontal
-        pagingEnabled
-        scrollbar={false}
-        style={{ height: 160, borderRadius: 12 }}
-        onLayout={({ bounds }) => width.set(bounds.size.width)}
-        onScrollEnd={settle}
-      >
-        <View style={{ flexDirection: "row" }}>
-          <Each of={colors}>
-            {(color, i) => (
-              <View style={{ width: width(), height: 160, backgroundColor: color(), alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "#ffffff", fontSize: 24, fontWeight: "700" }}>Page {i() + 1}</Text>
-              </View>
-            )}
-          </Each>
-        </View>
-      </Scroll>
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: 6 }}>
-        <Each of={colors}>
-          {(_, i) => <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: page() === i() ? "#0969da" : "#d0d7de" }} />}
-        </Each>
-      </View>
-    </View>
-  );
-}
+  function settle({ offset }) {
+    if (width > 0) page = Math.round(offset.x / width);
+  }
+</script>
 
-mount(Pager);
+<div class="gap-2 p-4">
+  <Scroll
+    horizontal
+    pagingEnabled
+    scrollbar={false}
+    class="h-40 rounded-xl"
+    onLayout={({ bounds }) => (width = bounds.size.width)}
+    onScrollEnd={settle}
+  >
+    <div class="flex-row">
+      {#each colors as color, i}
+        <div class="h-40 items-center justify-center" style="width: {width}px; background-color: {color}">
+          <p class="text-white text-2xl font-bold">Page {i + 1}</p>
+        </div>
+      {/each}
+    </div>
+  </Scroll>
+  <div class="flex-row justify-center gap-1.5">
+    {#each colors as _, i}
+      <div class="w-2 h-2 rounded-full {page === i ? 'bg-[#0969da]' : 'bg-[#d0d7de]'}"></div>
+    {/each}
+  </div>
+</div>
 ```
 
 A carousel of cards that snap to the center, one card per fling:
@@ -219,16 +216,16 @@ scroll()
     .child(view().flex_row().gap_3().px_4().children(cards))
 ```
 
-```tsx tabs
+```svelte tabs
 <Scroll
   horizontal
-  snapToInterval={232}          // card width (220) + gap (12)
+  snapToInterval={232}
   snapToAlignment="center"
   decelerationRate="fast"
   disableIntervalMomentum
   scrollbar={false}
 >
-  <View style={{ flexDirection: "row", gap: 12, paddingHorizontal: 16 }}>…</View>
+  <div class="flex-row gap-3 px-4">…</div>
 </Scroll>
 ```
 
@@ -260,13 +257,17 @@ scroll()
     .child(content)
 ```
 
-```tsx tabs
-const atBottom = signal(false);
+```svelte tabs
+<script>
+  import { Scroll } from "nsh";
+
+  let atBottom = $state(false);
+</script>
 
 <Scroll
-  style={{ flex: 1 }}
+  class="flex-1"
   scrollEventThrottle={100}
-  onScroll={(e) => atBottom.set(e.offset.y + e.size.height >= e.contentSize.height - 20)}
+  onScroll={(e) => (atBottom = e.offset.y + e.size.height >= e.contentSize.height - 20)}
 >
   …
 </Scroll>
@@ -304,42 +305,25 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, Scroll, Text, View } from "nsh";
-import { createAnimatedValue } from "nsh";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { Scroll, createAnimatedValue } from "nsh";
 
-function App() {
   const offset = createAnimatedValue(0);
-  return (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          height: 56,
-          justifyContent: "center",
-          paddingHorizontal: 16,
-          // Transparent at the top, white after 80 points.
-          backgroundColor: offset.interpolate({ inputRange: [0, 80], outputRange: ["rgba(255,255,255,0)", "#ffffff"] }),
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 22,
-            fontWeight: "700",
-            transformOrigin: "left center",
-            scale: offset.interpolate({ inputRange: [0, 80], outputRange: [1, 0.8] }),
-          }}
-        >
-          Inbox
-        </Text>
-      </View>
-      <Scroll style={{ flex: 1 }} scrollValue={offset}>
-        <View style={{ padding: 16, gap: 8 }}>…</View>
-      </Scroll>
-    </View>
-  );
-}
+</script>
 
-mount(App);
+<div class="flex-1">
+  <div
+    class="h-14 justify-center px-4"
+    style="background-color: {offset.interpolate({ inputRange: [0, 80], outputRange: ['rgba(255,255,255,0)', '#ffffff'] })}"
+  >
+    <p class="text-xl font-bold">Inbox</p>
+  </div>
+  <Scroll class="flex-1" scrollValue={offset}>
+    <div class="p-4 gap-2">…</div>
+  </Scroll>
+</div>
 ```
 
 A header that slides away while the content scrolls up and comes back as soon as it scrolls down is `diffClamp` of the offset:
@@ -354,16 +338,20 @@ view()
     .child(view().absolute().top_0().left_0().right_0().h(px(56.0)).bind_translate_y(&header.mul(-1.0)))
 ```
 
-```tsx tabs
-const offset = createAnimatedValue(0);
-const header = offset.diffClamp(0, 56);
+```svelte tabs
+<script>
+  import { Scroll, createAnimatedValue } from "nsh";
 
-<View style={{ flex: 1 }}>
-  <Scroll style={{ flex: 1 }} scrollValue={offset}>
-    <View style={{ paddingTop: 56 }}>…</View>
+  const offset = createAnimatedValue(0);
+  const header = offset.diffClamp(0, 56);
+</script>
+
+<div class="flex-1 relative">
+  <Scroll class="flex-1" scrollValue={offset}>
+    <div class="pt-14">…</div>
   </Scroll>
-  <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: 56, translate: [0, header.mul(-1)] }}>…</View>
-</View>
+  <div class="absolute top-0 left-0 right-0 h-14 bg-white shadow-sm">…</div>
+</div>
 ```
 
 Interpolations clamp outside their input range by default, so pulling past the top (a negative offset) keeps the effect at its end; pass `extrapolate: "extend"` (`interpolate_with(.., Interpolation::extrapolate(Extrapolate::Extend))` in Rust) for a stretchy header that grows as you pull.
@@ -387,18 +375,24 @@ let reload = move || {
 scroll().flex_1().refreshing(refreshing).on_refresh(reload).child(content)
 ```
 
-```tsx tabs
-const refreshing = signal(false);
-const reload = async () => {
-  refreshing.set(true);
-  try {
-    items.set(await (await fetch("https://api.example.com/items")).json());
-  } finally {
-    refreshing.set(false);
-  }
-};
+```svelte tabs
+<script>
+  import { Scroll } from "nsh";
 
-<Scroll style={{ flex: 1 }} refreshing={refreshing()} onRefresh={reload}>…</Scroll>
+  let refreshing = $state(false);
+
+  async function reload() {
+    refreshing = true;
+    try {
+      const res = await fetch("https://api.example.com/items");
+      items = await res.json();
+    } finally {
+      refreshing = false;
+    }
+  }
+</script>
+
+<Scroll class="flex-1" {refreshing} onRefresh={reload}>…</Scroll>
 ```
 
 On iOS the control is UIRefreshControl; in the Mac idiom of Mac Catalyst, NSH shows its own spinner with the same behavior. Lists take the same props. On the desktop and in the browser the pull is a touchscreen's (or a macOS trackpad's, which pulls past the top) gesture, since the mouse scrolls without dragging; offer another way to refresh there, such as a button or a keyboard shortcut.
@@ -437,36 +431,27 @@ view()
     )
 ```
 
-```tsx tabs
-const pull = createAnimatedValue(0);
+```svelte tabs
+<script>
+  import { Scroll, createAnimatedValue } from "nsh";
 
-<View style={{ flex: 1 }}>
+  const pull = createAnimatedValue(0);
+</script>
+
+<div class="flex-1 relative">
   <Scroll
-    style={{ flex: 1 }}
-    refreshing={refreshing()}
+    class="flex-1"
+    {refreshing}
     onRefresh={reload}
     pullValue={pull}
     refreshIndicator={{ height: 72 }}
   >
     …
   </Scroll>
-  <View
-    style={{
-      pointerEvents: "none",
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 72,
-      alignItems: "center",
-      justifyContent: "center",
-      opacity: pull.interpolate({ inputRange: [0, 36], outputRange: [0, 1] }),
-      transform: [{ rotate: pull.interpolate({ inputRange: [36, 72], outputRange: ["0deg", "180deg"] }) }],
-    }}
-  >
+  <div class="pointer-events-none absolute top-0 left-0 right-0 h-[72px] items-center justify-center">
     <Arrow />
-  </View>
-</View>;
+  </div>
+</div>
 ```
 
 Keep `height` within half the viewport: past the top the content resists the finger more the further it goes, and a height too far is never reached. On iOS, an indicator of the app's own replaces UIRefreshControl with the pull NSH detects itself, as in the Mac idiom.
@@ -506,31 +491,30 @@ pub fn photo() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Image, mount, Scroll, type ScrollRef, signal } from "nsh";
+```svelte tabs
+<!-- Photo.svelte -->
+<script>
+  import { Scroll } from "nsh";
 
-function Photo() {
-  let scroll!: ScrollRef;
-  const scale = signal(1);
-  return (
-    <Scroll
-      ref={scroll}
-      style={{ flex: 1, backgroundColor: "#000000" }}
-      minimumZoomScale={1}
-      maximumZoomScale={4}
-      centerContent
-      onScroll={(e) => scale.set(e.zoomScale)}
-    >
-      <Image
-        src="https://picsum.photos/id/1015/1200/800"
-        style={{ width: 390, height: 260 }}
-        onPress={() => scroll.zoomTo({ scale: scale() > 1.5 ? 1 : 3 })}
-      />
-    </Scroll>
-  );
-}
+  let scrollRef = $state();
+  let scale = $state(1);
+</script>
 
-mount(Photo);
+<Scroll
+  bind:this={scrollRef}
+  class="flex-1 bg-black"
+  minimumZoomScale={1}
+  maximumZoomScale={4}
+  centerContent
+  onScroll={(e) => (scale = e.zoomScale)}
+>
+  <img
+    src="https://picsum.photos/id/1015/1200/800"
+    class="w-[390px] h-[260px] object-cover"
+    onclick={() => scrollRef?.zoomTo({ scale: scale > 1.5 ? 1 : 3 })}
+    alt=""
+  />
+</Scroll>
 ```
 
 Text and canvases inside a zoomed scroll view are drawn again at the new resolution when the zoom ends, so they stay sharp on iOS. On Android, NSH zooms with a scroll view of its own, which scales around the pinch's focal point, pans with any number of fingers, flings and rubber-bands at the edges and zoom limits. Android starts a pinch once the fingers are about 27 mm apart, as the system's gesture detector does.
@@ -551,11 +535,15 @@ scroll().flex_1().element_ref(&scroller).child(content)
 view().on_press(move || scroller.scroll_to(point(px(0.0), px(0.0)), true))
 ```
 
-```tsx tabs
-let scroll!: ScrollRef;
+```svelte tabs
+<script>
+  import { Scroll } from "nsh";
 
-<Scroll ref={scroll} style={{ flex: 1 }}>…</Scroll>
-<View onPress={() => scroll.scrollTo({ y: 0 })}>…</View>
+  let scrollRef = $state();
+</script>
+
+<Scroll bind:this={scrollRef} class="flex-1">…</Scroll>
+<button onclick={() => scrollRef?.scrollTo({ y: 0 })}>Top</button>
 ```
 
 Lists add `scrollToIndex`, `scrollToOffset` and `scrollToEnd`; see [Lists](./lists.md#scrolling-from-code).

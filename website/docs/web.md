@@ -461,10 +461,10 @@ await player.runModule(entry, {
 
 A chunk that cannot be downloaded rejects the `import()` with a `TypeError` naming it; the next `import()` tries again. Chunk names are fixed file names from the bundle: the app cannot make the page download anything else.
 
-The [gallery](/gallery) loads each demo this way: `lazy` (in `examples/gallery/ui.tsx`) makes a component that starts the import the first time it renders, shows a placeholder until it resolves, then renders what it loaded. Its first load is the index and the demo shown first; a font a demo imports comes with that demo's chunk. Native builds hold every module, so there the import resolves at once:
+The [gallery](/gallery) loads each demo this way: dynamic `import()` fetches components on demand, showing a placeholder until it resolves. Its first load is the index and the demo shown first; a font a demo imports comes with that demo's chunk. Native builds hold every module, so there the import resolves at once:
 
-```tsx
-const Stocks = lazy(() => import("./demos/Stocks").then((m) => m.Stocks));
+```ts
+const Stocks = lazy(() => import("./demos/Stocks.svelte").then((m) => m.default));
 ```
 
 ## Limits

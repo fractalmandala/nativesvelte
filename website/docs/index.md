@@ -65,7 +65,23 @@ NSH is built in Rust, and Rust is a first-class language for writing apps with i
 
 ## An app
 
-The same counter, in Rust and in TSX:
+The same counter, in Svelte and in Rust:
+
+```svelte tabs
+<script>
+  let count = $state(0);
+</script>
+
+<div class="flex-1 items-center justify-center gap-3">
+  <span class="text-5xl font-bold">{count}</span>
+  <button
+    onclick={() => count++}
+    class="rounded-lg bg-blue-600 px-5 py-3 active:opacity-60"
+  >
+    <span class="text-white text-lg">Tap</span>
+  </button>
+</div>
+```
 
 ```rust tabs
 use nsh_core::prelude::*;
@@ -92,29 +108,7 @@ pub fn Counter() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, View } from "nsh";
-
-function Counter() {
-  const count = signal(0);
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 48, fontWeight: "700" }}>{count()}</Text>
-      <View
-        onPress={() => count.update((n) => n + 1)}
-        activeStyle={{ opacity: 0.6 }}
-        class="rounded-lg bg-blue-600 px-5 py-3"
-      >
-        <Text class="text-white text-lg">Tap</Text>
-      </View>
-    </View>
-  );
-}
-
-mount(Counter);
-```
-
-A view (`view()`, `<View>`) becomes a `UIView` on iOS, a `ViewGroup` on Android, an `NSView` on macOS, a GTK widget on Linux, a retained view drawn with Direct2D on Windows and an HTML element on the web; a text becomes a native text view, and the button's press feedback (`.active(..)`, `activeStyle`) runs on the main thread. When you tap, `count.update` changes one signal, and only the text that reads it is updated: the component function does not run again. The Rust app is native code from start to end; in the TSX app, only the module's own code is JavaScript.
+A view (`<div>`, `view()`) becomes a `UIView` on iOS, a `ViewGroup` on Android, an `NSView` on macOS, a GTK widget on Linux, a retained view drawn with Direct2D on Windows and an HTML element on the web; a text becomes a native text view, and the button's press feedback (`active:opacity-60`, `.active(..)`) runs on the main thread. When you tap, `count++` changes reactive state, and only the text that reads it is updated. The Rust app is native code from start to end; in the NativeSvelte app, Svelte 5 components drive native retained views.
 
 ## Retained views
 

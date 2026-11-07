@@ -1,6 +1,6 @@
 ---
 title: Forms and the keyboard
-description: Text input with the input element - controlled and uncontrolled values, keyboard types, the return key, focus, selection, growing multiline inputs - and keeping content clear of the software keyboard.
+description: Text input with inputs and forms in Svelte and Rust - controlled and uncontrolled values, keyboard types, the return key, focus, selection, growing multiline inputs - and keeping content clear of the software keyboard.
 order: 42
 group: ui
 demo: guide-forms
@@ -8,9 +8,9 @@ demo: guide-forms
 
 # Forms and the keyboard
 
-Text entry is the input element, `input()` in Rust and `<Input>` in TSX: a UITextField or UITextView on iOS, an EditText on Android. Typing, the caret, selection, autocorrection and autofill are the platform's own; your app gets the text through events and can control it. NSH also keeps focused inputs above the software keyboard on its own, and gives you the keyboard's height as a reactive value for the cases it cannot handle by itself.
+Text entry is the input element, `input()` in Rust and `<input>` / `<Input>` in Svelte: a UITextField or UITextView on iOS, an EditText on Android. Typing, the caret, selection, autocorrection and autofill are the platform's own; your app gets the text through events and can control it. NSH also keeps focused inputs above the software keyboard on its own, and gives you the keyboard's height as a reactive value for the cases it cannot handle by itself.
 
-An input takes styles like any view (typed style methods in Rust, styles and Tailwind classes in TSX), so the fields of a form have your app's own look. A labeled field is a short component of your own:
+An input takes styles like any view (Tailwind classes and bindings in Svelte, typed style methods in Rust), so the fields of a form have your app's own look. A labeled field is a short component of your own:
 
 ```rust tabs
 use nsh_core::prelude::*;
@@ -37,27 +37,25 @@ fn field(label: &'static str, value: Signal<String>, masked: bool) -> impl IntoE
 }
 ```
 
-```tsx tabs
-import { signal, Text, View } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<!-- Field.svelte -->
+<script>
+  import { Input } from "nsh/base";
 
-function Field(props: { label: string; value: string; onChange: (e: { value: string }) => void; masked?: boolean }) {
-  const focused = signal(false);
-  return (
-    <View class="gap-1">
-      <Text class="text-sm text-neutral-500">{props.label}</Text>
-      <Input
-        value={props.value}
-        onChange={props.onChange}
-        masked={props.masked}
-        onFocus={() => focused.set(true)}
-        onBlur={() => focused.set(false)}
-        class="rounded-lg border px-3 py-2 text-base"
-        style={{ borderColor: focused() ? "#0969da" : "#d0d7de" }}
-      />
-    </View>
-  );
-}
+  let { label, value = $bindable(), masked = false } = $props();
+  let focused = $state(false);
+</script>
+
+<div class="gap-1">
+  <p class="text-sm text-neutral-500">{label}</p>
+  <Input
+    bind:value
+    {masked}
+    onFocus={() => (focused = true)}
+    onBlur={() => (focused = false)}
+    class="rounded-lg border px-3 py-2 text-base {focused ? 'border-[#0969da]' : 'border-[#d0d7de]'}"
+  />
+</div>
 ```
 
 ## Controlled and uncontrolled inputs
@@ -93,26 +91,22 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, View } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { Input } from "nsh/base";
 
-function App() {
-  const name = signal("");
-  return (
-    <View style={{ flex: 1, padding: 16, paddingTop: 60, gap: 8 }}>
-      <Input
-        value={name()}
-        onChange={({ value }) => name.set(value)}
-        placeholder="Your name"
-        style={{ fontSize: 17, borderWidth: 1, borderColor: "#d0d7de", borderRadius: 10, padding: 12 }}
-      />
-      <Text>Hello, {name() || "stranger"}</Text>
-    </View>
-  );
-}
+  let name = $state("");
+</script>
 
-mount(App);
+<div class="flex-1 p-4 pt-16 gap-2">
+  <Input
+    bind:value={name}
+    placeholder="Your name"
+    class="text-[17px] border border-[#d0d7de] rounded-[10px] p-3"
+  />
+  <p>Hello, {name || "stranger"}</p>
+</div>
 ```
 
 Because you control the value, you can transform what the user types: `.on_change(move |t: &str| tag.set(t.to_uppercase()))` uppercases, `onChange={({ value }) => code.set(value.replace(/[^0-9]/g, ""))}` keeps digits only.
@@ -142,19 +136,29 @@ input()
     })
 ```
 
-```tsx tabs
-const query = signal("");
-let composing = false;
-<Input
-  value={query()}
-  onChange={({ value }) => {
-    query.set(value);
-    if (!composing) search(value);
-  }}
-  onCompositionChange={(e) => {
+```svelte tabs
+<script>
+  import { Input } from "nsh/base";
+
+  let query = $state("");
+  let composing = false;
+
+  function onChange(e) {
+    query = e.value;
+    if (!composing) search(e.value);
+  }
+
+  function onCompositionChange(e) {
     composing = e.composing;
-    if (!e.composing) search(query());
-  }}
+    if (!e.composing) search(query);
+  }
+</script>
+
+<Input
+  value={query}
+  {onChange}
+  {onCompositionChange}
+  placeholder="Search"
 />
 ```
 
@@ -224,7 +228,7 @@ input()
     .selection_color(rgb(0x2563eb))
 ```
 
-```tsx tabs
+```svelte tabs
 <Input
   class="rounded-lg border border-zinc-300 px-3 py-2 text-base focus:border-blue-500 placeholder:text-zinc-400 selection:text-blue-600"
   placeholder="Search"
@@ -267,7 +271,7 @@ input()
     .placeholder("Code")
 ```
 
-```tsx tabs
+```svelte tabs
 <Input keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" placeholder="E-mail" />
 <Input masked autoComplete="new-password" placeholder="Password" />
 <Input keyboardType="number-pad" autoComplete="one-time-code" maxLength={6} placeholder="Code" />
@@ -321,32 +325,31 @@ pub fn sign_in() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { type InputRef, mount, signal, View } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<!-- SignIn.svelte -->
+<script>
+  import { Input } from "nsh/base";
 
-function SignIn() {
-  const email = signal("");
-  let password!: InputRef;
-  const submit = () => console.log("sign in", email());
-  return (
-    <View style={{ flex: 1, padding: 16, paddingTop: 60, gap: 12 }}>
-      <Input
-        value={email()}
-        onChange={({ value }) => email.set(value)}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        returnKeyType="next"
-        submitBehavior="submit"
-        onSubmit={() => password.focus()}
-        placeholder="E-mail"
-      />
-      <Input ref={password} masked returnKeyType="go" onSubmit={submit} placeholder="Password" />
-    </View>
-  );
-}
+  let email = $state("");
+  let passwordRef = $state();
 
-mount(SignIn);
+  function submit() {
+    console.log("sign in", email);
+  }
+</script>
+
+<div class="flex-1 p-4 pt-16 gap-3">
+  <Input
+    bind:value={email}
+    keyboardType="email-address"
+    autoCapitalize="none"
+    returnKeyType="next"
+    submitBehavior="submit"
+    onSubmit={() => passwordRef?.focus()}
+    placeholder="E-mail"
+  />
+  <Input bind:this={passwordRef} masked returnKeyType="go" onSubmit={submit} placeholder="Password" />
+</div>
 ```
 
 Submitting without blurring (`SubmitBehavior::Submit`, `submitBehavior="submit"`) on the first field keeps the keyboard up while focus moves, so it does not drop and rise again. A chat input that sends on return and stays focused submits the same way (see the composer [below](#content-outside-scroll-views)).
@@ -371,10 +374,12 @@ On macOS and the web, `focus()` and `blur()` on the ref of a view that takes pre
 view().on_press(|| dismiss_keyboard())
 ```
 
-```tsx tabs
-import { View, Keyboard } from "nsh";
+```svelte tabs
+<script>
+  import { Keyboard } from "nsh";
+</script>
 
-<View onPress={() => Keyboard.dismiss()}>…</View>
+<button onclick={() => Keyboard.dismiss()}>…</button>
 ```
 
 ## Selection
@@ -415,19 +420,24 @@ view()
     )
 ```
 
-```tsx tabs
-const text = signal("Select part of this text");
-const range = signal({ start: 0, end: 0 });
-const selection = signal<{ start: number; end?: number } | undefined>(undefined);
+```svelte tabs
+<script>
+  import { Input } from "nsh/base";
+
+  let content = $state("Select part of this text");
+  let range = $state({ start: 0, end: 0 });
+  let selection = $state(undefined);
+</script>
 
 <Input
-  value={text()}
-  onChange={({ value }) => text.set(value)}
-  selectedRange={selection()}
-  onSelectionChange={(r) => range.set(r)}
+  bind:value={content}
+  selectedRange={selection}
+  onSelectionChange={(r) => (range = r)}
 />
-<Text>Selected: "{text().slice(range().start, range().end)}"</Text>
-<View onPress={() => selection.set({ start: 0, end: text().length })}><Text>Select all</Text></View>
+<p>Selected: "{content.slice(range.start, range.end)}"</p>
+<button onclick={() => (selection = { start: 0, end: content.length })}>
+  Select all
+</button>
 ```
 
 ## The caret
@@ -474,34 +484,34 @@ view()
     ))
 ```
 
-```tsx tabs
-import { type Bounds, Overlay, Text, View, signal } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<script>
+  import { Overlay } from "nsh";
+  import { Input } from "nsh/base";
 
-const draft = signal("");
-const end = signal(0);
-const caret = signal<Bounds | null>(null);
+  let draft = $state("");
+  let end = $state(0);
+  let caret = $state(null);
+</script>
 
-<View>
+<div>
   <Input
     multiline
-    value={draft()}
-    onChange={({ value }) => draft.set(value)}
-    onSelectionChange={(e) => end.set(e.end)}
+    bind:value={draft}
+    onSelectionChange={(e) => (end = e.end)}
     onCaretMove={(e) => {
-      // Suggestions while the word before the caret starts with "@".
-      const word = draft().slice(0, end()).split(/\s/).pop() ?? "";
-      caret.set(word.startsWith("@") ? e.pageBounds : null);
+      const word = draft.slice(0, end).split(/\s/).pop() ?? "";
+      caret = word.startsWith("@") ? e.pageBounds : null;
     }}
     class="p-2"
   />
-  <If when={caret()}>
-    <Overlay anchor={caret()} placement="bottom" align="start" offset={4}>
-      <Text>@ada</Text>
-      <Text>@grace</Text>
+  {#if caret}
+    <Overlay anchor={caret} placement="bottom" align="start" offset={4}>
+      <p>@ada</p>
+      <p>@grace</p>
     </Overlay>
-  </If>
-</View>;
+  {/if}
+</div>
 ```
 
 `pageBounds` is where the caret was when the event came: a page that scrolls under the input moves the input but
@@ -534,21 +544,21 @@ input()
     .p_2()
 ```
 
-```tsx tabs
-import { signal } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<script>
+  import { Input } from "nsh/base";
 
-const attachments = signal<File[]>([]);
+  let attachments = $state([]);
+</script>
 
 <Input
   multiline
   placeholder="Message"
   onPaste={(e) => {
-    // A screenshot pasted into the message goes along as an image.
-    attachments.update((a) => [...a, ...e.files]);
+    attachments = [...attachments, ...e.files];
   }}
   class="p-2"
-/>;
+/>
 ```
 
 Upload a pasted file as any `File`, with `fetch` and `FormData` (`form.append("image", file)`); its bytes stay
@@ -575,14 +585,19 @@ input()
     .h(move || height.get().max(px(20.0)) + px(20.0))
 ```
 
-```tsx tabs
-const height = signal(0);
+```svelte tabs
+<script>
+  import { Input } from "nsh/base";
+
+  let height = $state(0);
+</script>
 
 <Input
   multiline
   placeholder="Write a comment"
-  onContentSizeChange={({ size }) => height.set(Math.min(size.height, 120))}
-  style={{ fontSize: 16, padding: 10, borderWidth: 1, borderColor: "#d0d7de", borderRadius: 10, height: Math.max(height(), 20) + 20 }}
+  onContentSizeChange={({ size }) => (height = Math.min(size.height, 120))}
+  class="text-base p-2.5 border border-[#d0d7de] rounded-[10px]"
+  style="height: {Math.max(height, 20) + 20}px"
 />
 ```
 
@@ -602,11 +617,11 @@ scroll()
     .child(view().p(px(16.0)).gap(px(12.0)) /* inputs */)
 ```
 
-```tsx tabs
-<Scroll style={{ flex: 1 }} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
-  <View style={{ padding: 16, gap: 12 }}>
-    {/* inputs */}
-  </View>
+```svelte tabs
+<Scroll class="flex-1" keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
+  <div class="p-4 gap-3">
+    <!-- inputs -->
+  </div>
 </Scroll>
 ```
 
@@ -658,44 +673,36 @@ pub fn chat_screen() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Scroll, signal, View, keyboardFrame, safeAreaInsets } from "nsh";
-import { Input } from "nsh/base";
+```svelte tabs
+<!-- ChatScreen.svelte -->
+<script>
+  import { Scroll, keyboardFrame, safeAreaInsets } from "nsh";
+  import { Input } from "nsh/base";
 
-function ChatScreen() {
-  const insets = safeAreaInsets();
-  const draft = signal("");
-  const send = () => {
-    if (draft().trim()) console.log("send", draft());
-    draft.set("");
-  };
-  return (
-    <View style={{ flex: 1, paddingBottom: "env(keyboard-inset-height)" }}>
-      <Scroll style={{ flex: 1 }} keyboardDismissMode="interactive">
-        {/* messages */}
-      </Scroll>
-      <View
-        style={{
-          flexDirection: "row",
-          padding: 8,
-          // Above the home indicator, unless the keyboard covers it.
-          paddingBottom: 8 + (keyboardFrame().height > 0 ? 0 : insets().bottom),
-        }}
-      >
-        <Input
-          value={draft()}
-          onChange={({ value }) => draft.set(value)}
-          multiline
-          submitBehavior="submit"
-          returnKeyType="send"
-          onSubmit={send}
-          placeholder="Message"
-          style={{ flex: 1, maxHeight: 120 }}
-        />
-      </View>
-    </View>
-  );
-}
+  let draft = $state("");
+
+  function send() {
+    if (draft.trim()) console.log("send", draft);
+    draft = "";
+  }
+</script>
+
+<div class="flex-1 pb-[env(keyboard-inset-height)]">
+  <Scroll class="flex-1" keyboardDismissMode="interactive">
+    <!-- messages -->
+  </Scroll>
+  <div class="flex-row p-2">
+    <Input
+      bind:value={draft}
+      multiline
+      submitBehavior="submit"
+      returnKeyType="send"
+      onSubmit={send}
+      placeholder="Message"
+      class="flex-1 max-h-[120px]"
+    />
+  </div>
+</div>
 ```
 
 Padding (`.pb_keyboard()`) shrinks the content above while the background reaches the bottom of the screen; a bottom margin (`marginBottom: "env(keyboard-inset-height)"`, `.mb_keyboard()`) ends the whole view at the top of the keyboard. `calc(env(keyboard-inset-height) + <length>)` (Rust `.pb_keyboard_plus(..)`, `.mb_keyboard_plus(..)`) adds a length, such as minus the height of a tab bar below the view.
@@ -713,12 +720,14 @@ view().child(when(
 ))
 ```
 
-```tsx tabs
-import { View, keyboardFrame } from "nsh";
+```svelte tabs
+<script>
+  import { keyboardFrame } from "nsh";
+</script>
 
-<If when={keyboardFrame().height === 0}>
-  <View style={{ position: "absolute", right: 16, bottom: 16 }}>…</View>
-</If>
+{#if keyboardFrame().height === 0}
+  <div class="absolute right-4 bottom-4">…</div>
+{/if}
 ```
 
 ## A bar over the keyboard (iOS): InputAccessoryView
@@ -763,32 +772,30 @@ pub fn note() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { type InputRef, signal, Text, View } from "nsh";
-import { Input } from "nsh/base";
-import { InputAccessoryView } from "nsh/mobile";
+```svelte tabs
+<!-- Note.svelte -->
+<script>
+  import { Input } from "nsh/base";
+  import { InputAccessoryView } from "nsh/mobile";
 
-function Note() {
-  const text = signal("");
-  let input!: InputRef;
-  return (
-    <View style={{ padding: 16 }}>
-      <Input
-        ref={input}
-        value={text()}
-        onChange={({ value }) => text.set(value)}
-        ios={{ inputAccessoryViewID: "note-bar" }}
-        placeholder="A note"
-      />
-      <InputAccessoryView nativeID="note-bar" style={{ backgroundColor: "#f6f8fa" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", padding: 8 }}>
-          <Text style={{ flex: 1, color: "#57606a" }}>{text().length} characters</Text>
-          <Text onPress={() => input.blur()} style={{ color: "#0969da", fontWeight: "600" }}>Done</Text>
-        </View>
-      </InputAccessoryView>
-    </View>
-  );
-}
+  let note = $state("");
+  let inputRef = $state();
+</script>
+
+<div class="p-4">
+  <Input
+    bind:this={inputRef}
+    bind:value={note}
+    ios={{ inputAccessoryViewID: "note-bar" }}
+    placeholder="A note"
+  />
+  <InputAccessoryView nativeID="note-bar" class="bg-[#f6f8fa]">
+    <div class="flex-row items-center p-2">
+      <p class="flex-1 text-[#57606a]">{note.length} characters</p>
+      <button onclick={() => inputRef?.blur()} class="text-[#0969da] font-semibold">Done</button>
+    </div>
+  </InputAccessoryView>
+</div>
 ```
 
 The bar is as wide as the window and as tall as its content. Input accessories are iOS's: on Android the bar is an empty hidden view, so place those controls elsewhere there, for example above the input (`os() == Os::Android` in Rust, `platform.os === "android"` in TSX).

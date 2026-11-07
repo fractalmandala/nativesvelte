@@ -39,12 +39,12 @@ fn adds_a_todo() {
 }
 ```
 
-```tsx tabs
-// App.test.tsx
+```ts tabs
+// App.test.ts
 import { expect, open, test } from "nsh/test";
 
 test("adds a todo", async () => {
-  const app = await open("./App.tsx", { storage: { todos: "[]" } });
+  const app = await open("./App.svelte", { storage: { todos: "[]" } });
   await app.type("id:new-todo", "Buy milk");
   await app.press("text:Add");
   await app.waitFor("text:Buy milk");
@@ -123,7 +123,7 @@ test fails when it throws, when the promise it returns rejects, and after its ti
 
 `describe`, the hooks and the variants of `test` work as Jest's:
 
-```tsx
+```ts
 import { beforeEach, describe, expect, open, test } from "nsh/test";
 import type { App } from "nsh/test";
 
@@ -185,8 +185,8 @@ the host app: `host.params` gives the launch parameters the app reads at start, 
 call's data that returns the answer (or a promise of it). What the function throws rejects the call, as a host app's
 error does. A call of a name `handlers` does not list fails, as it does in a host app that handles none.
 
-```tsx
-const app = await open("./App.tsx", {
+```ts
+const app = await open("./App.svelte", {
   host: {
     params: { conversation: "c-42" },
     handlers: {
@@ -210,7 +210,7 @@ expect(app.shows("Conversation c-43")).toBe(true);
 The URLs the app opens ([`openUrl`](../modules/nsh.md#openurl), a `TextView`'s links with `links="open"`) are
 recorded and reported to the app as opened, and nothing opens on this machine. `app.openedUrls()` lists them:
 
-```tsx
+```ts
 await app.press("Contact us");
 expect(app.openedUrls()).toEqual(["mailto:help@example.com"]);
 ```
@@ -251,8 +251,8 @@ fn adds_a_todo_on_the_server() {
 }
 ```
 
-```tsx tabs
-const app = await open("./App.tsx", {
+```ts tabs
+const app = await open("./App.svelte", {
   network: {
     "GET https://api.example.com/todos": { body: [{ id: 1, title: "Walk" }] },
     "POST https://api.example.com/todos": (request) => ({ status: 201, body: JSON.parse(request.body!) }),
@@ -309,8 +309,8 @@ fn autosaves() {
 }
 ```
 
-```tsx tabs
-const app = await open("./App.tsx", { clock: { time: new Date("2026-01-01T09:00:00Z") } });
+```ts tabs
+const app = await open("./App.svelte", { clock: { time: new Date("2026-01-01T09:00:00Z") } });
 await app.type("label:Note", "Milk");
 await app.clock!.runFor(10_000);           // the autosave, ten seconds later
 expect(app.texts()).toContain("Saved at 09:00:10");
@@ -444,7 +444,7 @@ a test matches the code:
 | `ERR_NSH_TEST_NO_BACK` | `back()` found nothing to go back from. |
 | `ERR_NSH_TEST_UNSUPPORTED` | `open` with `--target` was given an option the target's platform cannot honor: `width` or `height` on iOS and Android, a phone's `platform` on a desktop or the web, a desktop's or the other phone's on iOS or Android, `host.handlers`, `url`. The message names it. |
 
-```tsx
+```ts
 await expect(app.press("Pay")).rejects.toMatchObject({ code: "ERR_NSH_TEST_DISABLED" });
 ```
 
@@ -489,12 +489,12 @@ the page. A call's timeout and the host's own timers run on the app's time, so a
 (`app.clock.runFor`). In a browser (`--target web`) the development page runs `nsh.json`'s `web.host` for each app as a
 published page does; on the other platforms (`--target`) the apps have no host: `host.available()` is `false`.
 
-```tsx
+```ts
 // nsh.json: { "capabilities": { "host": ["echo"] }, "web": { "host": "./host.js" } }
 import { open, test } from "nsh/test";
 
 test("calls reach the page's host", async () => {
-  const app = await open("./App.tsx");
+  const app = await open("./App.svelte");
   await app.press("label:call");
   await app.waitFor('text:{"n":1}');
 });
@@ -799,10 +799,10 @@ view()
     .child(text(move || format!("{} items", count.get())).test_id("cart-count"))
 ```
 
-```tsx tabs
-<View testID="add-to-cart" onPress={add} style={{ padding: 12 }}>
-  <Text testID="cart-count">{`${count()} items`}</Text>
-</View>
+```svelte tabs
+<button testID="add-to-cart" onclick={add} class="p-3">
+  <span testID="cart-count">{count} items</span>
+</button>
 ```
 
 | Platform | Where `testID` goes |

@@ -30,16 +30,15 @@ view()
     .child(text("▶"))
 ```
 
-```tsx tabs
-<View
-  onPress={play}
-  role="button"
-  accessibilityLabel="Play"
+```svelte tabs
+<button
+  onclick={play}
+  aria-label="Play"
   accessibilityHint="Starts the song"
-  style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
+  class="w-11 h-11 items-center justify-center"
 >
-  <Text>▶</Text>
-</View>
+  <span>▶</span>
+</button>
 ```
 
 | Rust | TSX | Type | Description |
@@ -84,8 +83,8 @@ text("Settings")
     .font_weight(FontWeight::BOLD)
 ```
 
-```tsx tabs
-<Text role="header" style={{ fontSize: 22, fontWeight: "700" }}>Settings</Text>
+```svelte tabs
+<h1 role="header" class="text-[22px] font-bold">Settings</h1>
 ```
 
 ### States and values
@@ -119,19 +118,18 @@ view()
     )
 ```
 
-```tsx tabs
-// A toggle drawn with views.
-<View
-  onPress={() => on.set(!on())}
+```svelte tabs
+<!-- A toggle drawn with views -->
+<button
+  onclick={() => (on = !on)}
   role="switch"
-  accessibilityLabel="Wi-Fi"
-  accessibilityState={{ checked: on() }}
+  aria-label="Wi-Fi"
+  aria-checked={on}
   hitSlop={8}
-  class="h-[31px] w-[51px] rounded-full p-0.5 transition-colors"
-  classList={{ "bg-green-500": on(), "bg-zinc-300": !on() }}
+  class="h-[31px] w-[51px] rounded-full p-0.5 transition-colors {on ? 'bg-green-500' : 'bg-zinc-300'}"
 >
-  <View class="size-[27px] rounded-full bg-white transition-transform" classList={{ "translate-x-5": on() }} />
-</View>
+  <div class="size-[27px] rounded-full bg-white transition-transform {on ? 'translate-x-5' : ''}"></div>
+</button>
 ```
 
 The state is `AccessibilityState { disabled, selected, checked: Option<Checked>, busy, expanded, pressed: Option<Checked>, current: Option<AccessibilityCurrent>, has_popup }` in Rust and `{ disabled?, selected?, checked?: boolean | "mixed", busy?, expanded?, pressed?: boolean | "mixed", current?: boolean | "page" | "step" | "location" | "date" | "time", hasPopup? }` in TSX. `pressed` makes a button a toggle button (ARIA's `aria-pressed`); `current` marks the current item of a set (ARIA's `aria-current`): a pagination's page, a wizard's step; `hasPopup` marks the trigger of a popup, a menu or a list (ARIA's `aria-haspopup`), whose `expanded` says whether it is open, where an `expanded` element without it is a disclosure that shows its content in place (`Popover`, `Menu`, `HoverCard`, `Select`, `Combobox` and `DatePicker` set it on their triggers). `disabled` is also implied by disabling the view (`.disabled(..)`, `disabled`). `accessibilityValue` with `min`, `max` and `now` is read as a percentage; with `text` it is read as given ("3 of 10", "Medium").
@@ -140,28 +138,27 @@ The state is `AccessibilityState { disabled, selected, checked: Option<Checked>,
 
 A pressable view supports activation already. For anything else, declare actions with `accessibilityActions` and handle them with `onAccessibilityAction`; a Rust component hears the performed action's name with `.on_accessibility_action(|name: &str| ..)`:
 
-```tsx
-function Quantity() {
-  const n = signal(1);
-  return (
-    <View
-      accessible
-      role="adjustable"
-      accessibilityLabel="Quantity"
-      accessibilityValue={{ text: String(n()) }}
-      accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-      onAccessibilityAction={(e) => {
-        if (e.actionName === "increment") n.update((v) => v + 1);
-        if (e.actionName === "decrement") n.update((v) => Math.max(0, v - 1));
-      }}
-      style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-    >
-      <View onPress={() => n.update((v) => Math.max(0, v - 1))}><Text>−</Text></View>
-      <Text>{n()}</Text>
-      <View onPress={() => n.update((v) => v + 1)}><Text>+</Text></View>
-    </View>
-  );
-}
+```svelte
+<script>
+  let n = $state(1);
+</script>
+
+<div
+  accessible
+  role="adjustable"
+  aria-label="Quantity"
+  accessibilityValue={{ text: String(n) }}
+  accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
+  onaccessibilityaction={(e) => {
+    if (e.actionName === "increment") n++;
+    if (e.actionName === "decrement") n = Math.max(0, n - 1);
+  }}
+  class="flex-row items-center gap-3"
+>
+  <button onclick={() => (n = Math.max(0, n - 1))}><span>−</span></button>
+  <span>{n}</span>
+  <button onclick={() => n++}><span>+</span></button>
+</div>
 ```
 
 Some action names are standard and map to the platforms' own gestures:
@@ -179,13 +176,13 @@ An element with `increment` or `decrement` is adjustable whatever its role: a ch
 
 Any other name becomes a custom action, listed in VoiceOver's actions rotor and TalkBack's actions menu with its `label` (or its name). Custom actions are the accessible form of swipe-to-delete and similar gestures:
 
-```tsx
-<View
+```svelte
+<div
   accessibilityActions={[{ name: "archive", label: "Archive" }, { name: "delete", label: "Delete" }]}
-  onAccessibilityAction={(e) => (e.actionName === "archive" ? archive(mail.id) : remove(mail.id))}
+  onaccessibilityaction={(e) => (e.actionName === "archive" ? archive(mail.id) : remove(mail.id))}
 >
   …
-</View>
+</div>
 ```
 
 ## Grouping and hiding
@@ -203,18 +200,18 @@ view()
     .child(text("$120"))
 ```
 
-```tsx tabs
-<View accessible onPress={open} role="button" style={{ padding: 16 }}>
-  <Text>Blue jacket</Text>
-  <Text>Size M</Text>
-  <Text>$120</Text>
-</View>
+```svelte tabs
+<div accessible onclick={open} role="button" class="p-4">
+  <span>Blue jacket</span>
+  <span>Size M</span>
+  <span>$120</span>
+</div>
 ```
 
 Hide what adds nothing: decorative images, dividers, an icon next to a text that already says the same.
 
-```tsx
-<Image src={decoration} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+```svelte
+<img src={decoration} alt="" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
 ```
 
 `accessibilityElementsHidden` (iOS's name) and `importantForAccessibility="no-hide-descendants"` (Android's) both hide the subtree on both platforms; setting both is harmless.
@@ -254,28 +251,29 @@ fn upload() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { signal, Text, View, type ViewRef } from "nsh";
-import { announce, screenReaderEnabled, setAccessibilityFocus } from "nsh";
+```svelte tabs
+<script>
+  import { announce, screenReaderEnabled, setAccessibilityFocus } from "nsh";
 
-function Upload() {
-  const done = signal(false);
-  let result!: ViewRef;
-  const finish = () => {
-    done.set(true);
+  let done = $state(false);
+  let result = $state();
+
+  function finish() {
+    done = true;
     announce("Upload complete");
-    setAccessibilityFocus(result);
-  };
-  return (
-    <View style={{ gap: 12 }}>
-      {/* Autoplaying carousels are hard to use with a screen reader: show a list instead. */}
-      <If when={!screenReaderEnabled()} else={<PhotoList />}>
-        <PhotoCarousel />
-      </If>
-      <Text ref={result}>{done() ? "Uploaded 3 photos" : "Uploading…"}</Text>
-    </View>
-  );
-}
+    if (result) setAccessibilityFocus(result);
+  }
+</script>
+
+<div class="gap-3">
+  <!-- Autoplaying carousels are hard to use with a screen reader: show a list instead -->
+  {#if !screenReaderEnabled()}
+    <PhotoCarousel />
+  {:else}
+    <PhotoList />
+  {/if}
+  <span bind:this={result}>{done ? "Uploaded 3 photos" : "Uploading…"}</span>
+</div>
 ```
 
 Announce changes the user would otherwise miss: a background save finishing, an error appearing away from the focus, a timer ending. On Android, `android={{ accessibilityLiveRegion: "polite" }}` on a view makes TalkBack announce its changes by itself.
@@ -309,18 +307,20 @@ view()
     .when(!reduce_motion(), |v| v.active(|s| s.scale(0.95)))
 ```
 
-```tsx tabs
-import { View } from "nsh";
-import { reduceMotion } from "nsh";
-import { LayoutAnimation } from "nsh";
+```svelte tabs
+<script>
+  import { reduceMotion, LayoutAnimation } from "nsh";
 
-const toggle = () => {
-  if (!reduceMotion()) LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-  expanded.set(!expanded());
-};
+  let expanded = $state(false);
 
-<View onPress={open} class="transition active:scale-95 motion-reduce:transition-none" />
-<View class="motion-safe:animate-bounce" />
+  function toggle() {
+    if (!reduceMotion()) LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+    expanded = !expanded;
+  }
+</script>
+
+<button onclick={open} class="transition active:scale-95 motion-reduce:transition-none"></button>
+<div class="motion-safe:animate-bounce"></div>
 ```
 
 ## Touch targets

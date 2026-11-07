@@ -41,27 +41,21 @@ fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, View } from "nsh";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  let count = $state(0);
+</script>
 
-function App() {
-  const count = signal(0);
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <View
-        onPress={() => count.update((n) => n + 1)}
-        onLongPress={() => count.set(0)}
-        activeStyle={{ opacity: 0.6 }}
-        role="button"
-        style={{ paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, backgroundColor: "#0969da" }}
-      >
-        <Text style={{ color: "#ffffff", fontWeight: "600" }}>Pressed {count()} times</Text>
-      </View>
-    </View>
-  );
-}
-
-mount(App);
+<div class="flex-1 items-center justify-center">
+  <button
+    onclick={() => count++}
+    oncontextmenu={(e) => { e.preventDefault(); count = 0; }}
+    class="px-5 py-3 rounded-[10px] bg-[#0969da] active:opacity-60"
+  >
+    <span class="text-white font-semibold">Pressed {count} times</span>
+  </button>
+</div>
 ```
 
 | Rust | TSX | Default | Description |
@@ -112,18 +106,12 @@ view()
     })
 ```
 
-```tsx tabs
-<View onPress={open} activeStyle={{ opacity: 0.5 }}>…</View>
+```svelte tabs
+<button onclick={open} class="active:opacity-50">…</button>
 
-<View onPress={open} activeStyle={{ backgroundColor: "#ddf4ff" }} style={{ padding: 16 }}>…</View>
+<button onclick={open} class="p-4 active:bg-[#ddf4ff]">…</button>
 
-<View
-  onPress={open}
-  activeStyle={{ opacity: 0.6 }}
-  android={{ ripple: { color: "rgba(9,105,218,0.3)" } }}
->
-  …
-</View>
+<button onclick={open} class="active:opacity-60">…</button>
 ```
 
 A borderless ripple spreads outside the view, which suits icon buttons: `Ripple { borderless: true, radius: Some(px(24.0)), .. }`, `android={{ ripple: { borderless: true, radius: 24 } }}`. See [Platform-specific code](./platform-specific.md).
@@ -147,13 +135,13 @@ view()
     )
 ```
 
-```tsx tabs
-<View
-  onPress={save}
+```svelte tabs
+<button
+  onclick={save}
   class="group rounded-xl bg-emerald-600 p-4 transition active:scale-95 active:bg-emerald-800"
 >
-  <Text class="font-semibold text-white group-active:opacity-85">Save</Text>
-</View>
+  <span class="font-semibold text-white group-active:opacity-85">Save</span>
+</button>
 ```
 
 ## Hit areas: hitSlop
@@ -168,9 +156,9 @@ view()
     .on_press(next)
 ```
 
-```tsx tabs
-<View hitSlop={12} onPress={close} style={{ width: 20, height: 20 }}>…</View>
-<View hitSlop={{ top: 10, bottom: 10, left: 4, right: 4 }} onPress={next}>…</View>
+```svelte tabs
+<button onclick={close} class="w-5 h-5 p-3">…</button>
+<button onclick={next} class="py-2.5 px-1">…</button>
 ```
 
 | Rust | TSX | Description |
@@ -219,16 +207,15 @@ view().flex_1().child(map()).child(
 )
 ```
 
-```tsx tabs
-<View style={{ flex: 1 }}>
+```svelte tabs
+<div class="flex-1 relative">
   <Map />
-  {/* A floating toolbar: the empty area passes touches to the map. */}
-  <View style={{ pointerEvents: "box-none", position: "absolute", top: 0, left: 0, right: 0, bottom: 0, justifyContent: "flex-end", padding: 16 }}>
-    <View onPress={locate} style={{ alignSelf: "flex-end", padding: 12, borderRadius: 24, backgroundColor: "#ffffff" }}>
-      <Text>Locate</Text>
-    </View>
-  </View>
-</View>
+  <div class="pointer-events-none absolute inset-0 justify-end p-4">
+    <button onclick={locate} class="pointer-events-auto self-end p-3 rounded-full bg-white shadow">
+      <span>Locate</span>
+    </button>
+  </div>
+</div>
 ```
 
 `"none"` is inherited as CSS's `pointer-events`: a view inside it that sets `"auto"` takes touches again. `"box-none"` and `"box-only"` apply to the view that sets them. The Tailwind classes `pointer-events-none` and `pointer-events-auto` set `"none"` and `"auto"`, and as a style key `pointerEvents` also takes state styles (`activeStyle`, ...) and variants.
@@ -262,29 +249,26 @@ fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, View } from "nsh";
-import { createAnimatedValue } from "nsh";
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import { createAnimatedValue, View } from "nsh";
 
-function App() {
   const x = createAnimatedValue(0);
   const y = createAnimatedValue(0);
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <View
-        pan={{ x, y }}
-        onPanEnd={(e) => {
-          // Spring back, starting at the speed the finger let go with.
-          x.spring(0, { velocity: e.velocity.x });
-          y.spring(0, { velocity: e.velocity.y });
-        }}
-        style={{ width: 120, height: 120, borderRadius: 24, backgroundColor: "#8250df", translate: [x, y] }}
-      />
-    </View>
-  );
-}
+</script>
 
-mount(App);
+<div class="flex-1 items-center justify-center">
+  <View
+    pan={{ x, y }}
+    onPanEnd={(e) => {
+      x.spring(0, { velocity: e.velocity.x });
+      y.spring(0, { velocity: e.velocity.y });
+    }}
+    class="w-[120px] h-[120px] rounded-3xl bg-[#8250df]"
+    style={{ translate: [x, y] }}
+  />
+</div>
 ```
 
 | Rust | TSX | Description |
@@ -317,8 +301,7 @@ view()
     .bind_translate_x(&x)
 ```
 
-```tsx tabs
-// A card that snaps to the left or right edge.
+```svelte tabs
 <View
   pan={{ x }}
   onPanEnd={(e) => {
@@ -373,12 +356,12 @@ view().on_touch(|e: &TouchEvent| {
 })
 ```
 
-```tsx tabs
-<View
-  onTouchStart={(e) => console.log("down", e.locationX, e.locationY, e.touches.length)}
-  onTouchMove={(e) => console.log("move", e.pageX, e.pageY)}
-  onTouchEnd={() => console.log("up")}
-/>
+```svelte tabs
+<div
+  onpointerdown={(e) => console.log("down", e.offsetX, e.offsetY)}
+  onpointermove={(e) => console.log("move", e.pageX, e.pageY)}
+  onpointerup={() => console.log("up")}
+></div>
 ```
 
 ### Where a view is: measure
@@ -402,19 +385,21 @@ view()
     .on_responder_move(move |e: &ResponderEvent| seek(e.page.x - origin.get()))
 ```
 
-```tsx tabs
-let track!: ViewRef;
-let origin = 0;
+```svelte tabs
+<script>
+  let trackRef = $state();
+  let origin = 0;
+</script>
+
 <View
-  ref={track}
+  bind:this={trackRef}
   onStartShouldSetResponder={() => true}
   onResponderGrant={async (e) => {
-    const x = e.pageX;
-    origin = (await track.measure())?.pagePosition.x ?? 0;
-    seek(x - origin);
+    origin = (await trackRef?.measure())?.pagePosition.x ?? 0;
+    seek(e.pageX - origin);
   }}
   onResponderMove={(e) => seek(e.pageX - origin)}
-/>;
+/>
 ```
 
 It resolves once the changes made so far are laid out: in Rust to a `Measurement` (`frame`, the frame in the parent as the layout handler reports it, and `page`, the top left corner), in TSX to `{ bounds, pagePosition }`. The corner is in the surface, or in the dialog the view is in, the same coordinates as touches' page positions. The offsets of the scroll views and lists around it are taken into account; transforms (animations included) are not. It resolves to `None` / `null` for a view that is not on screen.
@@ -482,38 +467,36 @@ fn sketch() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Canvas, type GestureResponderEvent, mount, signal } from "nsh";
+```svelte tabs
+<!-- Sketch.svelte -->
+<script>
+  import { Canvas } from "nsh";
 
-function Sketch() {
-  const strokes = signal<[number, number][][]>([]);
-  const point = (e: GestureResponderEvent): [number, number] => [e.locationX, e.locationY];
-  return (
-    <Canvas
-      style={{ flex: 1 }}
-      onStartShouldSetResponder={() => true}
-      onResponderGrant={(e) => {
-        strokes.set([...strokes(), [point(e)]]);
-        return true; // the scroll view around must not take the touches
-      }}
-      onResponderTerminationRequest={() => false}
-      onResponderMove={(e) => {
-        const all = strokes();
-        strokes.set([...all.slice(0, -1), [...all[all.length - 1], point(e)]]);
-      }}
-      draw={(cx) => {
-        cx.lineWidth = 3;
-        for (const s of strokes()) {
-          cx.beginPath();
-          s.forEach(([x, y], i) => (i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y)));
-          cx.stroke();
-        }
-      }}
-    />
-  );
-}
+  let strokes = $state([]);
+  const point = (e) => [e.locationX, e.locationY];
+</script>
 
-mount(Sketch);
+<Canvas
+  class="flex-1"
+  onStartShouldSetResponder={() => true}
+  onResponderGrant={(e) => {
+    strokes = [...strokes, [point(e)]];
+    return true;
+  }}
+  onResponderTerminationRequest={() => false}
+  onResponderMove={(e) => {
+    const last = strokes[strokes.length - 1];
+    strokes = [...strokes.slice(0, -1), [...last, point(e)]];
+  }}
+  draw={(cx) => {
+    cx.lineWidth = 3;
+    for (const s of strokes) {
+      cx.beginPath();
+      s.forEach(([x, y], i) => (i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y)));
+      cx.stroke();
+    }
+  }}
+/>
 ```
 
 How it runs: a view with any touch or responder handler listens to touches natively; the platform reports the touches on it (and inside it) with the path of listening views, and the negotiation runs in NSH's Rust core, asking the claims and calling your handlers in order: the captures from the outermost view inwards, then the others from the target outwards. Two consequences:
@@ -554,30 +537,28 @@ fn ball() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, View } from "nsh";
-import { PanResponder } from "nsh";
+```svelte tabs
+<!-- Ball.svelte -->
+<script>
+  import { View, PanResponder } from "nsh";
 
-function Ball() {
-  const pos = signal({ x: 0, y: 0 });
+  let pos = $state({ x: 0, y: 0 });
   let start = { x: 0, y: 0 };
   const responder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderGrant: () => {
-      start = pos();
+      start = { ...pos };
     },
-    onPanResponderMove: (_, g) => pos.set({ x: start.x + g.dx, y: start.y + g.dy }),
-    onPanResponderRelease: (_, g) => console.log("released at", g.vx, g.vy, "pt/s"),
+    onPanResponderMove: (_, g) => (pos = { x: start.x + g.dx, y: start.y + g.dy }),
+    onPanResponderRelease: (_, g) => console.log("released at", g.vx, g.vy),
   });
-  return (
-    <View
-      {...responder.panHandlers}
-      style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: "#0969da", translate: [pos().x, pos().y] }}
-    />
-  );
-}
+</script>
 
-mount(Ball);
+<View
+  {...responder.panHandlers}
+  class="w-[60px] h-[60px] rounded-full bg-[#0969da]"
+  style={{ translate: [pos.x, pos.y] }}
+/>
 ```
 
 The gesture state:
@@ -606,7 +587,7 @@ view()
     .child(chart())
 ```
 
-```tsx tabs
+```svelte tabs
 <View
   panActivation={{ activeOffsetX: 10, failOffsetY: 10 }}
   onResponderGrant={(e) => scrub(e.locationX)}

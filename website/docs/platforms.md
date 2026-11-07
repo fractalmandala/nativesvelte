@@ -96,22 +96,21 @@ fn tab_layout() -> AnyElement {
 }
 ```
 
-```tsx tabs
-import { View } from "nsh";
-import { platform } from "nsh";
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+  import SidebarLayout from "./SidebarLayout.svelte";
+  import TabLayout from "./TabLayout.svelte";
+</script>
 
-export function Shell() {
-  // macOS, Windows, Linux and desktop browsers get a sidebar; phones get tabs.
-  return <View class="flex-1">{platform.desktop ? <SidebarLayout /> : <TabLayout />}</View>;
-}
-
-function SidebarLayout() {
-  return <View class="flex-1 flex-row" />;
-}
-
-function TabLayout() {
-  return <View class="flex-1 flex-col" />;
-}
+<!-- macOS, Windows, Linux and desktop browsers get a sidebar; phones get tabs -->
+<div class="flex-1">
+  {#if platform.desktop}
+    <SidebarLayout />
+  {:else}
+    <TabLayout />
+  {/if}
+</div>
 ```
 
 Each backend lists what it does its own way: [macOS](./macos.md#what-differs-on-macos), [Windows](./windows.md#what-differs-on-windows), [Linux](./linux.md#what-differs-on-linux), [GPUI](./gpui.md#differences), [TUI](./tui.md).
@@ -119,6 +118,6 @@ Each backend lists what it does its own way: [macOS](./macos.md#what-differs-on-
 ## See also
 
 - [Getting started](./getting-started.md): a first app, run on each platform.
-- [Building with Rust](./rust.md): apps written in Rust, and Rust with TSX.
+- [Building with Rust](./rust.md): apps written in Rust, and Rust with Svelte.
 - [Installation](./installation.md): the tools each platform needs.
 - [Architecture](./architecture.md): what is shared and what each backend does.

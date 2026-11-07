@@ -138,18 +138,16 @@ impl Workspace {
 }
 ```
 
-```tsx tabs
+```ts tabs
 // store.ts
-import { signal } from "nsh";
-
-const name = signal("Untitled");
+let name = $state("Untitled");
 
 /** The workspace's name (tracked where it is read). */
-export const workspaceName = () => name();
+export const workspaceName = () => name;
 
 /** Renames the workspace. */
 export function renameWorkspace(next: string) {
-  name.set(next);
+  name = next;
 }
 ```
 
@@ -182,14 +180,14 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, View } from "nsh";
+```svelte tabs
+<script>
+  import App from "./App.svelte";
+</script>
 
-mount(() => (
-  <View class="flex-1 bg-background">
-    <App />
-  </View>
-));
+<div class="flex-1 bg-background">
+  <App />
+</div>
 ```
 
 The root coordinates what belongs to the whole surface: the navigation stack, the dialogs, popovers, menus, sheets and
@@ -243,14 +241,15 @@ fn empty_state(title: impl Into<SharedString>) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-function EmptyState(props: { title: string }) {
-  return (
-    <View class="items-center gap-2">
-      <Text class="text-muted-foreground">{props.title}</Text>
-    </View>
-  );
-}
+```svelte tabs
+<!-- EmptyState.svelte -->
+<script>
+  let { title }: { title: string } = $props();
+</script>
+
+<div class="items-center gap-2">
+  <span class="text-muted-foreground">{title}</span>
+</div>
 ```
 
 ### Use a component for retained behavior
@@ -276,11 +275,16 @@ pub fn Search(props: SearchProps) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-function Search(props: { placeholder: string }) {
-  const query = signal("");
-  return <Input value={query()} onChange={({ value }) => query.set(value)} placeholder={props.placeholder} />;
-}
+```svelte tabs
+<!-- Search.svelte -->
+<script>
+  import { Input } from "nsh/base";
+
+  let { placeholder }: { placeholder: string } = $props();
+  let query = $state("");
+</script>
+
+<Input bind:value={query} {placeholder} />
 ```
 
 A `#[component]` has typed props (`#[derive(Props)]`) and events (`#[derive(Event)]`); TSX imports it with
@@ -339,9 +343,9 @@ switch()
     .child(text("Show hidden files"))
 ```
 
-```tsx tabs
-<Switch checked={showHidden()} onChange={({ checked }) => showHidden.set(checked)}>
-  <Text>Show hidden files</Text>
+```svelte tabs
+<Switch bind:checked={showHidden}>
+  <span>Show hidden files</span>
 </Switch>
 ```
 
@@ -445,66 +449,73 @@ quantity_stepper()
     .on_change(move |next: &u32| quantity.set(*next))
 ```
 
-```tsx tabs
-import { signal } from "nsh";
-import { QuantityStepper } from "my-app";   // the Rust component: src/lib.rs has #[native_module("my-app")]
+```svelte tabs
+<script>
+  import { QuantityStepper } from "my-app"; // the Rust component: src/lib.rs has #[native_module("my-app")]
 
-function CartRow() {
-  const quantity = signal(1);
-  return (
-    <QuantityStepper
-      value={quantity()}
-      min={1}
-      max={10}
-      decrementLabel="Fewer"
-      incrementLabel="More"
-      onChange={({ value }) => quantity.set(value)}
-    />
-  );
-}
+  let quantity = $state(1);
+</script>
+
+<QuantityStepper
+  bind:value={quantity}
+  min={1}
+  max={10}
+  decrementLabel="Fewer"
+  incrementLabel="More"
+/>
 ```
 
 The same contract in TSX, a component in `components/`:
 
-```tsx
-import { Text, View } from "nsh";
-import { Button } from "nsh/base";
+```svelte
+<!-- QuantityStepper.svelte -->
+<script>
+  import { Button } from "nsh/base";
 
-export interface QuantityStepperProps {
-  /** The quantity: the app owns the value. */
-  value: number;
-  /** The smallest quantity (0 when left out). */
-  min?: number;
-  /** The largest quantity (99 when left out). */
-  max?: number;
-  /** What screen readers say for the button that takes one away. */
-  decrementLabel: string;
-  /** What screen readers say for the button that adds one. */
-  incrementLabel: string;
-  /** The user asked for another quantity; the owner sets `value`. */
-  onChange?: (e: { value: number }) => void;
-}
+  interface Props {
+    /** The quantity: the app owns the value. */
+    value: number;
+    /** The smallest quantity (0 when left out). */
+    min?: number;
+    /** The largest quantity (99 when left out). */
+    max?: number;
+    /** What screen readers say for the button that takes one away. */
+    decrementLabel: string;
+    /** What screen readers say for the button that adds one. */
+    incrementLabel: string;
+    /** The user asked for another quantity; the owner sets `value`. */
+    onchange?: (e: { value: number }) => void;
+  }
 
-export function QuantityStepper(props: QuantityStepperProps) {
-  const min = () => props.min ?? 0;
-  const max = () => props.max ?? 99;
-  const step = (delta: number) => {
-    const next = Math.min(max(), Math.max(min(), props.value + delta));
-    if (next !== props.value) props.onChange?.({ value: next });
-  };
+  let {
+    value = $bindable(0),
+    min = 0,
+    max = 99,
+    decrementLabel,
+    incrementLabel,
+    onchange
+  }: Props = $props();
+
+  function step(delta: number) {
+    const next = Math.min(max, Math.max(min, value + delta));
+    if (next !== value) {
+      value = next;
+      onchange?.({ value: next });
+    }
+  }
+
   const buttonClass = "size-8 items-center justify-center rounded-(--radius) bg-muted active:opacity-60 disabled:opacity-40";
-  return (
-    <View class="flex-row items-center gap-3">
-      <Button disabled={props.value <= min()} accessibilityLabel={props.decrementLabel} onPress={() => step(-1)} class={buttonClass}>
-        <Text class="text-foreground">−</Text>
-      </Button>
-      <Text class="text-foreground">{props.value}</Text>
-      <Button disabled={props.value >= max()} accessibilityLabel={props.incrementLabel} onPress={() => step(1)} class={buttonClass}>
-        <Text class="text-foreground">+</Text>
-      </Button>
-    </View>
-  );
-}
+</script>
+
+<div class="flex-row items-center gap-3">
+  <Button disabled={value <= min} aria-label={decrementLabel} onclick={() => step(-1)} class={buttonClass}>
+    <span class="text-foreground">−</span>
+  </Button>
+  <span class="text-foreground">{value}</span>
+  <Button disabled={value >= max} aria-label={incrementLabel} onclick={() => step(1)} class={buttonClass}>
+    <span class="text-foreground">+</span>
+  </Button>
+</div>
 ```
 
 ### Keep ownership links and subscriptions bounded
@@ -555,14 +566,12 @@ each(projects, |p| p.id, move |project, _index| {
 })
 ```
 
-```tsx tabs
-<Each of={projects()} key={(p) => p.id}>
-  {(project) => (
-    <Button onPress={() => remove(project().id)}>
-      <Text testID={`delete-${project().id}`}>Delete</Text>
-    </Button>
-  )}
-</Each>
+```svelte tabs
+{#each projects as project (project.id)}
+  <Button onclick={() => remove(project.id)}>
+    <span testID="delete-{project.id}">Delete</span>
+  </Button>
+{/each}
 ```
 
 A changed key means a changed UI identity. Treat that reset as deliberate.
@@ -586,15 +595,17 @@ pub fn ProjectPage() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-function ProjectPage() {
-  return (
-    <View class="flex-1">
-      <Toolbar />
-      <Content />
-    </View>
-  );
-}
+```svelte tabs
+<!-- ProjectPage.svelte -->
+<script>
+  import Toolbar from "./Toolbar.svelte";
+  import Content from "./Content.svelte";
+</script>
+
+<div class="flex-1">
+  <Toolbar />
+  <Content />
+</div>
 ```
 
 Extract a helper when it names a meaningful region and reduces the amount of state a reader must hold at once.
@@ -647,8 +658,8 @@ view()
     .rounded(move || theme().radius)
 ```
 
-```tsx tabs
-<View class="rounded-(--radius) border border-border bg-background text-foreground" />
+```svelte tabs
+<div class="rounded-(--radius) border border-border bg-background text-foreground"></div>
 ```
 
 Rules:
@@ -734,15 +745,22 @@ view()
     )
 ```
 
-```tsx tabs
-keymap.bind("mod+s", save);
+```svelte tabs
+<script>
+  import { Button, Menu, MenuItem } from "nsh/base";
 
-<View>
-  <Button onPress={save}><Text>Save</Text></Button>
-  <Menu trigger={<View class="px-3 py-2"><Text>File</Text></View>}>
-    <MenuItem onSelect={save}><Text>Save  {keymap.label("mod+s")}</Text></MenuItem>
+  keymap.bind("mod+s", save);
+</script>
+
+<div>
+  <Button onclick={save}><span>Save</span></Button>
+  <Menu>
+    {#snippet trigger()}
+      <div class="px-3 py-2"><span>File</span></div>
+    {/snippet}
+    <MenuItem onselect={save}><span>Save  {keymap.label("mod+s")}</span></MenuItem>
   </Menu>
-</View>
+</div>
 ```
 
 Preserve semantic roles in the element choice. Use `Button` for commands even when the desired treatment is quiet;
@@ -823,15 +841,23 @@ let results = resource(
 );
 ```
 
-```tsx tabs
-const results = resource(
-  () => query() || undefined,
-  async (q, { signal }) => {
-    const response = await fetch(`https://api.example.com/search?q=${encodeURIComponent(q)}`, { signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return (await response.json()) as SearchHit[];
-  },
-);
+```ts tabs
+let query = $state("");
+let results = $state<SearchHit[]>([]);
+
+$effect(() => {
+  const q = query;
+  if (!q) {
+    results = [];
+    return;
+  }
+  const controller = new AbortController();
+  fetch(`https://api.example.com/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
+    .then((r) => r.json())
+    .then((data) => (results = data))
+    .catch(() => {});
+  return () => controller.abort();
+});
 ```
 
 Move expensive parsing or computation out of TSX handlers: into a `computed`, off the interaction path, or into Rust.
@@ -852,11 +878,11 @@ view()
     .child(content())
 ```
 
-```tsx tabs
-<View class="flex flex-1">
+```svelte tabs
+<div class="flex flex-1">
   <Sidebar />
   <Content />
-</View>
+</div>
 ```
 
 Most UI should use layout rather than measuring itself ([Layout](./layout.md)). Measurement (`onLayout`, `measure()`)
@@ -930,16 +956,22 @@ virtual_list(move || posts.with(Vec::len), move |at| {
 .estimated_item_size(px(64.0))
 ```
 
-```tsx tabs
-const liked = signal<Set<number>>(new Set());
+```svelte tabs
+<script>
+  import { List } from "nsh";
 
-<List each={posts()} estimatedItemSize={64} class="flex-1">
-  {(post) => (
-    <View class="flex-row p-4">
-      <Text class="flex-1">{post().title}</Text>
-      <Text onPress={() => toggle(post().id)}>{liked().has(post().id) ? "♥" : "♡"}</Text>
-    </View>
-  )}
+  let liked = $state(new Set<number>());
+</script>
+
+<List items={posts} estimatedItemSize={64} class="flex-1">
+  {#snippet children(post)}
+    <div class="flex-row p-4">
+      <span class="flex-1">{post.title}</span>
+      <button onclick={() => toggle(post.id)}>
+        {liked.has(post.id) ? "♥" : "♡"}
+      </button>
+    </div>
+  {/snippet}
 </List>
 ```
 
@@ -1146,11 +1178,11 @@ fn a_tap_counts() {
 }
 ```
 
-```tsx tabs
+```ts tabs
 import { expect, open, test } from "nsh/test";
 
 test("a tap counts", async () => {
-  const app = await open("./App.tsx");
+  const app = await open("./App.svelte");
   await app.press("role:button[Tap]");
   expect(app.texts()).toContain("Count: 1");
 });

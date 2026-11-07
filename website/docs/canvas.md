@@ -38,29 +38,25 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Canvas, mount, View } from "nsh";
+```svelte tabs
+<script>
+  import { Canvas } from "nsh";
+</script>
 
-function App() {
-  return (
-    <View style={{ flex: 1, padding: 24, paddingTop: 60 }}>
-      <Canvas
-        style={{ height: 200, borderRadius: 12, backgroundColor: "#ffffff" }}
-        draw={(cx, { width, height }) => {
-          cx.fillStyle = "#0969da";
-          cx.beginPath();
-          cx.arc(width / 2, height / 2, 60, 0, Math.PI * 2);
-          cx.fill();
-          cx.strokeStyle = "#1f2328";
-          cx.lineWidth = 4;
-          cx.strokeRect(20, 20, width - 40, height - 40);
-        }}
-      />
-    </View>
-  );
-}
-
-mount(App);
+<div class="flex-1 p-6 pt-[60px]">
+  <Canvas
+    class="h-[200px] rounded-xl bg-white"
+    draw={(cx, { width, height }) => {
+      cx.fillStyle = "#0969da";
+      cx.beginPath();
+      cx.arc(width / 2, height / 2, 60, 0, Math.PI * 2);
+      cx.fill();
+      cx.strokeStyle = "#1f2328";
+      cx.lineWidth = 4;
+      cx.strokeRect(20, 20, width - 40, height - 40);
+    }}
+  />
+</div>
 ```
 
 A canvas takes everything a [view](../elements/view.md) takes (styles, classes, touch handlers, accessibility, refs) plus its drawing. It needs a size from its style or layout; its content is the drawing. Coordinates are in points, with the origin at the top left.
@@ -96,13 +92,17 @@ canvas(move || {
 .on_layout(move |frame: &Bounds<Points>| width.set(frame.size.width.0))
 ```
 
-```tsx tabs
-const values = signal([12, 30, 22, 48, 36, 60]);
+```svelte tabs
+<script>
+  import { Canvas } from "nsh";
+
+  let values = $state([12, 30, 22, 48, 36, 60]);
+</script>
 
 <Canvas
-  style={{ height: 160 }}
+  class="h-40"
   draw={(cx, { width, height }) => {
-    const v = values();
+    const v = values;
     const x = (i: number) => (i / (v.length - 1)) * width;
     const y = (n: number) => height - (n / 100) * height;
     cx.beginPath();
@@ -164,12 +164,16 @@ canvas(draw.clone())
     })
 ```
 
-```tsx tabs
-let cx: CanvasRenderingContext2D | undefined;
-const slices = [new Path2D("M50 50 L100 50 A50 50 0 0 1 50 100 Z"), /* ... */];
+```svelte tabs
+<script>
+  import { Canvas, Path2D } from "nsh";
+
+  let cx: CanvasRenderingContext2D | undefined;
+  const slices = [new Path2D("M50 50 L100 50 A50 50 0 0 1 50 100 Z"), /* ... */];
+</script>
 
 <Canvas
-  style={{ width: 100, height: 100 }}
+  class="w-[100px] h-[100px]"
   onStartShouldSetResponder={() => true}
   onResponderRelease={(e) => {
     const hit = slices.findIndex((p) => cx?.isPointInPath(p, e.locationX, e.locationY));
@@ -213,23 +217,24 @@ fn heart(size: f32, color: Rgba) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Canvas, Path2D } from "nsh";
+```svelte tabs
+<!-- Heart.svelte -->
+<script>
+  import { Canvas, Path2D } from "nsh";
 
-const heart = new Path2D("M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z");
+  let { size, color }: { size: number; color: string } = $props();
 
-function Heart(props: { size: number; color: string }) {
-  return (
-    <Canvas
-      style={{ width: props.size, height: props.size }}
-      draw={(cx) => {
-        cx.scale(props.size / 24, props.size / 24); // the path is drawn on a 24-point grid
-        cx.fillStyle = props.color;
-        cx.fill(heart);
-      }}
-    />
-  );
-}
+  const heart = new Path2D("M12 21s-7-4.35-9.5-8.5C.5 8.5 3 4 7 4c2 0 3.5 1 5 3 1.5-2 3-3 5-3 4 0 6.5 4.5 4.5 8.5C19 16.65 12 21 12 21z");
+</script>
+
+<Canvas
+  style="width: {size}px; height: {size}px;"
+  draw={(cx) => {
+    cx.scale(size / 24, size / 24); // the path is drawn on a 24-point grid
+    cx.fillStyle = color;
+    cx.fill(heart);
+  }}
+/>
 ```
 
 A `Path2D` has the same path methods as the context (`moveTo`, `arc`, `roundRect`, ...) and `addPath(other)`. `new Path2D(other)` copies a path.
@@ -258,9 +263,13 @@ canvas(move || {
 .on_layout(move |frame: &Bounds<Points>| width.set(frame.size.width.0))
 ```
 
-```tsx tabs
+```svelte tabs
+<script>
+  import { Canvas } from "nsh";
+</script>
+
 <Canvas
-  style={{ height: 120 }}
+  class="h-[120px]"
   draw={(cx, { width, height }) => {
     const linear = cx.createLinearGradient(0, 0, width, 0);
     linear.addColorStop(0, "#22d3ee");
@@ -294,7 +303,7 @@ Painter::new()
     .fill_text("100", 32.0 - 6.0 - measure_text("11px system-ui", "100").0, 16.0)
 ```
 
-```tsx tabs
+```ts tabs
 cx.font = "600 20px system-ui";
 cx.fillStyle = "#1f2328";
 cx.textAlign = "center";
@@ -329,12 +338,14 @@ canvas(
 .size(px(120.0))
 ```
 
-```tsx tabs
-import { Canvas } from "nsh";
-import logo from "./logo.png";
+```svelte tabs
+<script>
+  import { Canvas } from "nsh";
+  import logo from "./logo.png";
+</script>
 
 <Canvas
-  style={{ width: 120, height: 120 }}
+  class="w-[120px] h-[120px]"
   draw={(cx) => {
     cx.save();
     cx.beginPath();
@@ -404,49 +415,46 @@ pub fn ring() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Canvas, mount, signal, Text, View } from "nsh";
-import { createAnimatedValue, Easing } from "nsh";
+```svelte tabs
+<script>
+  import { Canvas, createAnimatedValue, Easing } from "nsh";
 
-function Ring() {
   const progress = createAnimatedValue(0.3);
-  const label = signal(30);
-  const go = (to: number) => {
-    label.set(Math.round(to * 100));
-    progress.timing(to, { duration: 900, easing: Easing.inOut(Easing.cubic) });
-  };
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16 }}>
-      <Canvas
-        style={{ width: 140, height: 140 }}
-        draw={(cx, { width, height }) => {
-          const centerX = width / 2, cy = height / 2, r = width / 2 - 10;
-          cx.lineWidth = 12;
-          cx.lineCap = "round";
-          cx.strokeStyle = "#e5e7eb";
-          cx.beginPath();
-          cx.arc(centerX, cy, r, 0, Math.PI * 2);
-          cx.stroke();
-          cx.strokeStyle = "#6366f1";
-          cx.beginPath();
-          // The end angle reads the animated value on every frame.
-          cx.arc(centerX, cy, r, -Math.PI / 2, progress.mul(Math.PI * 2).sub(Math.PI / 2));
-          cx.stroke();
-          cx.fillStyle = "#1f2328";
-          cx.font = "600 22px system-ui";
-          cx.textAlign = "center";
-          cx.textBaseline = "middle";
-          cx.fillText(`${label()}%`, centerX, cy);
-        }}
-      />
-      <View onPress={() => go(Math.random())}>
-        <Text style={{ color: "#0969da" }}>Animate</Text>
-      </View>
-    </View>
-  );
-}
+  let label = $state(30);
 
-mount(Ring);
+  function go(to: number) {
+    label = Math.round(to * 100);
+    progress.timing(to, { duration: 900, easing: Easing.inOut(Easing.cubic) });
+  }
+</script>
+
+<div class="flex-1 items-center justify-center gap-4">
+  <Canvas
+    class="w-[140px] h-[140px]"
+    draw={(cx, { width, height }) => {
+      const centerX = width / 2, cy = height / 2, r = width / 2 - 10;
+      cx.lineWidth = 12;
+      cx.lineCap = "round";
+      cx.strokeStyle = "#e5e7eb";
+      cx.beginPath();
+      cx.arc(centerX, cy, r, 0, Math.PI * 2);
+      cx.stroke();
+      cx.strokeStyle = "#6366f1";
+      cx.beginPath();
+      // The end angle reads the animated value on every frame.
+      cx.arc(centerX, cy, r, -Math.PI / 2, progress.mul(Math.PI * 2).sub(Math.PI / 2));
+      cx.stroke();
+      cx.fillStyle = "#1f2328";
+      cx.font = "600 22px system-ui";
+      cx.textAlign = "center";
+      cx.textBaseline = "middle";
+      cx.fillText(`${label}%`, centerX, cy);
+    }}
+  />
+  <button onclick={() => go(Math.random())} class="text-[#0969da]">
+    Animate
+  </button>
+</div>
 ```
 
 The arc's end angle is `progress.mul(2π).sub(π/2)`: a node, so the ring sweeps natively for 900 ms while the drawing was recorded once (and once more for the label, which reads a signal). A clock's second hand works the same way: `rotate(seconds.mul(π / 30))` with `seconds` animated linearly.
@@ -488,25 +496,29 @@ canvas(move || {
 })
 ```
 
-```tsx tabs
-const strokes = signal<[number, number][][]>([]);
+```svelte tabs
+<script>
+  import { Canvas } from "nsh";
+
+  let strokes = $state<[number, number][][]>([]);
+</script>
 
 <Canvas
-  style={{ height: 240 }}
+  class="h-[240px]"
   onStartShouldSetResponder={() => true}
   onResponderGrant={(e) => {
-    strokes.set([...strokes(), [[e.locationX, e.locationY]]]);
+    strokes = [...strokes, [[e.locationX, e.locationY]]];
     return true; // a scroll view around must not take the touches
   }}
   onResponderMove={(e) => {
-    const all = strokes();
-    strokes.set([...all.slice(0, -1), [...all[all.length - 1], [e.locationX, e.locationY]]]);
+    const all = strokes;
+    strokes = [...all.slice(0, -1), [...all[all.length - 1], [e.locationX, e.locationY]]];
   }}
   draw={(cx) => {
     cx.lineWidth = 3;
     cx.lineCap = "round";
     cx.lineJoin = "round";
-    for (const s of strokes()) {
+    for (const s of strokes) {
       cx.beginPath();
       s.forEach(([x, y], i) => (i === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y)));
       cx.stroke();

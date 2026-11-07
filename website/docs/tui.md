@@ -265,25 +265,21 @@ fn sidebar_layout() -> AnyElement {
 }
 ```
 
-```tsx tabs
-import { View, platform } from "nsh";
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+  import CompactLayout from "./CompactLayout.svelte";
+  import SidebarLayout from "./SidebarLayout.svelte";
+</script>
 
-export function Shell() {
-  // The terminal gets one compact column; windows get a sidebar.
-  return (
-    <View class="flex-1">
-      {platform.idiom === "terminal" ? <CompactLayout /> : <SidebarLayout />}
-    </View>
-  );
-}
-
-function CompactLayout() {
-  return <View class="flex-1 flex-col" />;
-}
-
-function SidebarLayout() {
-  return <View class="flex-1 flex-row" />;
-}
+<!-- The terminal gets one compact column; windows get a sidebar -->
+<div class="flex-1">
+  {#if platform.idiom === "terminal"}
+    <CompactLayout />
+  {:else}
+    <SidebarLayout />
+  {/if}
+</div>
 ```
 
 `platform.desktop` is `true` in a terminal, and `platform.idiom === "desktop"` matches windows and desktop browsers,

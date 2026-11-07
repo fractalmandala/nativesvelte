@@ -51,21 +51,19 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, Text, View, safeArea } from "nsh";
-import { colorScheme, fontScale, windowSize } from "nsh";
+```svelte tabs
+<script>
+  import { safeArea, colorScheme, fontScale, windowSize } from "nsh";
+</script>
 
-function App() {
-  return (
-    <View style={{ flex: 1, paddingTop: safeArea().top + 16, paddingHorizontal: 16, backgroundColor: colorScheme() === "dark" ? "#0d1117" : "#ffffff" }}>
-      <Text style={{ color: colorScheme() === "dark" ? "#e6edf3" : "#1f2328" }}>
-        {Math.round(windowSize().width)} × {Math.round(windowSize().height)} pt, text at {fontScale().toFixed(2)}×
-      </Text>
-    </View>
-  );
-}
-
-mount(App);
+<div
+  style="padding-top: {safeArea().top + 16}px;"
+  class="flex-1 px-4 {colorScheme() === "dark" ? "bg-[#0d1117] text-[#e6edf3]" : "bg-white text-[#1f2328]"}"
+>
+  <span>
+    {Math.round(windowSize().width)} × {Math.round(windowSize().height)} pt, text at {fontScale().toFixed(2)}×
+  </span>
+</div>
 ```
 
 ## Window size and responsive layout
@@ -89,20 +87,22 @@ fn gallery() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { Image, View } from "nsh";
-import { windowSize } from "nsh";
+```svelte tabs
+<script>
+  import { Image, windowSize } from "nsh";
 
-function Gallery() {
-  const columns = () => (windowSize().width >= 700 ? 4 : windowSize().width >= 500 ? 3 : 2);
-  return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-      <Each of={photos}>
-        {(p) => <Image src={p().url} style={{ width: (windowSize().width - 32 - (columns() - 1) * 8) / columns(), aspectRatio: 1 }} />}
-      </Each>
-    </View>
-  );
-}
+  let { photos }: { photos: Array<{ url: string }> } = $props();
+  let columns = $derived(windowSize().width >= 700 ? 4 : windowSize().width >= 500 ? 3 : 2);
+</script>
+
+<div class="flex-row flex-wrap gap-2">
+  {#each photos as p}
+    <Image
+      src={p.url}
+      style="width: {(windowSize().width - 32 - (columns - 1) * 8) / columns}px; aspect-ratio: 1;"
+    />
+  {/each}
+</div>
 ```
 
 Often flexbox, percentages and `aspect_ratio` (`aspectRatio`) do the job without reading the size at all; see [Layout](./layout.md). Rust's `style_when(|| window().width.0 >= 640.0, |s| s.flex_row())` switches styles with the width; in TSX with Tailwind, the breakpoint variants (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`, `max-*:`, `min-[…]:`) and `portrait:` / `landscape:` follow the window too: `class="grid grid-cols-2 md:grid-cols-4"`.
@@ -122,10 +122,10 @@ view()
     )
 ```
 
-```tsx tabs
-<View class="flex-1 bg-white dark:bg-zinc-900 p-4">
-  <Text class="text-zinc-900 dark:text-zinc-100">Follows the system appearance</Text>
-</View>
+```svelte tabs
+<div class="flex-1 bg-white dark:bg-zinc-900 p-4">
+  <span class="text-zinc-900 dark:text-zinc-100">Follows the system appearance</span>
+</div>
 ```
 
 For anything else, read `dark()` (TSX: `colorScheme()`) in a closure or a computed value; in TSX, for more than a few colors, derive a palette once:
@@ -140,19 +140,20 @@ view()
     .child(text("Hello"))
 ```
 
-```tsx tabs
-import { computed, Text, View } from "nsh";
-import { colorScheme } from "nsh";
+```svelte tabs
+<script>
+  import { colorScheme } from "nsh";
 
-const palette = computed(() =>
-  colorScheme() === "dark"
-    ? { background: "#0d1117", surface: "#161b22", text: "#e6edf3", muted: "#8b949e" }
-    : { background: "#f6f8fa", surface: "#ffffff", text: "#1f2328", muted: "#57606a" },
-);
+  let palette = $derived(
+    colorScheme() === "dark"
+      ? { background: "#0d1117", surface: "#161b22", text: "#e6edf3", muted: "#8b949e" }
+      : { background: "#f6f8fa", surface: "#ffffff", text: "#1f2328", muted: "#57606a" },
+  );
+</script>
 
-<View style={{ flex: 1, backgroundColor: palette().background }}>
-  <Text style={{ color: palette().text }}>Hello</Text>
-</View>
+<div class="flex-1" style:background-color={palette.background}>
+  <span style:color={palette.text}>Hello</span>
+</div>
 ```
 
 Rust components also take their colors from the theme, which has light and dark values (`nsh.json` `"theme"`, see [Building with Rust](./rust.md)), so they switch with the system as well. To match the status bar to your background, give your pages and dialogs a [`statusBar`](../modules/nsh-base.md#status-bar), or the app one in `nsh.json`.
@@ -185,13 +186,17 @@ view()
     )
 ```
 
-```tsx tabs
-import { Text, View } from "nsh";
-import { colorScheme, setColorScheme } from "nsh";
+```svelte tabs
+<script>
+  import { colorScheme, setColorScheme } from "nsh";
+</script>
 
-<View onPress={() => setColorScheme(colorScheme() === "dark" ? "light" : "dark")} role="button" class="rounded-lg px-4 py-2 bg-neutral-200 dark:bg-neutral-800">
-  <Text class="text-neutral-900 dark:text-neutral-50">{colorScheme() === "dark" ? "Light" : "Dark"}</Text>
-</View>
+<button
+  onclick={() => setColorScheme(colorScheme() === "dark" ? "light" : "dark")}
+  class="rounded-lg px-4 py-2 bg-neutral-200 dark:bg-neutral-800"
+>
+  <span class="text-neutral-900 dark:text-neutral-50">{colorScheme() === "dark" ? "Light" : "Dark"}</span>
+</button>
 ```
 
 > [!TIP]
@@ -213,8 +218,8 @@ text("Today")
     .max_font_size_multiplier(1.4)
 ```
 
-```tsx tabs
-<Text style={{ fontSize: 34, fontWeight: "700" }} maxFontSizeMultiplier={1.4}>Today</Text>
+```svelte tabs
+<span class="text-[34px] font-bold" maxFontSizeMultiplier={1.4}>Today</span>
 ```
 
 Read `font_scale()` to adapt layout that does not follow text automatically, such as switching a row to a column when the text gets large: `.style_when(|| font_scale() > 1.3, |s| s.flex_col())` in Rust, `flexDirection: fontScale() > 1.3 ? "column" : "row"` in TSX.
@@ -239,13 +244,14 @@ fn greeting() -> &'static str {
 text(greeting)
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { locale } from "nsh";
+```svelte tabs
+<script>
+  import { locale } from "nsh";
 
-const greetings: Record<string, string> = { en: "Welcome", de: "Willkommen", zh: "欢迎" };
+  const greetings: Record<string, string> = { en: "Welcome", de: "Willkommen", zh: "欢迎" };
+</script>
 
-<Text>{greetings[locale().split("-")[0]] ?? greetings.en}</Text>
+<span>{greetings[locale().split("-")[0]] ?? greetings.en}</span>
 ```
 
 ## Locale settings
@@ -267,14 +273,15 @@ let twelve_hour = computed(|| locale_settings().hour_cycle.twelve_hour());
 text(move || if twelve_hour.get() { "3:00 PM" } else { "15:00" })
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { computed, localeSettings } from "nsh";
+```svelte tabs
+<script>
+  import { localeSettings } from "nsh";
 
-// Updates when the user switches between 12- and 24-hour time, and only then.
-const twelveHour = computed(() => ["h11", "h12"].includes(localeSettings().hourCycle));
+  // Updates when the user switches between 12- and 24-hour time, and only then.
+  let twelveHour = $derived(["h11", "h12"].includes(localeSettings().hourCycle));
+</script>
 
-<Text>{twelveHour() ? "3:00 PM" : "15:00"}</Text>
+<span>{twelveHour ? "3:00 PM" : "15:00"}</span>
 ```
 
 In tests, `open`'s `localeSettings` sets the ones it names over the locale's (the locale alone as the languages, its
@@ -299,7 +306,7 @@ fn text_language() -> &'static str {
 }
 ```
 
-```tsx tabs
+```ts tabs
 import { localeSettings } from "nsh";
 
 const TRANSLATED = ["en", "de", "zh"];
@@ -340,7 +347,7 @@ fn week_columns() -> [u8; 7] {
 }
 ```
 
-```tsx tabs
+```ts tabs
 import { localeSettings } from "nsh";
 
 const time = (date: Date) =>
@@ -374,11 +381,12 @@ use nsh_core::prelude::*;
 text(move || format!("Times in {}", locale_settings().time_zone))
 ```
 
-```tsx tabs
-import { Text } from "nsh";
-import { localeSettings } from "nsh";
+```svelte tabs
+<script>
+  import { localeSettings } from "nsh";
+</script>
 
-<Text>{`Times in ${localeSettings().timeZone}`}</Text>
+<span>Times in {localeSettings().timeZone}</span>
 ```
 
 `Date`'s local times follow the system's zone, as they always have: `time_zone` names it. `Intl` formats local time in that zone and names it the same way: `Intl.DateTimeFormat().resolvedOptions().timeZone` is `localeSettings().timeZone`, and `{ timeZone: localeSettings().timeZone }` formats in local time. In tests, the zone `open` or `app.setLocaleSettings` gives (`UTC` otherwise) is the one `localeSettings()` reports; local times, `Date`'s and `Intl`'s, stay the machine's, and `Intl` names the machine's zone.
@@ -401,8 +409,8 @@ effect(move || {
 });
 ```
 
-```tsx tabs
-effect(() => {
+```ts tabs
+$effect(() => {
   if (lifecycle() === "background") feed.pause();
   else feed.resume();
 });
@@ -442,22 +450,20 @@ fn BottomBar(cx: Scope<NoEvent>) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { View, safeAreaInsets } from "nsh";
+```svelte tabs
+<script>
+  import { safeAreaInsets } from "nsh";
+  import Content from "./Content.svelte";
 
-function Screen() {
-  return (
-    <View class="flex-1 bg-white pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
-      <Content />
-      <BottomBar />
-    </View>
-  );
-}
-
-function BottomBar() {
   const insets = safeAreaInsets();
-  return <View style={{ paddingBottom: insets().bottom + 8, paddingTop: 8, flexDirection: "row" }}>…</View>;
-}
+</script>
+
+<div class="flex-1 bg-white pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
+  <Content />
+  <div style="padding-bottom: {insets().bottom + 8}px; padding-top: 8px;" class="flex-row">
+    …
+  </div>
+</div>
 ```
 
 On Android, a view embedded below a toolbar gets only the parts of the system bars that overlap it, like UIKit's safe area: no top inset if it does not reach the status bar.
@@ -491,7 +497,7 @@ use nsh_core::{element::Os, prelude::*};
 let haptics_supported = os() == Os::Ios || (os() == Os::Android && os_version().0 >= 30);
 ```
 
-```tsx tabs
+```ts tabs
 import { platform } from "nsh";
 
 const hapticsSupported = platform.os === "ios" || (platform.os === "android" && Number(platform.version) >= 30);
@@ -541,11 +547,12 @@ view()
     .bg(rgb(0xd0d7de))
 ```
 
-```tsx tabs
-import { View } from "nsh";
-import { pixelRatio } from "nsh";
+```svelte tabs
+<script>
+  import { pixelRatio } from "nsh";
+</script>
 
-<View style={{ height: 1 / pixelRatio(), backgroundColor: "#d0d7de" }} />
+<div style="height: {1 / pixelRatio()}px;" class="bg-[#d0d7de]"></div>
 ```
 
 `pixel_ratio()` and `pixelRatio()` are reactive, so a hairline follows a window moved to a screen with another density.

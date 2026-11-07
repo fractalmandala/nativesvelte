@@ -110,18 +110,6 @@ pub fn App() -> impl IntoElement {
 <Home />
 ```
 
-```tsx tabs
-// App.tsx
-import { mount } from "nsh";
-import { Home } from "./components/Home";
-
-function App() {
-  return <Home />;
-}
-
-mount(App);
-```
-
 `nsh run` and `nsh package` mount a Rust root on every platform, with no QuickJS. In TSX, `mount(component, props?)` renders the component into the app's surface and returns a function that removes it again; an app calls it once. Code at the top level of the entry runs when the bundle loads, before the first frame.
 
 ## nsh.json
@@ -247,10 +235,10 @@ An app made by an earlier `nsh init` gets the new `tsconfig.json` with its next 
 
 A Rust app's code is its crate's modules (`mod screens;`), and its dependencies come from crates.io like any crate's; NSH's own crates are `nsh-core` (the primitives, signals and typed styles, `use nsh_core::prelude::*`) and `nsh-base` (the base components and the theme).
 
-In TSX, split the app into as many `.ts` and `.tsx` modules as you like and import them with relative paths; the extension may be left out:
+In NativeSvelte, split the app into as many `.svelte` and `.ts` modules as you like and import them with relative paths:
 
-```tsx
-import { Header } from "./components/Header";
+```ts
+import Header from "./components/Header.svelte";
 import { formatPrice } from "./lib/format";
 import strings from "./strings.json";
 ```
@@ -265,10 +253,10 @@ If you build your own executable with Cargo (embedding NSH, or your own `main`),
 
 `import()` of one of the app's modules returns a promise of its exports, as in a browser:
 
-```tsx
+```ts
 const open = async () => {
-  const { Settings } = await import("./screens/Settings");
-  screen.set(() => Settings);
+  const { default: Settings } = await import("./screens/Settings.svelte");
+  currentScreen = Settings;
 };
 ```
 
@@ -322,13 +310,14 @@ image(LOGO)
 text("Hello").font_family(INTER.family)
 ```
 
-```tsx tabs
-import { Image, Text } from "nsh";
-import logo from "./assets/logo@2x.png";   // { url: "asset:/assets/logo@2x.png", size: { width: 64, height: 64 } }
-import Inter from "./assets/Inter.ttf";     // "Inter"
+```svelte tabs
+<script>
+  import logo from "./assets/logo@2x.png"; // { url: "asset:/assets/logo@2x.png", size: { width: 64, height: 64 } }
+  import Inter from "./assets/Inter.ttf"; // "Inter"
+</script>
 
-<Image src={logo} />
-<Text style={{ fontFamily: Inter }}>Hello</Text>
+<img src={logo} alt="Logo" />
+<span style:font-family={Inter}>Hello</span>
 ```
 
 | Extension | Import gives |

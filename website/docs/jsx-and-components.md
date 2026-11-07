@@ -1,6 +1,6 @@
 ---
 title: Components & Templates
-description: How NativeSvelte describes UI in Svelte 5, TSX, and Rust - elements, components, props, runes, control flow, and zero-virtual-DOM native compilation.
+description: How NativeSvelte describes UI in Svelte 5, templates, runes, props, snippets, control flow, and zero-virtual-DOM native compilation.
 order: 30
 group: ui
 demo: guide-components
@@ -8,10 +8,10 @@ demo: guide-components
 
 # Components and templates
 
-NativeSvelte apps describe their UI with elements and components in **Svelte 5** (`.svelte`), **TSX** (`.tsx`), or native **Rust**.
-- In **Svelte 5**, components use HTML-like templates, runes (`$state`, `$derived`, `$props`), and standard directives (`onclick`, `bind:value`), compiled with zero virtual DOM directly into native signals and view operations.
-- In **TSX**, JSX components compile into direct calls of the same native renderer.
+NativeSvelte apps describe their UI with elements and components in **Svelte 5** (`.svelte`), or native **Rust**.
+- In **Svelte 5**, components use HTML-like templates, runes (`$state`, `$derived`, `$props`, `$bindable`), and standard directives (`onclick`, `bind:value`), compiled with zero virtual DOM directly into native signals and view operations.
 - In **Rust**, elements are built using functions and typed builder methods (`view().gap_4().child(..)`).
+- **TSX** entries remain supported through the same underlying native renderer.
 
 Either way, a component builds its part of the tree, and fine-grained [reactivity](./reactivity.md) follows signal bindings natively so only changed values update.
 
@@ -19,17 +19,18 @@ Either way, a component builds its part of the tree, and fine-grained [reactivit
 
 The **host elements** are each backed by a native view:
 
-| Rust | TSX | Svelte | Native view | Page |
-|---|---|---|---|---|
-| `view()` | `<View>` | `<div>`, `<View>` | `UIView` / `ViewGroup`: a box for layout, styling and touches | [View](../elements/view.md) |
-| `text(..)` | `<Text>` | `<p>`, `<span>`, `<Text>` | A native text view; nested text elements are spans | [Text](../elements/text.md) |
-| `image(src)` | `<Image>` | `<img>`, `<Image>` | An image view (local assets and URLs) | [Image](../elements/image.md) |
-| `scroll()` | `<Scroll>` | `<Scroll>` | `UIScrollView` / `ScrollView` | [Scroll](../elements/scroll.md) |
-| `input()` | `<Input>` | `<input>`, `<Input>` | `UITextField` / `UITextView` / `EditText` | [Input](../elements/input.md) |
-| `virtual_list(count, row)` | `<List>` | `<List>` | A virtualized, recycling list | [List](../elements/list.md) |
-| `canvas(..)`, `web_view(url)`, `video(url)` | `<Canvas>`, `<WebView>`, `<Video>` | `<Canvas>`, `<WebView>`, `<Video>` | A drawing, a web page, a video player | [Elements](../elements/index.md) |
-| `nsh_base::dialog()` | `<Dialog>` from `nsh/base` | `<Dialog>` | A presented layer | [Elements](../elements/index.md) |
-| `when(..)`, `each(..)` | `<If>`, `<Each>` | `{#if}`, `{#each}` | Control flow, no view of its own | [Control flow](../elements/control-flow.md) |
+| Svelte | Rust | Native view | Page |
+|---|---|---|---|
+| `<div>`, `<View>` | `view()` | `UIView` / `ViewGroup`: a box for layout, styling and touches | [View](../elements/view.md) |
+| `<p>`, `<span>`, `<Text>` | `text(..)` | A native text view; nested text elements are spans | [Text](../elements/text.md) |
+| `<img>`, `<Image>` | `image(src)` | An image view (local assets and URLs) | [Image](../elements/image.md) |
+| `<Scroll>` | `scroll()` | `UIScrollView` / `ScrollView` | [Scroll](../elements/scroll.md) |
+| `<input>`, `<Input>` | `input()` | `UITextField` / `UITextView` / `EditText` | [Input](../elements/input.md) |
+| `<button>`, `<Button>` | `button()` | Pressable surface with native states and feedback | [Button](../elements/button.md) |
+| `<List>` | `virtual_list(count, row)` | A virtualized, recycling list | [List](../elements/list.md) |
+| `<Canvas>`, `<WebView>`, `<Video>` | `canvas(..)`, `web_view(url)`, `video(url)` | A drawing, a web page, a video player | [Elements](../elements/index.md) |
+| `<Dialog>` | `nsh_base::dialog()` | A presented layer | [Elements](../elements/index.md) |
+| `{#if}`, `{#each}` | `when(..)`, `each(..)` | Control flow, no view of its own | [Control flow](../elements/control-flow.md) |
 
 ```svelte tabs
 <!-- App.svelte -->
@@ -40,21 +41,6 @@ The **host elements** are each backed by a native view:
 <div class="rounded-xl bg-background p-4" onclick={() => count++}>
   <p class="font-semibold text-foreground">Taps: {count}</p>
 </div>
-```
-
-```tsx tabs
-import { mount, signal, Text, View } from "nsh";
-
-function Counter() {
-  const count = signal(0);
-  return (
-    <View class="rounded-xl bg-background p-4" onPress={() => count.update((c) => c + 1)}>
-      <Text class="font-semibold text-foreground">Taps: {count()}</Text>
-    </View>
-  );
-}
-
-mount(Counter);
 ```
 
 ```rust tabs
@@ -72,11 +58,20 @@ pub fn Counter() -> impl IntoElement {
 }
 ```
 
-In Rust, styles are typed methods named as Tailwind's utilities are (`.px_4()`, `.rounded_lg()`, `.bg(..)`), and
-listeners are methods too (`.on_press(..)`); platform-only settings have methods of their own. In TSX, props keep
-their camelCase names (`onPress`, `allowFontScaling`, `backgroundColor`); every element accepts `style`, `class` /
-`classList` ([Tailwind](./tailwind.md)), `ref`, touch handlers, accessibility props and `testID`, and platform-only
-props go in `ios={{…}}` and `android={{…}}`, where only the current platform's object is sent:
+In Svelte, styles use Tailwind utility classes in `class`, dynamic classes `{condition ? '...' : ''}`, or inline styles (`style="..."` / `style:property={...}`). Event handlers use standard lowercase directives (`onclick`, `onpointerdown`, `onkeydown`). In Rust, styles are typed methods named as Tailwind's utilities are (`.px_4()`, `.rounded_lg()`, `.bg(..)`), and listeners are methods too (`.on_press(..)`).
+
+```svelte tabs
+<script>
+  let open = $state(false);
+</script>
+
+<div
+  class="rounded-xl shadow-md active:opacity-75"
+  onclick={() => (open = true)}
+>
+  <p class="font-semibold">Open</p>
+</div>
+```
 
 ```rust tabs
 view()
@@ -86,39 +81,37 @@ view()
     .child(text("Open").font_weight(FontWeight::SEMIBOLD))
 ```
 
-```tsx tabs
-<View android={{ elevation: 4, ripple: { color: "#0001" } }} style={{ borderRadius: 12 }} onPress={() => open.set(true)}>
-  <Text style={{ fontWeight: "600" }}>Open</Text>
-</View>
-```
-
-TSX tags are PascalCase so that TypeScript checks each one against the binding it names: a lowercase tag is checked against one global type per name, so a generic component such as `List` or `Each` could not infer its rows' type from `each` / `of`, and an app's own components would not be typed at all. The imports cost nothing at run time: the compiler recognizes the primitives through their imports (aliases too) and makes the native element in place, so `<View>` is a direct call of the renderer and the import is dropped from the bundle. A lowercase tag is a build error that says what to write:
-
-```text
-x lowercase tag <view>: tags are PascalCase components: write <View> and
-| `import { View } from "nsh"`
-```
-
 > [!IMPORTANT]
-> Text is only displayed inside a text element: `text(..)` in Rust, `<Text>` in TSX. A string directly in a `<View>` creates no native view and is not shown.
+> In NativeSvelte, text is displayed inside paragraphs or spans: `<p>`, `<span>`, or `<Text>`. A string directly in an unstyled layout box without text tags is wrapped in an implicit text node or styled paragraph.
 
 ## Components
 
-The look of an app is the app's own. NSH provides two layers: the primitives (the elements above, styles, Tailwind classes) and the unstyled base components of [`nsh/base`](../modules/nsh-base.md) (`nsh_base` in Rust), which own behavior such as navigation, dialogs, the keyboard, the status bar and safe areas. The third layer, the component library, is yours: buttons, cards and every other piece of your UI are components you write on those two layers, in your app's crate ([Building with Rust](./rust.md)) or in TSX, or a library from the community ([Three layers](./architecture.md#three-layers)).
+The look of an app is the app's own. NativeSvelte provides two layers: the primitives (the elements above, styles, Tailwind classes) and the unstyled base components of [`nsh/base`](../modules/nsh-base.md) (`nsh_base` in Rust), which own behavior such as navigation, dialogs, the keyboard, the status bar and safe areas. The third layer, the component library, is yours: buttons, cards and every other piece of your UI are components you write in Svelte 5, or in your app's crate ([Building with Rust](./rust.md)).
 
-A Rust component is a `#[component] fn` that takes its props struct (and, when it has events, a `Scope` to emit them) and returns its elements. `#[component]` also makes its constructor, the function's name in snake case: `Badge` is placed with `badge()`, as `view()` places a view, with a setter per prop (`.label(..)`, `.color(..)`: a value, a signal or a closure). A TSX component is a function that takes a props object and returns JSX:
+A Svelte component is written in a `.svelte` file using Svelte 5 runes. Props are declared with `$props()`, and state with `$state()`. A Rust component is a `#[component] fn` that takes its props struct:
+
+```svelte tabs
+<!-- Badge.svelte -->
+<script>
+  let { label, color = "#ddf4ff" } = $props();
+</script>
+
+<div
+  class="rounded-full px-2.5 py-1"
+  style:background-color={color}
+>
+  <p class="text-xs font-semibold">{label}</p>
+</div>
+```
 
 ```rust tabs
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct BadgeProps {
-    /// The text.
     pub label: Prop<SharedString>,
-    /// The background (light blue when left out).
     #[prop(default = Hsla::from(rgb(0xddf4ff)))]
     pub color: Prop<Hsla>,
 }
 
-/// A small rounded label.
 #[component]
 pub fn Badge(props: BadgeProps) -> impl IntoElement {
     view()
@@ -128,54 +121,32 @@ pub fn Badge(props: BadgeProps) -> impl IntoElement {
         .bg(move || props.color.get())
         .child(text(props.label).text_size(px(13.0)).font_weight(FontWeight::SEMIBOLD))
 }
+```
 
-// Placed in another component's view:
+Placed in another component's view:
+
+```svelte tabs
+<Badge label="{unread} new" color="#fff8c5" />
+```
+
+```rust tabs
 badge()
     .label(move || format!("{} new", unread.get()))
     .color(rgb(0xfff8c5))
 ```
 
-```tsx tabs
-function Badge(props: { label: string; color?: string }) {
-  return (
-    <View style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: props.color ?? "#ddf4ff" }}>
-      <Text style={{ fontSize: 13, fontWeight: "600" }}>{props.label}</Text>
-    </View>
-  );
-}
-
-<Badge label={`${unread()} new`} color="#fff8c5" />
-```
-
-The function runs **once**, when the component is created, and does not track what it reads: there is no re-rendering. Code in its body (creating signals, starting effects, computing constants) runs one time. The elements it returns stay connected to the props and signals they read, so `Badge` above updates its text whenever `unread` changes, without running `Badge` again.
-
-Write a `#[component]` when the UI has props or events of its own, or when a TSX entry imports it: a Rust component is registered under its type (`registry.register::<Badge>()`), with props typed from the struct ([Building with Rust](./rust.md#extending-a-rust-app-with-tsx)). For a piece of UI only Rust uses, a plain function returning `impl IntoElement` is enough, its arguments the props. In TSX, a component may return an element, a string or number, an array, `null`, or a function returning any of these (which the renderer follows); the `Component<P>` type from `nsh` describes one:
-
-```rust tabs
-fn row(title: impl Into<SharedString>, content: impl IntoElement) -> impl IntoElement {
-    view()
-        .flex_row()
-        .gap_2()
-        .child(text(title.into()))
-        .child(content)
-}
-```
-
-```tsx tabs
-import type { Component, JSX } from "nsh";
-import { Text, View } from "nsh";
-
-const Row: Component<{ title: string; children?: JSX.Element }> = (props) => (
-  <View style={{ flexDirection: "row", gap: 8 }}>
-    <Text>{props.title}</Text>
-    {props.children}
-  </View>
-);
-```
+In Svelte 5, the component initialization runs **once**, wiring up reactive bindings through runes. The compiled output directly manipulates native signal nodes without virtual DOM diffing. When `unread` changes, only the exact text node that reads it updates.
 
 ### What runs again
 
-A value given to an element is set once; a binding follows what it reads. In Rust a binding is a closure (or a signal, a memo, a prop) given where a value goes. In TSX, the compiler decides for each expression in JSX: an expression changes when it **calls a function or reads a property** (outside nested functions), and everything else is set once:
+A value given to an element is set once; a binding follows what it reads. In Svelte, expressions inside template interpolations `{count}` or derived runes `$derived(...)` automatically track the signals they access. In Rust, a binding is a closure (or a signal, a memo, a prop) given where a value goes:
+
+```svelte tabs
+<p>{count}</p>
+<p>{title}</p>
+<p>{user.name}</p>
+<div class="transition-opacity {busy ? 'opacity-50' : 'opacity-100'}"></div>
+```
 
 ```rust tabs
 text(move || format!("{}", count.get()))     // follows count
@@ -184,61 +155,47 @@ text(label.clone())                          // a plain value: set once
 view().opacity(move || if busy.get() { 0.5_f32 } else { 1.0 })   // follows busy
 ```
 
-```tsx tabs
-<Text>{count()}</Text>              // follows count
-<Text>{props.title}</Text>          // follows the prop
-<Text>{user.name}</Text>            // re-read when something it depends on changes
-<Text>{label}</Text>                // a plain variable: set once
-<View style={{ opacity: busy() ? 0.5 : 1 }} />   // the style object is rebuilt when busy changes
-```
-
 A changing prop or child is a small native effect that sets that one prop or replaces that one child. Styles are diffed in Rust, so a style that changes only sends the properties that changed.
 
-Event handlers are set once: a closure in Rust, a function or a name in TSX (`onPress={() => …}`, `onPress={save}`). In TSX, other expressions are followed (`onPress={props.onPress}` follows the prop).
+Event handlers are set once: a function or closure in Svelte (`onclick={() => count++}`), a closure in Rust (`.on_press(move || count.update(|c| *c += 1))`).
 
 ### Props
 
-A Rust component's props are the fields of its `#[derive(Props)]` struct, each a `Prop<T>`: a value, or a binding the parent passed. Read one in a binding (`text(props.title)`, `move || props.title.get()`) to follow it; `props.title.get()` in the body reads it once. Fields with `#[prop(default)]` or `#[prop(default = …)]`, and `Option`s, are optional. The constructor starts every prop at its default, and a parent calls the setters of the ones it needs: `badge().label("New")`.
+In Svelte 5, props are declared with the `$props()` rune and can be cleanly destructured with default values:
 
-A TSX prop given a changing expression is passed as a getter: reading `props.title` calls it, which is what lets the JSX that reads it follow it. Static props are plain values. In both, props are read where they are used:
+```svelte tabs
+<!-- Title.svelte -->
+<script>
+  let { text = "Default Title" } = $props();
+</script>
+
+<p class="text-xl font-bold">{text}</p>
+```
 
 ```rust tabs
-// Wrong: reads the prop once, when the component runs.
+#[derive(Debug, Clone, PartialEq, Props)]
+pub struct TitleProps {
+    #[prop(default = SharedString::from("Default Title"))]
+    pub text: Prop<SharedString>,
+}
+
 #[component]
 fn Title(props: TitleProps) -> impl IntoElement {
-    let content = props.text.get();
-    text(content)
-}
-
-// Right: binds the text to the prop.
-#[component]
-fn Title(props: TitleProps) -> impl IntoElement {
-    text(props.text)
+    text(props.text).text_xl().font_weight(FontWeight::BOLD)
 }
 ```
 
-```tsx tabs
-// Wrong: reads the prop once, when the component runs.
-function Title(props: { text: string }) {
-  const { text } = props;
-  return <Text>{text}</Text>;
-}
+To derive formatted values from props, use `$derived`:
 
-// Right: reads it in JSX, which follows it.
-function Title(props: { text: string }) {
-  return <Text>{props.text}</Text>;
-}
+```svelte tabs
+<!-- Price.svelte -->
+<script>
+  let { cents } = $props();
+  let formatted = $derived(`$${(cents / 100).toFixed(2)}`);
+</script>
+
+<p class="font-mono">{formatted}</p>
 ```
-
-A TSX component that takes its props apart in its parameter, `function Title({ text }: …)`, reads them the same once, and the build warns of it with the props to read instead:
-
-```text
-warn App.tsx:3:16: Title takes its props apart (`{ text }`): each is read once, when Title runs, and does not follow changes; take `props` and read `props.text` where it is used (`split(props, [...])` to pass the rest on)
-```
-
-A prop the component wants only once, such as an id it starts with, is read in the body (`props.id.get_untracked()`, `const { id } = props;`), which says so.
-
-In TSX the same applies to default values: write `props.color ?? "#ddf4ff"` in the JSX rather than destructuring with a default. To compute something from props, use a closure or [`computed`](./reactivity.md#computed):
 
 ```rust tabs
 #[component]
@@ -248,23 +205,26 @@ fn Price(props: PriceProps) -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-function Price(props: { cents: number }) {
-  const formatted = () => `$${(props.cents / 100).toFixed(2)}`;
-  return <Text>{formatted()}</Text>;
-}
+### Children and Snippets
+
+What a parent places in a component arrives as `children` in Svelte 5, rendered using `{@render children?.()}`:
+
+```svelte tabs
+<!-- Card.svelte -->
+<script>
+  let { title, children } = $props();
+</script>
+
+<div class="p-3.5 rounded-xl bg-card border border-border gap-2">
+  <p class="font-semibold text-foreground">{title}</p>
+  {@render children?.()}
+</div>
 ```
-
-### Children
-
-What a parent places in a component arrives as its children: a `children: Prop<Children>` field in Rust, which the parent fills with `.child(..)`; `props.children` in TSX, a getter that builds those elements when read:
 
 ```rust tabs
 #[derive(Debug, Clone, PartialEq, Props)]
 pub struct CardProps {
-    /// The title.
     pub title: Prop<SharedString>,
-    /// The content.
     pub children: Prop<Children>,
 }
 
@@ -278,50 +238,49 @@ pub fn Card(props: CardProps) -> impl IntoElement {
         .child(text(props.title).font_weight(FontWeight::SEMIBOLD))
         .child(props.children)
 }
+```
 
+Used by a parent component:
+
+```svelte tabs
+<Card title="Account">
+  <p>Signed in as {user.name}</p>
+</Card>
+```
+
+```rust tabs
 card()
     .title("Account")
     .child(text(move || format!("Signed in as {}", user.get().name)))
 ```
 
-```tsx tabs
-function Card(props: { title: string; children?: JSX.Element }) {
-  return (
-    <View style={{ padding: 14, borderRadius: 12, backgroundColor: "#ffffff", gap: 8 }}>
-      <Text style={{ fontWeight: "600" }}>{props.title}</Text>
-      {props.children}
-    </View>
-  );
-}
+You can also define and pass named snippets in Svelte 5 with `{#snippet name(...)}`:
 
-<Card title="Account">
-  <Text>Signed in as {user().name}</Text>
-</Card>
-```
+```svelte tabs
+{#snippet row(index)}
+  <p class="py-1">Row {index}</p>
+{/snippet}
 
-In TSX, each read of `props.children` builds the children again (new native views): read it once, in the place where the children go. Among several children, one that changes (an `<If>`, an `<Each>`, `{cond() ? a : b}`) arrives as a function, and `{props.children}` updates that one alone: its siblings keep their views, an input its text and focus. Fragments (`<>…</>`) group elements without a view.
-
-Children can also be made by a function the component calls with arguments, a render callback:
-
-```rust tabs
-fn repeat<E: IntoElement>(times: usize, row: impl Fn(usize) -> E) -> impl IntoElement {
-    view().child((0..times).map(row))
-}
-
-repeat(3, |i| text(format!("Row {i}")))
-```
-
-```tsx tabs
-function Repeat(props: { times: number; children: (i: number) => JSX.Element }) {
-  return <View>{Array.from({ length: props.times }, (_, i) => props.children(i))}</View>;
-}
-
-<Repeat times={3}>{(i) => <Text>Row {i}</Text>}</Repeat>
+{#each Array(3) as _, i}
+  {@render row(i)}
+{/each}
 ```
 
 ## Control flow
 
-`when` and `each` in Rust, `<If>` and `<Each>` in TSX, are built-in control flow. They render no view of their own.
+In Svelte, control flow uses template syntax `{#if}` and `{#each}`. In Rust, `when` and `each` provide fine-grained signal-driven branching:
+
+```svelte tabs
+{#if user}
+  <p>Hello, {user.name}</p>
+{:else}
+  <p>Signed out</p>
+{/if}
+
+{#each todos as todo, index (todo.id)}
+  <p>{index + 1}. {todo.title}</p>
+{/each}
+```
 
 ```rust tabs
 when(move || user.get().is_some(), move || {
@@ -334,30 +293,33 @@ each(todos, |todo| todo.id, |todo, index| {
 })
 ```
 
-```tsx tabs
-<If when={user()} else={<Text>Signed out</Text>}>
-  {(u) => <Text>Hello, {u().name}</Text>}
-</If>
+- **`{#if}`** / **`when`** renders the active branch and updates only when condition boundaries flip.
+- **`{#each}`** / **`each`** renders a row per item, keyed by identity (`(todo.id)`). When list order changes, native views are efficiently reordered without tearing down DOM or native elements.
 
-<Each of={todos()} key={(t) => t.id}>
-  {(todo, index) => (
-    <Text>
-      {index() + 1}. {todo().title}
-    </Text>
-  )}
-</Each>
-```
-
-- **`when`** / **`<If>`** shows its branch while the condition holds, else the `otherwise` / `else` branch. It renders a branch again only when whether the condition holds changes, not every time the condition is re-evaluated. In TSX, a function child gets an accessor of `when`'s value, typed without `null` and `undefined`: `u()` is the user while the branch shows, and follows it when it changes.
-- **`each`** / **`<Each>`** renders a row per item, made by its row function. Rows are kept by key (Rust: the key function; TSX: `key`, by default the item itself, objects by identity and primitives by value): when the list changes, kept rows are moved rather than rebuilt, and new rows are made only for new keys. The row function receives **signals** of the item and its index (`todo.get()` and `index.get()` in Rust, `todo()` and `index()` in TSX), because a kept row's item and position can change. In TSX, `key="index"` (or `key={(item, i) => i}`) keeps rows by position instead: a list of strings that changes in place, such as text streamed in, keeps its rows and only their `item()` changes.
-
-A choice made in a closure (`dynamic(move || if busy.get() { … } else { … })` in Rust, a ternary or `&&` in TSX) builds its branch again every time anything it reads changes. Prefer `when` / `<If>` when a branch is more than a few elements.
-
-For long or infinite lists, use [`List`](./lists.md) (`virtual_list` in Rust): it creates views only for the rows on screen and recycles them. See [Control flow](../elements/control-flow.md) for the details.
+For large or infinite datasets, use [`<List>`](./lists.md) (`virtual_list` in Rust) to recycle native view cells.
 
 ## Refs
 
-A ref names a host element for imperative calls: `focus()`, `blur()`, `scroll_to()` / `scrollTo()`, `scroll_to_index()` / `scrollToIndex()`, `measure()` ([where a view is](./touch-and-gestures.md#where-a-view-is-measure)), ... In Rust, `element_ref()` makes one and `.element_ref(&handle)` puts it on an element; in TSX, `ref` gives you the element's ref, whose type is the element's own (`InputRef` here, `ViewRef` for a `View`; see [ref methods](../elements/index.md#ref-methods)):
+A ref names a host element for imperative calls: `focus()`, `blur()`, `scrollTo()`, `measure()` ([where a view is](./touch-and-gestures.md#where-a-view-is-measure)).
+
+In Svelte, use `bind:this={element}`. In Rust, `element_ref()` creates a handle:
+
+```svelte tabs
+<script>
+  let inputRef = $state();
+
+  function focusInput() {
+    inputRef?.focus();
+  }
+</script>
+
+<div class="gap-2">
+  <input bind:this={inputRef} placeholder="Search" class="border p-2 rounded" />
+  <button onclick={focusInput} class="bg-primary text-white p-2 rounded">
+    Focus
+  </button>
+</div>
+```
 
 ```rust tabs
 fn search() -> impl IntoElement {
@@ -368,106 +330,42 @@ fn search() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import type { InputRef } from "nsh";
-import { Text, View } from "nsh";
-import { Input } from "nsh/base";
-
-function Search() {
-  let input: InputRef | undefined;
-  return (
-    <View>
-      <Input ref={input} placeholder="Search" />
-      <View onPress={() => input?.focus()}>
-        <Text>Focus</Text>
-      </View>
-    </View>
-  );
-}
-```
-
-A Rust ref is a `Copy` handle; its calls go to the element that carries it, and do nothing once its owner is gone. In TSX, what `ref={…}` names receives the node:
-
-- a variable declared with `let` is assigned it;
-- a field (`ref={refs.input}`, `ref={refs[name]}`) is assigned it;
-- a [signal](./reactivity.md) is set to it, so what reads the signal follows it;
-- a function is called with it (`<Scroll ref={(node) => (scroller = node)} />`).
-
-A `const` or an import holds a signal or a function, as in `const input = signal<InputRef>()` with `<Input ref={input} />` and `input()?.focus()`; one holding anything else is reported when the element is made, with what to write.
-
-The ref is set when the element is created, before the component returns, so it is available in [effects](./reactivity.md#effect) and event handlers. Calls are sent to the view in order with the changes made before them. The base components and the Rust components of your own crate accept `ref` too (in Rust `component_ref()`, put on the element with `.component_ref(&r)`: `dialog().component_ref(&r)`).
+The ref is attached when the element is created and mounted into the native view hierarchy, so it is accessible in `$effect` runes and event handlers.
 
 ## Spreading props
 
-In Rust, a parent calls the setters of the props it needs and the rest keep their defaults, and a wrapper passes its own `Prop`s on as they are (`card().title(props.title)`): a `Prop` keeps following what it was given.
+In Svelte, props can be spread onto elements using `{...props}` or destructured cleanly in `$props()`:
 
-In TSX, spread an object of props onto an element or a component with `{...props}`. Getters stay getters, so spread props keep following what they read. To take some props for yourself and pass the rest on, use `split`:
+```svelte tabs
+<!-- Field.svelte -->
+<script>
+  let { label, ...restProps } = $props();
+</script>
 
-```tsx
-import { split, Text, View } from "nsh";
-import { Input, type InputProps } from "nsh/base";
-
-function Field(props: InputProps & { label: string }) {
-  const [own, rest] = split(props, ["label"]);
-  return (
-    <View style={{ gap: 4 }}>
-      <Text>{own.label}</Text>
-      <Input style={{ borderWidth: 1, borderRadius: 8, padding: 8 }} {...rest} />
-    </View>
-  );
-}
-
-<Field label="Email" value={email()} onChange={({ value }) => email.set(value)} keyboardType="email-address" />
+<div class="gap-1">
+  <p class="text-sm font-medium">{label}</p>
+  <input class="border rounded p-2" {...restProps} />
+</div>
 ```
 
-`split(props, keys)` returns `[picked, rest]`, both still reading through to the original props (destructuring `{ label, ...rest } = props` would read every prop once). Element props that come later in the JSX win over earlier ones.
-
-`<If>` and `<Each>` take no spread props, and spread children (`{...items}`) are not supported: use `<Each>` or an array expression.
-
-## Tags and names
-
-A Rust element is whatever the code calls: a primitive's function, a component's constructor (`badge()`, `nsh_base::button()`), or a function of your own. A TSX tag names a binding in scope, as usual: `<Badge />`, `<Theme.Provider>`, a `<Button>` of your own. A tag that names nothing in scope is a build error, except `<If>` and `<Each>`, which are globals.
-
-```rust tabs
-/// The app's button: a press target styled by the app.
-fn primary_button(title: &'static str, on_press: impl Fn() + 'static) -> impl IntoElement {
-    view()
-        .role(AccessibilityRole::Button)
-        .rounded_lg()
-        .bg(rgb(0x2563eb))
-        .px_5()
-        .py_3()
-        .active(|s| s.opacity(0.6))
-        .on_press(on_press)
-        .child(text(title).text_base().font_weight(FontWeight::SEMIBOLD).text_color(white()))
-}
-
-primary_button("Save", save)
+```svelte tabs
+<Field label="Email" type="email" placeholder="you@example.com" />
 ```
-
-```tsx tabs
-import { Text, View } from "nsh";
-
-function Button(props: { title: string; onPress: () => void }) {
-  return (
-    <View onPress={props.onPress} activeStyle={{ opacity: 0.6 }} role="button" class="rounded-lg bg-blue-600 px-5 py-3">
-      <Text class="text-base font-semibold text-white">{props.title}</Text>
-    </View>
-  );
-}
-
-<Button title="Save" onPress={save} />
-```
-
-`nsh_base`'s `Button` (`button()` in Rust, `<Button>` from `nsh/base`) is the unstyled press target with the disabled and selected states and their accessibility; the app gives it its look: `button().disabled(move || saving.get()).on_press(move || save()).px_4().active(|s| s.opacity(0.6)).child(text("Save"))`.
-
-In TSX, your bindings win over the globals: a component named `Each` in scope makes `<Each>` that component. A primitive is recognized by its import, so `import { View as Box } from "nsh"` makes `<Box>` a view, and a component of your own named `Text` is just your component. The primitives are real components too: `const Tag = inline ? Text : View;` and then `<Tag>…</Tag>` works.
-
-Components are typed by their own declarations: Rust's props structs are checked by the compiler, and TypeScript checks a TSX component's props wherever it is used, with nothing to generate. A Rust component a TSX entry imports gets TypeScript declarations generated from its struct.
 
 ## Mounting and the root
 
-A Rust app's root is the component `nsh.json`'s `"root"` names; `nsh run` and `nsh package` mount it. A TSX entry calls `mount(App)` to render the root component (`mount(App, props)` passes it props). The root view fills the surface (the window, or the view an app embeds NSH in). Give the root `flex: 1` so it fills the screen, and a background color: the surface's own background depends on the platform.
+In SvelteKit or standalone NativeSvelte apps, the root component is typically `src/routes/+page.svelte` or `App.svelte`:
+
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import Home from "./Home.svelte";
+</script>
+
+<div class="flex-1 bg-background text-foreground">
+  <Home />
+</div>
+```
 
 ```rust tabs
 // nsh.json: { "rust": ".", "root": "App" }
@@ -480,17 +378,11 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-mount(() => (
-  <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
-    <App />
-  </View>
-));
-```
+Give the root `flex-1` so it fills the screen, and a background color: the surface's own background depends on the platform.
 
 ## Related
 
-- [Reactivity](./reactivity.md): signals, effects, context.
+- [Reactivity](./reactivity.md): Svelte 5 runes, signals, effects, context.
 - [Elements](../elements/index.md): every host element and its props.
 - [Styling](./styling.md) and [Tailwind](./tailwind.md): the look of your components.
-- [Building with Rust](./rust.md): Rust apps, components in your app's own crate, and TSX on top.
+- [Building with Rust](./rust.md): Rust apps and native extensions.

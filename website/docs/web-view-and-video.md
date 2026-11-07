@@ -45,14 +45,12 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, WebView } from "nsh";
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+</script>
 
-function App() {
-  return <WebView src="https://en.m.wikipedia.org/wiki/Swift_(programming_language)" style={{ flex: 1 }} />;
-}
-
-mount(App);
+<WebView src="https://en.m.wikipedia.org/wiki/Swift_(programming_language)" class="flex-1" />
 ```
 
 ### Sources
@@ -148,39 +146,46 @@ pub fn browser() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, View, WebView, type WebViewNavigation, type WebViewRef } from "nsh";
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+  import type { WebViewNavigation, WebViewRef } from "nsh";
 
-function Browser() {
-  let web!: WebViewRef;
-  const nav = signal<WebViewNavigation | null>(null);
-  const button = (label: string, enabled: boolean, action: () => void) => (
-    <Text onPress={enabled ? action : undefined} style={{ padding: 12, color: enabled ? "#0969da" : "#8c959f" }}>
-      {label}
-    </Text>
-  );
-  return (
-    <View style={{ flex: 1, paddingTop: 50 }}>
-      <Text style={{ numberOfLines: 1, paddingHorizontal: 12, color: "#57606a" }}>
-        {nav()?.loading ? "Loading…" : nav()?.title ?? ""}
-      </Text>
-      <WebView
-        ref={web}
-        src="https://developer.mozilla.org/"
-        style={{ flex: 1 }}
-        onNavigationStateChange={(n) => nav.set(n)}
-        ios={{ allowsBackForwardNavigationGestures: true }}
-      />
-      <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
-        {button("Back", !!nav()?.canGoBack, () => web.goBack())}
-        {button("Forward", !!nav()?.canGoForward, () => web.goForward())}
-        {button("Reload", true, () => web.reload())}
-      </View>
-    </View>
-  );
-}
+  let web: WebViewRef | undefined = $state();
+  let nav = $state<WebViewNavigation | null>(null);
+</script>
 
-mount(Browser);
+<div class="flex-1 pt-[50px]">
+  <span class="truncate px-3 text-[#57606a]">
+    {nav?.loading ? "Loading…" : (nav?.title ?? "")}
+  </span>
+  <WebView
+    bind:this={web}
+    src="https://developer.mozilla.org/"
+    class="flex-1"
+    onnavigationstatechange={(n) => (nav = n)}
+    ios={{ allowsBackForwardNavigationGestures: true }}
+  />
+  <div class="flex-row justify-around">
+    <button
+      disabled={!nav?.canGoBack}
+      onclick={() => web?.goBack()}
+      class="p-3 text-[#0969da] disabled:text-[#8c959f]"
+    >
+      Back
+    </button>
+    <button
+      disabled={!nav?.canGoForward}
+      onclick={() => web?.goForward()}
+      class="p-3 text-[#0969da] disabled:text-[#8c959f]"
+    >
+      Forward
+    </button>
+    <button onclick={() => web?.reload()} class="p-3 text-[#0969da]">
+      Reload
+    </button>
+  </div>
+</div>
 ```
 
 ### Messaging between the page and the app
@@ -231,10 +236,12 @@ pub fn App() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, View, WebView, type WebViewRef } from "nsh";
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+  import type { WebViewRef } from "nsh";
 
-const page = `<!doctype html>
+  const page = `<!doctype html>
 <html><head><meta name="viewport" content="width=device-width"></head>
 <body style="font-family: -apple-system, sans-serif; margin: 16px">
   <button onclick="window.nsh.postMessage(JSON.stringify({ type: 'hello', at: Date.now() }))">
@@ -248,26 +255,22 @@ const page = `<!doctype html>
   </script>
 </body></html>`;
 
-function App() {
-  let web!: WebViewRef;
-  const last = signal("");
-  return (
-    <View style={{ flex: 1, paddingTop: 50, gap: 12 }}>
-      <WebView
-        ref={web}
-        html={page}
-        style={{ height: 240 }}
-        onMessage={(e) => last.set(JSON.parse(e.data).type)}
-      />
-      <Text onPress={() => web.postMessage("hi from nsh")} style={{ padding: 16, color: "#0969da" }}>
-        Post to the page
-      </Text>
-      <Text style={{ paddingHorizontal: 16 }}>Last message: {last()}</Text>
-    </View>
-  );
-}
+  let web: WebViewRef | undefined = $state();
+  let last = $state("");
+</script>
 
-mount(App);
+<div class="flex-1 pt-[50px] gap-3">
+  <WebView
+    bind:this={web}
+    html={page}
+    class="h-60"
+    onmessage={(e) => (last = JSON.parse(e.data).type)}
+  />
+  <button onclick={() => web?.postMessage("hi from NativeSvelte")} class="p-4 text-[#0969da]">
+    Post to the page
+  </button>
+  <span class="px-4">Last message: {last}</span>
+</div>
 ```
 
 The ref's `inject_java_script` (`injectJavaScript(script)`) runs code in the current page at any time; `injected_java_script` and `injected_java_script_before_content` (`injectedJavaScript`, `injectedJavaScriptBeforeContentLoaded`) run on every page load, before or after the page's own scripts, which is the place to install hooks:
@@ -279,12 +282,12 @@ web_view("https://example.com")
     .on_message(|title: &str| log::info!("title {title}"))
 ```
 
-```tsx tabs
+```svelte tabs
 <WebView
   src="https://example.com"
   injectedJavaScriptBeforeContentLoaded={`window.isNativeApp = true;`}
   injectedJavaScript={`window.nsh.postMessage(document.title);`}
-  onMessage={(e) => console.log("title", e.data)}
+  onmessage={(e) => console.log("title", e.data)}
 />
 ```
 
@@ -303,7 +306,7 @@ fn open(web: &ElementRef, token: &str) {
 }
 ```
 
-```tsx tabs
+```ts tabs
 web.load({ src: "https://docs.example.com/", headers: { Authorization: `Bearer ${token}` } });
 ```
 
@@ -335,7 +338,7 @@ fn search(web: &ElementRef) {
 }
 ```
 
-```tsx tabs
+```ts tabs
 web.sendInput({ type: "click", x: 120, y: 40 });
 setTimeout(() => {
   web.sendInput({ type: "text", text: "espresso" });
@@ -358,11 +361,13 @@ let input = signal(false);
 spawn(async move { input.set(web_input_available().await) });
 ```
 
-```tsx tabs
-import { signal, WebView } from "nsh";
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
 
-const input = signal(false);
-WebView.inputAvailable().then((available) => input.set(available));
+  let input = $state(false);
+  WebView.inputAvailable().then((available) => (input = available));
+</script>
 ```
 
 ### Website data
@@ -376,8 +381,8 @@ memory and gone with the web view.
 web_view("https://example.com/preview").incognito(true).flex_1()
 ```
 
-```tsx tabs
-<WebView src="https://example.com/preview" incognito style={{ flex: 1 }} />
+```svelte tabs
+<WebView src="https://example.com/preview" incognito class="flex-1" />
 ```
 
 `incognito` is read when the web view is made, so it takes a value in Rust; a later change in TSX keeps the store the
@@ -452,38 +457,36 @@ pub fn player() -> impl IntoElement {
 }
 ```
 
-```tsx tabs
-import { mount, signal, Text, Video, type VideoRef, View } from "nsh";
+```svelte tabs
+<script>
+  import { Video } from "nsh";
+  import type { VideoRef } from "nsh";
 
-function Player() {
-  let video!: VideoRef;
-  const paused = signal(true);
-  const time = signal("");
-  return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 16, gap: 12 }}>
-      <Video
-        ref={video}
-        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-        paused={paused()}
-        repeat
-        style={{ height: 220, borderRadius: 12, overflow: "hidden", backgroundColor: "#000000" }}
-        onProgress={(e) => time.set(`${e.currentTime.toFixed(1)} / ${e.duration.toFixed(1)} s`)}
-        onEnd={() => paused.set(true)}
-      />
-      <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
-        <Text onPress={() => paused.set(!paused())} style={{ color: "#0969da", fontWeight: "600" }}>
-          {paused() ? "Play" : "Pause"}
-        </Text>
-        <Text onPress={() => video.seek(0)} style={{ color: "#0969da" }}>
-          Restart
-        </Text>
-        <Text style={{ color: "#57606a" }}>{time()}</Text>
-      </View>
-    </View>
-  );
-}
+  let video: VideoRef | undefined = $state();
+  let paused = $state(true);
+  let time = $state("");
+</script>
 
-mount(Player);
+<div class="flex-1 justify-center p-4 gap-3">
+  <Video
+    bind:this={video}
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    {paused}
+    repeat
+    class="h-[220px] rounded-xl overflow-hidden bg-black"
+    onprogress={(e) => (time = `${e.currentTime.toFixed(1)} / ${e.duration.toFixed(1)} s`)}
+    onend={() => (paused = true)}
+  />
+  <div class="flex-row gap-4 items-center">
+    <button onclick={() => (paused = !paused)} class="text-[#0969da] font-semibold">
+      {paused ? "Play" : "Pause"}
+    </button>
+    <button onclick={() => video?.seek(0)} class="text-[#0969da]">
+      Restart
+    </button>
+    <span class="text-[#57606a]">{time}</span>
+  </div>
+</div>
 ```
 
 Playback is controlled by props: set `paused`, `muted`, `volume` and `rate` from signals and the player follows. The ref has `seek(seconds)`.
@@ -530,18 +533,18 @@ view()
     )
 ```
 
-```tsx tabs
-<View style={{ height: 220 }}>
-  <Video src={url} paused={paused()} style={{ flex: 1 }} />
-  <View
-    onPress={() => paused.set(!paused())}
-    style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}
+```svelte tabs
+<div class="h-[220px] relative">
+  <Video src={url} {paused} class="flex-1" />
+  <button
+    onclick={() => (paused = !paused)}
+    class="absolute inset-0 items-center justify-center"
   >
-    <If when={paused()}>
-      <Text style={{ fontSize: 48, color: "#ffffff" }}>▶</Text>
-    </If>
-  </View>
-</View>
+    {#if paused}
+      <span class="text-5xl text-white">▶</span>
+    {/if}
+  </button>
+</div>
 ```
 
 Video sources are network requests: with declared capabilities, the video's host must be allowed under `network` in `nsh.json`, as for `fetch` and remote images. A refused source shows nothing, and the refusal is logged once with the key to add.

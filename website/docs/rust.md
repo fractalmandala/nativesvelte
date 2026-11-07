@@ -307,26 +307,24 @@ impl Portfolio {
 }
 ```
 
-```tsx
-import { mount, signal, View, Text } from "nsh";
-import { Chart, Ledger, Portfolio } from "app/native";   // Rust
+```svelte
+<script>
+  import { Chart, Ledger, Portfolio } from "app/native"; // Rust
 
-const ledger = new Ledger();   // its state lives in Rust
+  const ledger = new Ledger(); // its state lives in Rust
+  let balance = $state(ledger.add(Portfolio.total())); // Rust, called at once
+</script>
 
-function Overview() {
-  const balance = signal(ledger.add(Portfolio.total()));   // Rust, called at once
-  return (
-    <View class="gap-2 p-4">
-      <Text>Balance: {balance()}</Text>
-      <Chart symbol="NSH" range="1M" onSelect={(e) => balance.set(ledger.add(e.price))} />
-      <View onPress={() => ledger.upload("https://example.com/ledger")} role="button" class="rounded-lg bg-blue-600 px-4 py-2 active:bg-blue-700">
-        <Text class="text-white">Upload</Text>
-      </View>
-    </View>
-  );
-}
-
-mount(() => <Overview />);
+<div class="gap-2 p-4">
+  <span>Balance: {balance}</span>
+  <Chart symbol="NSH" range="1M" onSelect={(e) => (balance = ledger.add(e.price))} />
+  <button
+    onclick={() => ledger.upload("https://example.com/ledger")}
+    class="rounded-lg bg-blue-600 px-4 py-2 active:bg-blue-700"
+  >
+    <span class="text-white">Upload</span>
+  </button>
+</div>
 ```
 
 Each export is documented in TypeScript by the doc comment of the Rust item that names it: a component by its
@@ -432,12 +430,12 @@ pub fn Quote(props: QuoteProps) -> impl IntoElement {
 }
 ```
 
-```tsx
-<Quote
-  symbol="NSH"
-  symbolClass="text-lg font-semibold"
-  renderBadge={(symbol) => <Text class="text-green-600">{`${symbol} ▲ 2.4%`}</Text>}
-/>
+```svelte
+<Quote symbol="NSH" symbolClass="text-lg font-semibold">
+  {#snippet renderBadge(symbol)}
+    <span class="text-green-600">{symbol} ▲ 2.4%</span>
+  {/snippet}
+</Quote>
 ```
 
 `TextView` in `nsh/base` is built this way: its `renderCodeBlock`, `renderMath`, ... are render functions, and its
@@ -476,8 +474,8 @@ fn a_tap_counts() {
 }
 ```
 
-```tsx tabs
-// App.test.tsx, next to nsh.json: nsh test
+```ts tabs
+// App.test.ts, next to nsh.json: nsh test
 import { expect, open, test } from "nsh/test";
 
 test("a tap counts", async () => {
@@ -602,7 +600,7 @@ paths, and each crate in it has its own `#[native_module]` function.
 }
 ```
 
-```tsx
+```ts
 import { Chart } from "app/charts";        // native/charts: #[native_module("app/charts")]
 import { Store } from "app/storage";       // native/storage: #[native_module("app/storage")]
 ```
