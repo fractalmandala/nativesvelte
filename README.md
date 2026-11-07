@@ -77,6 +77,35 @@ irm https://nativesvelte.dev/install.ps1 | iex
 
 </details>
 
+### Website Dev
+
+Navigate to the website directory and run:
+
+```bash
+bun run dev
+```
+
+bun run dev kills any lingering dev servers, prepares dependencies, and launches vite dev with live HMR (Hot Module Replacement). If you want to bypass the background wasm demo player build check and boot Vite immediately:
+
+```bash
+bunx vite dev
+```
+
+To automatically open it in your default browser:
+
+```bash
+bunx vite dev --open
+```
+
+To preview the fully-prerendered production build with static pages and the Pagefind search index:
+
+```bash
+bun run build
+bun run preview
+```
+
+This serves the output from website/dist/ at http://localhost:4173.
+
 Choose how to write your app:
 
 | | Svelte 5 (Default) | SvelteKit | TSX | Rust |
@@ -172,6 +201,7 @@ Logs and errors show in the terminal. What each platform needs:
 
 | Example | What it shows |
 |---|---|
+| [`examples/sveltebench`](examples/sveltebench) | Flagship developer workbench & IDE in Svelte 5: multi-pane docking workspace, reactive AST diff viewer, interactive live component preview, agent copilot panel, terminal dock, and real-time telemetry (28 MB RAM, 120 FPS) |
 | [`examples/counter-svelte`](examples/counter-svelte) | Svelte 5 counter app: runes (`$state`), Tailwind utility classes, and direct native view compilation |
 | [`examples/tasks-svelte`](examples/tasks-svelte) | Complete task manager in pure Svelte 5: runes (`$state`, `$derived`, `$props`), `bind:value`, navigation, dialogs, and native list recycling |
 | [`examples/components-svelte`](examples/components-svelte) | Reusable Svelte 5 component suite: custom Button, Card, Badge, Switch, TextInput, and Segmented controls with `$props()`, `$state()`, slots, and reactivity |
