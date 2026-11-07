@@ -1,12 +1,12 @@
 # AGENTS.md
 
-Native Shell (NSH for short in prose; crates, the CLI, the JS module and Java package all use `nsh`) is designed for
-AI-generated, dynamically delivered native UI: native apps embed it (`NshAppView` on iOS, `NshView` on Android,
-`AppView` on macOS, Windows and Linux) and load TSX modules at run time — signed, sandboxed by the host, rendered with
-each platform's own UI. Embedding comes first; plugins for native apps and standalone apps use the same machinery.
+NativeSvelte (forked from and extending NativeShell / NSH; CLI and packages use `nsh`) is designed for
+high-performance, modern native apps written in Svelte 5 (`.svelte`), SvelteKit, TSX, and Rust. Native apps embed it (`NshAppView` on iOS, `NshView` on Android,
+`AppView` on macOS, Windows and Linux) and load Svelte / TSX modules at run time — signed, sandboxed by the host, rendered with
+each platform's own UI with zero virtual DOM. Embedding comes first; plugins for native apps and standalone apps use the same machinery.
 Module code runs in QuickJS (on the web, the browser's own JavaScript engine) on a native runtime (the reactive graph,
 the renderer and every module apps import are Rust); layout uses Taffy; embedding native components such as maps or
-web views has no layering problems. The
+web views has no layering problems. Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) compile directly into fine-grained native signals and platform view operations. The
 toolchain is pure Rust and does not need Node.js; app developers get a prebuilt distribution (`cargo xtask dist`) and
 never need Rust either. Every platform has a native backend: iOS with UIKit views (`nsh-platform-ios`), Android with
 Android views (`nsh-platform-android`), macOS with AppKit views (`nsh-platform-macos`), Windows in Win32 windows drawn
@@ -14,7 +14,7 @@ with Direct2D (`nsh-platform-windows`), Linux with GTK 4 widgets (`nsh-platform-
 backend for standalone apps (AppKit, Win32, GTK 4); the GPUI backend (`nsh-platform-gpui`) draws on macOS, Windows and
 Linux and is the backend for embedding in GPUI / GPUI Kit apps; the web platform
 (`nsh-platform-web`) renders apps as HTML in a browser page, and `nsh package --target web` publishes them as static
-sites. NSH is layered as GPUI Kit is: `nsh-core` is NSH's `gpui` (primitives, layout, rendering), `nsh-base` its
+sites. NativeSvelte is layered as GPUI Kit is: `nsh-core` is NSH's `gpui` (primitives, layout, rendering), `nsh-base` its
 `gpui-base` (unstyled base components: behavior, state, focus, accessibility, no look); a styled component library,
 NSH's `gpui-component`, is never part of NSH: apps and the community build theirs on `nsh-base`, or customize the UI
 in the app itself.
@@ -83,11 +83,12 @@ crates/
                        wgpu offscreen, read back asynchronously, never blocking the main thread; docs/dev/shaders.md)
   nsh-package/         Signed packages (`.nshpkg`): Ed25519 keys, release-key certificates, revocation lists, the trust store
   nsh-updater/          App self-update: manifests and their signatures, verified downloads, replacing the installed app on the desktop (docs/dev/updater.md); `nsh-core`'s `runtime/updater.rs` is its JS face, `nsh/updater`
-  nsh-bundler/         Bundler: rolldown + Oxc (TS stripping) + NSH's JSX compiler (`jsx.rs`, docs/dev/native-pipeline.md) + source maps;
-                       imports of the native modules stay imports (`plugin.rs`), so a bundle holds only the app's code;
+  nsh-bundler/         Bundler: rolldown + Oxc (TS stripping) + NSH's JSX compiler (`jsx.rs`, docs/dev/native-pipeline.md) +
+                       Svelte 5 compiler pipeline (`svelte/`: `template.rs` for Svelte component AST parsing, `runes.rs` for rewriting Svelte 5 runes `$state`, `$derived`, `$effect`, `$props`, `$inspect` to native signals with deep proxy tracking, `lower.rs` for lowering Svelte AST into native view primitives and `nsh:rt` ops with text grouping & top-level import hoisting, and `kit.rs` for SvelteKit file-based route resolution `src/routes/**/+page.svelte` and `+layout.svelte`, client `load()`, `$app/navigation`, `$app/stores`) + source maps;
+                       imports of the native modules stay imports (`plugin.rs`, with virtual modules for `svelte`, `$app/navigation`, `$app/stores`), so a bundle holds only the app's code;
                        the app's themes (nsh.json `tailwind` / `theme`, checked, handed to the renderer by the entry) and the
                        unknown-class check (`classes.rs`); the warning of components taking their props apart (`props.rs`);
-                       development bundles with hot module replacement (`hot.rs`); the bundler's part of `.nsh/types`
+                       development bundles with state-preserving hot module replacement (`hot.rs`: signals, state, proxies); the bundler's part of `.nsh/types`
                        (`types.rs`: asset imports); feature `bundle` (default off in the workspace; the CLI turns it on) is
                        all of that, without it only `compile_module` (`compile.rs`: one module, no rolldown) is left, which
                        also builds for WebAssembly (the website's playground)
@@ -146,7 +147,7 @@ crates/
                        show it; connects to a dev server or runs a bundle
   nsh-ios-host/        Development host app (Catalyst / iOS simulator); connects to a dev server or runs a local bundle
   nsh-ios-app/         Release runner: the executable of iOS apps built by `nsh package`
-  nsh-cli/             The `nsh` command line (a binary): init / build / test / check / dev / run / package; keygen /
+  nsh-cli/             The `nsh` command line (a binary): init (templates: `svelte`, `sveltekit`, `ts`, `rust`, `mixed`) / build / test / check / dev / run / package; entry resolution (discovers `App.svelte`, `src/routes/+page.svelte`, `App.tsx`); keygen /
                        certify / publish / verify / revoke; apps with Rust components of their own (`rust_app.rs`: each crate
                        nsh.json `"rust"` names, one or a list, has a `#[native_module("…")]` fn; a generated workspace in `.nsh/rust`
                        with a `describe` program, which prints the sets as data for the CLI to bundle, compile and declare with, the
@@ -160,13 +161,12 @@ crates/
                        `compat record <version>`: records a release there)
 tests/compat/         The apps whose scripts check the API apps use (`nsh-compat` builds and runs them): `cases/<domain>/` (one app per
                       domain, a module per case, `script.txt`), `examples/<app>.txt` (the scripts of examples)
-skills/               The skills for coding agents that build apps with NSH (`npx skills add longbridge/nsh`): `skills/nsh`, `skills/nsh-design-guides`;
-                      their guides are verbatim copies of `website/docs/`, their recipes of `examples/tasks-rs` and `examples/tasks`, and `website/tests/skills.test.ts`
-                      fails when a copy differs: after changing one, copy it (`cp website/docs/coding-guides.md skills/nsh/references/`)
-docs/                 Documentation; `docs/dev/`: for developers of nsh (architecture, internals, decisions, pitfalls)
+skills/               The skills for coding agents that build apps with NativeSvelte (`npx skills add nativesvelte/nsh`): `skills/nsh`, `skills/nsh-design-guides`;
+                      their guides are copies of `website/docs/`, their recipes of `examples/tasks-rs`, `examples/tasks`, and `examples/counter-svelte`
+docs/                 Documentation; `docs/dev/`: for developers of NativeSvelte (architecture, internals, Svelte compiler pipeline, decisions, pitfalls)
 website/              The documentation site (Astro; guides, element / component / API reference in English and zh-CN) and its
                       runnable demos (`website/demos/*.tsx`, live on the site through the WebAssembly runtime); see its README
-examples/             Example apps (gallery: a demo index, one module per demo, `tests/` the reference for `nsh test` (storage,
+examples/             Example apps (counter-svelte: Svelte 5 runes counter; gallery: a demo index, one module per demo, `tests/` the reference for `nsh test` (storage,
                       inputs, a long list, stubbed requests, dark mode, a manual clock); gallery-rs: the same in Rust, the app's crate in `native/`,
                       TypeScript tests of its root (`*.test.tsx`, about a demo each); rust-exports: a TSX app using one of each export of its crate, the reference
                       for exporting components, modules and classes and registering native components, with Rust and TypeScript tests of the TSX entry; counter,
@@ -200,7 +200,7 @@ are never linked into the CLI: it reads their UI sets as data (`nsh_core::elemen
 | Changing | Read |
 |---|---|
 | threads, the JS → native data flow, text pipeline | `docs/dev/architecture.md` |
-| how apps are compiled and run: the JSX compiler, the renderer | `docs/dev/native-pipeline.md` |
+| how apps are compiled and run: Svelte 5 runes compiler, SvelteKit routing, JSX compiler, the renderer | `docs/dev/native-pipeline.md` |
 | the native modules, where a new API goes, platform props | `docs/dev/js-modules.md` |
 | API names: anything apps use, its props, events, slots and parts | `docs/dev/api-naming.md` |
 | elements, touch, accessibility, the environment | `docs/dev/elements.md`, `text.md` |
@@ -263,7 +263,7 @@ cargo run -- accordion [--section settings]                                     
 NSH_GALLERY_DEMO=accordion NSH_GALLERY_SECTION=settings ./target/debug/nsh test examples/gallery/App.tsx --target linux   # the same under nsh test (steps on stdin)
 cargo xtask [<app>] [--target catalyst|ios|android|gpui] [-v]                      # the same without cargo's own two lines; -v (any nsh / xtask command): all output
 cargo build -p nsh-cli                                                             # build the nsh CLI
-./target/debug/nsh init my-app --template ts|rust|mixed                            # new app: TSX, Rust (a Cargo project, "root"), or TSX that is also a crate ("rust": "."); asks on a terminal without --template
+./target/debug/nsh init my-app --template svelte|sveltekit|ts|rust|mixed                            # new app: Svelte 5, SvelteKit, TSX, Rust (a Cargo project, "root"), or TSX that is also a crate ("rust": "."); asks on a terminal without --template
 cargo build -p nsh-ios-host --target aarch64-apple-ios-macabi                          # the Catalyst development host (nsh run builds it in a checkout)
 cargo build -p nsh-ios-host --target aarch64-apple-ios-sim                             # the iOS simulator host (`nsh run --target ios`)
 cargo build -p nsh-ios-app --target aarch64-apple-ios-sim                              # the release runner (`nsh package --target ios-simulator`)

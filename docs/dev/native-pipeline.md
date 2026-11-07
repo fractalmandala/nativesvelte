@@ -1,21 +1,28 @@
-# How apps are compiled and run: NSH's JSX compiler and native modules
+# How apps are compiled and run: Svelte 5, SvelteKit, JSX and native modules
 
-An app is TSX importing NSH's modules. The bundler compiles each module with NSH's JSX compiler and rolldown bundles
-them into one ES module holding only the app's code (split into chunks loaded on demand for the web: "Split bundles"): imports of NSH's modules stay imports, and `nsh-js` serves them
-natively. The reactive graph, the renderer and every API apps import are Rust; nothing of NSH is JS. Apps cannot
-import `solid-js` (the bundler refuses it, pointing to `nsh`'s `signal` / `computed` / `effect` / ...), nor a module named as
-NSH's that NSH does not have (`nsh/list`: the bundler refuses it, naming NSH's modules). It also refuses a named import a
-native module does not export, as the names `nsh-js` serves say (`native_module_exports`), when the code uses it as a
-value (types need no `type` keyword), with the place in the source and the closest export's name. Since those imports
-stay in the output, the bundle also says what the app uses of each native module (`Bundle::native_use`, `natives.rs`):
-the exports it imports by name across every chunk, every export for a namespace import, `export * from` or an
-`import()` of one, and whether it may use the globals of `crypto` (`nsh_core::js::CRYPTO_GLOBALS`: `crypto`,
-`Crypto`, `SubtleCrypto`, `CryptoKey`): it spells one of their names (a variable, a member, a key it destructures, a
-string), reads a computed member of `globalThis`, or destructures it with a computed key or a rest element. The global
-object under another name, read by a name made at run time (`const g = globalThis; g[name]`), is beyond it.
-`nsh package --target web` serves the app with a runtime that has what it uses (`web.md`).
+An app in NativeSvelte can be written in **Svelte 5** (`.svelte`), **SvelteKit** (`src/routes/**`), **TSX** (`.tsx`), or native **Rust**.
+The bundler compiles Svelte components with the Svelte 5 native pipeline (`crates/nsh-bundler/src/svelte/`) or JSX modules with the JSX compiler (`jsx.rs`),
+and rolldown bundles them into one ES module holding only the app's code. Imports of NativeSvelte's modules stay imports, and `nsh-js` serves them natively.
+The reactive graph, the renderer and every API apps import are Rust; nothing of the core engine is JS.
+
+```svelte
+<!-- Svelte 5: App.svelte -->
+<script>
+  let count = $state(0);
+</script>
+
+<div class="flex-1 items-center justify-center gap-4 bg-background" onclick={() => count++}>
+  <p class="text-2xl font-bold text-foreground">Taps: {count}</p>
+  {#if count > 2}
+    <p class="text-sm text-muted-foreground">done</p>
+  {:else}
+    <p class="text-sm text-muted-foreground">keep going</p>
+  {/if}
+</div>
+```
 
 ```tsx
+// TSX: App.tsx
 import { computed, mount, signal, Text, View } from "nsh";
 
 function Counter(props: { label: string }) {
@@ -32,6 +39,40 @@ function Counter(props: { label: string }) {
 
 mount(() => <Counter label="Taps" />);
 ```
+
+## Svelte 5 and SvelteKit compiler (`crates/nsh-bundler/src/svelte/`)
+
+The Svelte compiler in `nsh-bundler` turns `.svelte` single-file components and SvelteKit route files directly into native signals and UI primitives with zero virtual DOM overhead:
+
+1. **Parser (`template.rs`)**:
+   Parses `<script>`, `<style>`, and template markup into an abstract syntax tree. Handles HTML tags, self-closing/void tags, `{expression}` interpolations, control flow blocks (`{#if ...} {:else if ...} {:else}`, `{#each ...}`), and snippets (`{#snippet name(args)}`, `{@render snippet()}`).
+2. **Runes lowering (`runes.rs`)**:
+   Rewrites Svelte 5 runes into NativeSvelte reactive primitives:
+   - `$state(init)`: Compiles to an observable signal (`__nsh_signal`) with recursive deep proxy tracking for arrays and objects (`__nsh_proxy`), so in-place mutations like `arr.push(...)` and `obj.count++` notify dependents automatically.
+   - `$state.raw(init)`: Compiles to a shallow non-proxied reactive signal.
+   - `$derived(expr)`: Rewrites to a computed signal memo.
+   - `$effect(() => { ... })`: Rewrites to a reactive effect that re-runs when tracked dependencies change.
+   - `$props()`: Lowers component props from the incoming `__props` parameter, with default value destructuring.
+   - `$inspect(...)`: Debug helper lowering to console inspection effects.
+   - `$state.snapshot(x)`: Unwraps reactive proxies to plain JS values.
+3. **Template lowering to native views (`lower.rs`)**:
+   Lowers Svelte elements and directives into native NSH primitives:
+   - `div`, `section`, `nav`, `main` $\to$ `<View>`
+   - `p`, `span`, `h1`-`h6`, `label` $\to$ `<Text>`
+   - `input`, `textarea` $\to$ `<Input>`
+   - `img` $\to$ `<Image>`
+   - Bare text and expressions are automatically grouped inside `<Text>` to preserve native text engine constraints.
+   - Event directives (`onclick`, `on:click`, `onsubmit`, `onkeydown`) map to `onPress`, `onSubmit`, `onKeyDown`.
+   - Two-way bindings (`bind:value={x}`) lower to `value={x}` plus updater event handlers.
+   - `<script>` imports are hoisted using Oxc AST analysis to the module's top level, ensuring standard ES module scoping.
+4. **SvelteKit file-based router (`kit.rs`)**:
+   Scans `src/routes/**` and automatically generates a nested routing tree:
+   - Discovers `+layout.svelte`, `+page.svelte`, and client `load({ params, url })` functions in `+page.ts` / `+page.js`.
+   - Supports nested layout chains, dynamic route params `[slug]`, and optional catch-alls.
+   - Injects virtual modules for `$app/navigation` (`goto`, `invalidate`) and `$app/stores` (`page`, `navigating`).
+5. **State-Preserving HMR (`hot.rs`)**:
+   Registers `"__nsh_state"`, `"__nsh_signal"`, and `"__nsh_proxy"` in the hot replacement engine's kept variables list so component state survives live code edits without resetting.
+
 
 ## Modules
 

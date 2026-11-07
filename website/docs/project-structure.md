@@ -25,6 +25,39 @@ my-app/
 └── target/            Cargo's build directory
 ```
 
+A Svelte app is an `App.svelte` entry (or `src/routes/+page.svelte` in SvelteKit) and the components it imports:
+
+```text
+my-app/
+├── App.svelte         the entry component (runes: $state, $derived, $props)
+├── App.test.tsx       its tests (nsh test)
+├── nsh.json           name, id, version, icon, Tailwind theme, capabilities
+├── tsconfig.json      TypeScript settings for editors
+├── .gitignore         .nsh/ and target/
+├── components/        your own Svelte components
+│   └── Header.svelte
+├── assets/
+│   ├── logo@2x.png    imported images
+│   └── Inter.ttf      imported fonts
+└── .nsh/              generated: type declarations, development host builds, test entries, build output (.nsh/out)
+```
+
+A SvelteKit app uses file-based routing:
+
+```text
+my-app/
+├── nsh.json           name, id, version, icon, Tailwind theme
+├── src/
+│   └── routes/
+│       ├── +layout.svelte   root layout wrapping all pages
+│       ├── +page.svelte     home page ("/")
+│       ├── +page.ts         client load({ params, url })
+│       └── about/
+│           └── +page.svelte about page ("/about")
+├── .gitignore         .nsh/ and target/
+└── .nsh/              generated build outputs and type declarations
+```
+
 A TSX app is an entry and the modules it imports:
 
 ```text
@@ -56,7 +89,7 @@ mod screens;
 
 use nsh_core::prelude::*;
 
-/// What a TSX entry may import from the crate.
+/// What a TSX or Svelte entry may import from the crate.
 #[native_module("my-app/native")]
 fn native(registry: &mut Registry) {
     registry.register::<App>().assets(assets!());
@@ -66,6 +99,15 @@ fn native(registry: &mut Registry) {
 pub fn App() -> impl IntoElement {
     screens::home()
 }
+```
+
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  import Home from "./components/Home.svelte";
+</script>
+
+<Home />
 ```
 
 ```tsx tabs

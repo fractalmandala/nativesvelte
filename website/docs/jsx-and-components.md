@@ -1,37 +1,75 @@
 ---
-title: JSX and components
-description: How NSH describes UI in Rust and in TSX - elements, components, props, children, control flow, refs and spreads - and how the JSX compiler and Rust's builders make the same native elements.
+title: Components & Templates
+description: How NativeSvelte describes UI in Svelte 5, TSX, and Rust - elements, components, props, runes, control flow, and zero-virtual-DOM native compilation.
 order: 30
 group: ui
 demo: guide-components
 ---
 
-# JSX and components
+# Components and templates
 
-NSH apps describe their UI with elements and components, in Rust or in TSX. Rust builds elements with functions and typed builder methods (`view().gap_4().child(..)`); TSX writes them as JSX, which NSH's compiler turns into direct calls of the same native renderer, with no React and no virtual DOM. Either way, a component is a function that runs once to build its part of the tree. What keeps the UI up to date afterwards is [reactivity](./reactivity.md): the bindings that read signals are followed natively, and only they run again.
+NativeSvelte apps describe their UI with elements and components in **Svelte 5** (`.svelte`), **TSX** (`.tsx`), or native **Rust**.
+- In **Svelte 5**, components use HTML-like templates, runes (`$state`, `$derived`, `$props`), and standard directives (`onclick`, `bind:value`), compiled with zero virtual DOM directly into native signals and view operations.
+- In **TSX**, JSX components compile into direct calls of the same native renderer.
+- In **Rust**, elements are built using functions and typed builder methods (`view().gap_4().child(..)`).
+
+Either way, a component builds its part of the tree, and fine-grained [reactivity](./reactivity.md) follows signal bindings natively so only changed values update.
 
 ## Elements
 
-The **host elements** are each backed by a native view. Rust makes them with the prelude's functions; TSX imports them from `nsh` as components, and only `If` and `Each` are globals that need no import:
+The **host elements** are each backed by a native view:
 
-| Rust | TSX | Native view | Page |
-|---|---|---|---|
-| `view()` | `<View>` | `UIView` / `ViewGroup`: a box for layout, styling and touches | [View](../elements/view.md) |
-| `text(..)` | `<Text>` | A native text view; nested text elements are spans | [Text](../elements/text.md) |
-| `image(src)` | `<Image>` | An image view (local assets and URLs) | [Image](../elements/image.md) |
-| `scroll()` | `<Scroll>` | `UIScrollView` / `ScrollView` | [Scroll](../elements/scroll.md) |
-| `input()` | `<Input>` | `UITextField` / `UITextView` / `EditText` | [Input](../elements/input.md) |
-| `virtual_list(count, row)` | `<List>` | A virtualized, recycling list | [List](../elements/list.md) |
-| `canvas(..)`, `web_view(url)`, `video(url)` | `<Canvas>`, `<WebView>`, `<Video>` | A drawing, a web page, a video player | [Elements](../elements/index.md) |
-| `nsh_base::dialog()` | `<Dialog>` from `nsh/base` | A presented layer | [Elements](../elements/index.md) |
-| `when(..)`, `each(..)` | `<If>`, `<Each>` | Control flow, no view of its own | [Control flow](../elements/control-flow.md) |
+| Rust | TSX | Svelte | Native view | Page |
+|---|---|---|---|---|
+| `view()` | `<View>` | `<div>`, `<View>` | `UIView` / `ViewGroup`: a box for layout, styling and touches | [View](../elements/view.md) |
+| `text(..)` | `<Text>` | `<p>`, `<span>`, `<Text>` | A native text view; nested text elements are spans | [Text](../elements/text.md) |
+| `image(src)` | `<Image>` | `<img>`, `<Image>` | An image view (local assets and URLs) | [Image](../elements/image.md) |
+| `scroll()` | `<Scroll>` | `<Scroll>` | `UIScrollView` / `ScrollView` | [Scroll](../elements/scroll.md) |
+| `input()` | `<Input>` | `<input>`, `<Input>` | `UITextField` / `UITextView` / `EditText` | [Input](../elements/input.md) |
+| `virtual_list(count, row)` | `<List>` | `<List>` | A virtualized, recycling list | [List](../elements/list.md) |
+| `canvas(..)`, `web_view(url)`, `video(url)` | `<Canvas>`, `<WebView>`, `<Video>` | `<Canvas>`, `<WebView>`, `<Video>` | A drawing, a web page, a video player | [Elements](../elements/index.md) |
+| `nsh_base::dialog()` | `<Dialog>` from `nsh/base` | `<Dialog>` | A presented layer | [Elements](../elements/index.md) |
+| `when(..)`, `each(..)` | `<If>`, `<Each>` | `{#if}`, `{#each}` | Control flow, no view of its own | [Control flow](../elements/control-flow.md) |
 
-```rust tabs
-use nsh_core::prelude::*;   // view, text, image, scroll, input, virtual_list, ..., when, each
+```svelte tabs
+<!-- App.svelte -->
+<script>
+  let count = $state(0);
+</script>
+
+<div class="rounded-xl bg-background p-4" onclick={() => count++}>
+  <p class="font-semibold text-foreground">Taps: {count}</p>
+</div>
 ```
 
 ```tsx tabs
-import { Image, mount, Text, View } from "nsh";
+import { mount, signal, Text, View } from "nsh";
+
+function Counter() {
+  const count = signal(0);
+  return (
+    <View class="rounded-xl bg-background p-4" onPress={() => count.update((c) => c + 1)}>
+      <Text class="font-semibold text-foreground">Taps: {count()}</Text>
+    </View>
+  );
+}
+
+mount(Counter);
+```
+
+```rust tabs
+use nsh_core::prelude::*;
+
+#[component]
+pub fn Counter() -> impl IntoElement {
+    let count = signal(0_u32);
+    view()
+        .rounded(px(12.0))
+        .bg(move || theme().background)
+        .p_4()
+        .on_press(move || count.update(|c| *c += 1))
+        .child(text(move || format!("Taps: {}", count.get())).font_weight(FontWeight::SEMIBOLD))
+}
 ```
 
 In Rust, styles are typed methods named as Tailwind's utilities are (`.px_4()`, `.rounded_lg()`, `.bg(..)`), and

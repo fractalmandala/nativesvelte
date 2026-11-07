@@ -1,11 +1,11 @@
 # Developer documentation
 
-For people working on NSH itself (`AGENTS.md` at the root is the short version agents read first).
+For people working on NativeSvelte itself (`AGENTS.md` at the root is the short version agents read first).
 
 | Page | What |
 |---|---|
 | [architecture.md](architecture.md) | Threads, the data flow from JS to native views, crates |
-| [native-pipeline.md](native-pipeline.md) | How apps are compiled and run: the JSX compiler, the native modules, the renderer, types, hot reload |
+| [native-pipeline.md](native-pipeline.md) | How apps are compiled and run: Svelte 5 runes compiler, SvelteKit routing, JSX compiler, the native modules, the renderer, types, hot reload |
 | [js-modules.md](js-modules.md) | The modules (`nsh`, `nsh/*`, apps' UI sets), where each module is implemented and declared, platform props, where new things go |
 | [api-naming.md](api-naming.md) | API names: how TSX names follow `gpui-base`'s, the conventions, the renames |
 | [components.md](components.md) | Rust components (`nsh/base`'s, apps' UI sets): writing one, the host node, bindings, children and slots, events, the JS face and declarations |

@@ -1,13 +1,13 @@
 ---
 name: nsh
-description: 'Build, run, test and package Native Shell (NSH) apps in Rust, TSX or both. Use for NSH development requests and projects with nsh.json, nsh-* crate dependencies or imports from nsh modules. Covers NSH reactivity, components, styling and tooling, with Coding Guides and working app recipes.'
+description: 'Build, run, test and package NativeSvelte apps in Svelte 5, SvelteKit, TSX, Rust or hybrid. Use for NativeSvelte development requests and projects with nsh.json, nsh-* crate dependencies or imports from nsh/svelte modules. Covers Svelte runes, reactivity, components, styling and tooling, with Coding Guides and working app recipes.'
 ---
 
-# Native Shell
+# NativeSvelte
 
-One app, written in Rust, in TSX, or in both, rendered through each platform's own
+One app, written in Svelte 5, SvelteKit, TSX, Rust, or a combination, rendered through each platform's own
 views on the same Rust engine. Follow the user’s chosen language and delivery model.
-When neither is specified, prefer Rust for an app shipped in its binary.
+When neither is specified, prefer Svelte 5 for web/UI-centric apps and Rust for binary-shipped applications.
 
 ## Establish the App's Design System First
 
@@ -32,17 +32,17 @@ narrow change, extend the existing system within the requested scope.
 
 ## Choose the Mode, Then Read Its Page
 
-| | 1. Rust (preferred) | 2. Rust with TSX | 3. TSX |
-| --- | --- | --- | --- |
-| Choose it when | The app ships in its binary; medium and large apps, demanding logic | A Rust core, plus screens that change often or arrive as signed packages | UI delivered at run time, with no Rust of your own |
-| Runs on | The engine and your crate; no JavaScript VM | QuickJS (the browser's engine on the web) with your crate | QuickJS (the browser's engine on the web) |
-| Start | `nsh init my-app --template rust` | `nsh init my-app --template mixed` | `nsh init my-app --template ts` |
-| How to recognize one | `nsh.json` has `"rust"` and `"root"` | `nsh.json` has `"rust"`, no `"root"`, and a TSX entry | `nsh.json` has no `"rust"` |
-| Edits | Rebuild and restart | TSX hot, Rust restarts | Hot |
-| Read first | [rust.md](references/rust.md) | [mixed.md](references/mixed.md), and rust.md for the crate | [tsx.md](references/tsx.md) |
-| Components | [rust-ui.md](references/rust-ui.md) | Both | tsx.md, `.nsh/types` |
-| Tests | [rust-testing.md](references/rust-testing.md) | mixed.md "Tests on both sides" | tsx.md, [testing guide](https://nsh.dev/docs/testing-and-trace.md) |
-| Whole app | [rust-recipe.md](references/rust-recipe.md) (`examples/tasks-rs`) | `examples/rust-exports` | [tsx-recipe.md](references/tsx-recipe.md) (`examples/tasks`) |
+| | 1. Svelte 5 (Default) | 2. SvelteKit | 3. TSX | 4. Rust |
+| --- | --- | --- | --- | --- |
+| Choose it when | Single-page UI with Svelte 5 runes (`$state`, `$derived`, `$props`), HTML-like syntax & Tailwind | Multi-page apps with file-based routing (`src/routes/+layout.svelte`, `+page.svelte`), client `load()` | UI delivered at run time, with no Rust of your own | The app ships in its binary; medium and large apps, demanding logic |
+| Runs on | QuickJS (or browser on web) compiled to native ops | QuickJS (or browser on web) compiled to native ops | QuickJS (the browser's engine on the web) | The engine and your crate; no JavaScript VM |
+| Start | `nsh init my-app --template svelte` | `nsh init my-app --template sveltekit` | `nsh init my-app --template ts` | `nsh init my-app --template rust` |
+| How to recognize one | `nsh.json` with `App.svelte` or Svelte entry | `src/routes/` with `+page.svelte` | `nsh.json` has no `"rust"` | `nsh.json` has `"rust"` and `"root"` |
+| Edits | Instant HMR preserving state | Instant HMR preserving state | Hot | Rebuild and restart |
+| Read first | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | [rust.md](references/rust.md) |
+| Components | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | tsx.md, `.nsh/types` | [rust-ui.md](references/rust-ui.md) |
+| Tests | [tsx.md](references/tsx.md) | [tsx.md](references/tsx.md) | tsx.md, [testing guide](https://nativesvelte.dev/docs/testing-and-trace) | [rust-testing.md](references/rust-testing.md) |
+| Whole app | `examples/counter-svelte` | `nsh init --template sveltekit` | [tsx-recipe.md](references/tsx-recipe.md) (`examples/tasks`) | [rust-recipe.md](references/rust-recipe.md) (`examples/tasks-rs`) |
 
 In an existing project, stay in its mode unless the user requests a change. For a new
 app, honor the requested mode; otherwise use the table above; a Rust app can gain TSX later, because it already has a
@@ -83,10 +83,10 @@ similar file in the codebase, or from training data.
 | [Coding Guides](references/coding-guides.md) | App structure, what runs once, state ownership, keys, theme, events, focus, async, lists, public API, naming, testing        |
 
 Read the Design Guides first when the change has a visible surface. If the design
-skill is not installed, fetch `https://nsh.dev/docs/design-guides.md`. The coding
-guide is a verbatim copy of `https://nsh.dev/docs/coding-guides.md`, so a link in
-it such as `./reactivity.md` means `https://nsh.dev/docs/reactivity.md`, and
-`../modules/nsh.md` means `https://nsh.dev/modules/nsh.md`.
+skill is not installed, fetch `https://nativesvelte.dev/docs/design-guides`. The coding
+guide is a copy of `https://nativesvelte.dev/docs/coding-guides`, so a link in
+it such as `./reactivity.md` means `https://nativesvelte.dev/docs/reactivity`, and
+`../modules/nsh.md` means `https://nativesvelte.dev/modules/nsh`.
 
 ### Coding Guides section map
 
