@@ -50,7 +50,7 @@ export function linkReferences(markdown) {
         ? part
         : part
             .replace(/(^|[\s(])#(\d+)(?=[\s.,;:)]|$)/gm, `$1[#$2](https://github.com/${RELEASE_REPO}/issues/$2)`)
-            .replace(/(^|[\s(])@([A-Za-z\d](?:[A-Za-z\d-]{0,37}[A-Za-z\d])?)(?=[\s.,;:)]|$)/gm, '$1[@$2](https://github.com/$2)'),
+            .replace(/(^|[\s(])@([A-Za-z\d](?:[A-Za-z\d-]{0,37}[A-Za-z\d])?)(?=[\s.,;:)]|$)/gm, `$1[@$2](https://github.com/$2)`),
     )
     .join('');
 }
@@ -68,19 +68,20 @@ export function scopeHeadings(html, tag) {
 export async function loadReleases() {
   const items = await fetchReleases();
   if (items.length === 0) return [];
-  const { createMarkdownProcessor } = await import('@astrojs/markdown-remark');
-  const { shikiConfig } = await import('./markdown.js');
-  const processor = await createMarkdownProcessor({ shikiConfig, defaultHighlightLang: 'sh' });
+  const { renderMarkdown } = await import('./markdown-render.ts');
   const latestStable = items.find((item) => !item.prerelease);
   return Promise.all(
-    items.map(async (item) => ({
-      tag: item.tag_name,
-      name: item.name || item.tag_name,
-      date: item.published_at.slice(0, 10),
-      url: item.html_url,
-      prerelease: item.prerelease,
-      latest: item === latestStable,
-      html: scopeHeadings((await processor.render(linkReferences((item.body ?? '').replace(/\r\n/g, '\n')))).code, item.tag_name),
-    })),
+    items.map(async (item) => {
+      const { html } = await renderMarkdown(linkReferences((item.body ?? '').replace(/\r\n/g, '\n')));
+      return {
+        tag: item.tag_name,
+        name: item.name || item.tag_name,
+        date: item.published_at.slice(0, 10),
+        url: item.html_url,
+        prerelease: item.prerelease,
+        latest: item === latestStable,
+        html: scopeHeadings(html, item.tag_name),
+      };
+    }),
   );
 }

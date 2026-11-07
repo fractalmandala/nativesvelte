@@ -16,8 +16,8 @@ if (process.argv.includes('--kill-dev')) {
   const ps = spawnSync('ps', ['-axo', 'pid=,command='], { encoding: 'utf8' });
   for (const line of (ps.stdout ?? '').split('\n')) {
     const match = /^\s*(\d+)\s+(.*)$/.exec(line);
-    // `node_modules/.bin/astro dev` or `node_modules/astro/bin/astro.mjs dev`.
-    if (!match || !match[2].includes(modules) || !/astro(\.mjs)?\s+dev(\s|$)/.test(match[2])) continue;
+    // `node_modules/.bin/vite dev` or `vite dev`.
+    if (!match || !match[2].includes(modules) || !/vite(\.mjs)?\s+dev(\s|$)/.test(match[2])) continue;
     const pid = Number(match[1]);
     if (pid === process.pid) continue;
     try {

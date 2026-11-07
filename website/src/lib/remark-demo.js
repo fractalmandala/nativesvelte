@@ -17,7 +17,7 @@ export function remarkDemo({ base = '/' } = {}) {
       if (section) node.value = await demoPanelHtml(section[1], { base, lang });
     }
 
-    const name = file?.data?.astro?.frontmatter?.demo;
+    const name = file?.data?.frontmatter?.demo || file?.data?.astro?.frontmatter?.demo;
     if (!name) return;
     const html = await demoPanelHtml(name, { base, lang });
 

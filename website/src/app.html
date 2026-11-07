@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="%sveltekit.lang%" class="dark" data-theme-pref="system">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0e1016" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <script>
+      (function () {
+        var stored = null;
+        try { stored = localStorage.getItem('theme'); } catch (e) {}
+        var pref = stored === 'light' || stored === 'dark' ? stored : 'system';
+        var media = window.matchMedia('(prefers-color-scheme: dark)');
+        var root = document.documentElement;
+        var apply = function () {
+          var p = root.dataset.themePref;
+          var dark = p === 'dark' || (p === 'system' && media.matches);
+          root.classList.toggle('dark', dark);
+          root.classList.toggle('light', !dark);
+        };
+        root.dataset.themePref = pref;
+        apply();
+        media.addEventListener('change', apply);
+        window.__applyTheme = apply;
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body>
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

@@ -128,7 +128,7 @@ function siteCopy(id) {
     recursive: true,
     filter: (source) => {
       const rel = source.slice(website.length).replace(/^\/+/, '');
-      return !['node_modules', 'dist', '.astro', '.versions', 'public/play'].some(
+      return !['node_modules', 'dist', '.svelte-kit', '.versions', 'public/play'].some(
         (skip) => rel === skip || rel.startsWith(`${skip}/`),
       );
     },
@@ -167,7 +167,7 @@ function releasePlayer(tag) {
 function build(version, copy, out) {
   const base = version === latest ? '/' : `/versions/${version}/`;
   console.log(`[versions] building ${version} at ${base}`);
-  run('bunx', ['--bun', 'astro', 'build'], {
+  run('bunx', ['--bun', 'vite', 'build'], {
     cwd: copy,
     env: {
       ...process.env,

@@ -1,4 +1,6 @@
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import matter from 'gray-matter';
 import { isMachine } from './locales';
 import { url, type Lang } from './site';
 
@@ -56,6 +58,19 @@ export const GROUPS: Record<string, Record<Lang, string>> = {
   base: { en: 'Base', 'zh-CN': 'Base' },
 };
 
+export interface PageEntry {
+  id: string;
+  data: {
+    title: string;
+    description: string;
+    order?: number;
+    demo?: string;
+    group?: string;
+  };
+  body: string;
+  filePath: string;
+}
+
 export interface Page {
   section: SectionId;
   lang: string;
@@ -77,11 +92,37 @@ export interface Page {
   filePath: string;
   /** The file to edit: the page's own, or the English it was translated from. */
   sourcePath: string;
-  entry: CollectionEntry<any>;
+  entry: PageEntry;
 }
 
-function collectionName(section: SectionId, lang: Lang) {
-  return (lang === 'zh-CN' ? `zh-${section}` : section) as any;
+function findDir(dir: string): string {
+  if (existsSync(join(process.cwd(), dir))) return join(process.cwd(), dir);
+  if (existsSync(join(process.cwd(), 'website', dir))) return join(process.cwd(), 'website', dir);
+  return dir;
+}
+
+function readEntries(baseDir: string): PageEntry[] {
+  const dir = findDir(baseDir);
+  if (!existsSync(dir)) return [];
+  const files = readdirSync(dir).filter((n) => n.endsWith('.md'));
+  return files.map((file) => {
+    const fullPath = join(dir, file);
+    const content = readFileSync(fullPath, 'utf8');
+    const parsed = matter(content);
+    const id = file.replace(/\.md$/, '');
+    return {
+      id,
+      data: {
+        title: (parsed.data.title as string) || id,
+        description: (parsed.data.description as string) || '',
+        order: typeof parsed.data.order === 'number' ? parsed.data.order : undefined,
+        demo: (parsed.data.demo as string) || undefined,
+        group: (parsed.data.group as string) || undefined,
+      },
+      body: parsed.content,
+      filePath: `${baseDir}/${file}`,
+    };
+  });
 }
 
 export function routeOf(section: SectionId, slug: string, lang: string): string {
@@ -92,9 +133,11 @@ const cache = new Map<string, Promise<Page[]>>();
 
 /** Every English page, in its translation where there is one. */
 async function loadMachine(locale: string): Promise<Page[]> {
-  const entries = new Map<string, CollectionEntry<any>>();
+  const entries = new Map<string, PageEntry>();
   for (const section of SECTIONS) {
-    for (const entry of await getCollection(`${locale}-${section.id}` as any)) entries.set(`${section.id}/${entry.id}`, entry as CollectionEntry<any>);
+    for (const entry of readEntries(`translations/${locale}/${section.id}`)) {
+      entries.set(`${section.id}/${entry.id}`, entry);
+    }
   }
   return (await pages('en')).map((page) => {
     const entry = entries.get(`${page.section}/${page.slug}`);
@@ -116,19 +159,14 @@ async function loadMachine(locale: string): Promise<Page[]> {
 async function load(lang: Lang): Promise<Page[]> {
   const all: Page[] = [];
   for (const section of SECTIONS) {
-    const entries = await getCollection(collectionName(section.id, lang));
-    // A Chinese page sorts by its English counterpart, so both locales list
-    // the same pages in the same order whatever the translated titles are.
-    const english = lang === 'en' ? entries : await getCollection(collectionName(section.id, 'en'));
-    // Elements list their groups in the order of `GROUPS` (the primitives,
-    // then the base components); within a group, and in the other sections,
-    // pages sort by `order`, then by title. Base components have no `order`,
-    // so they list by name (`tests/elements.test.ts`).
+    const baseDir = lang === 'zh-CN' ? `zh-CN/${section.id}` : section.id;
+    const entries = readEntries(baseDir);
+    const english = lang === 'en' ? entries : readEntries(section.id);
     const groups = Object.keys(GROUPS);
-    const key = (entry: CollectionEntry<any>) => {
+    const key = (entry: PageEntry) => {
       const source = english.find((e) => e.id === entry.id) ?? entry;
       return {
-        group: section.id === 'elements' ? groups.indexOf(source.data.group) : 0,
+        group: section.id === 'elements' ? groups.indexOf(source.data.group ?? '') : 0,
         order: source.data.order ?? 999,
         title: source.data.title as string,
       };
@@ -153,8 +191,8 @@ async function load(lang: Lang): Promise<Page[]> {
         demo: entry.data.demo,
         route,
         href: url(route),
-        filePath: (entry.filePath ?? `${lang === 'zh-CN' ? 'zh-CN/' : ''}${section.id}/${entry.id}.md`).replace(/^\.\//, ''),
-        sourcePath: (entry.filePath ?? `${section.id}/${entry.id}.md`).replace(/^\.\//, ''),
+        filePath: `${lang === 'zh-CN' ? 'zh-CN/' : ''}${section.id}/${entry.id}.md`,
+        sourcePath: `${section.id}/${entry.id}.md`,
         entry,
       });
     }
@@ -176,7 +214,6 @@ export function pages(lang: string): Promise<Page[]> {
 export async function sectionHref(section: SectionId, lang: string): Promise<string> {
   const own = (await pages(lang)).find((page) => page.section === section);
   if (own) return own.href;
-  // A section not translated yet falls back to the English one.
   const english = (await pages('en')).find((page) => page.section === section);
   return english?.href ?? url(`${lang === 'zh-CN' ? 'zh-CN/' : ''}${section}`);
 }
