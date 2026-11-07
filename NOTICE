@@ -1,0 +1,12 @@
+NativeSvelte
+Copyright 2026 The NativeSvelte Authors
+
+This product includes software originally developed by Longbridge (https://longbridge.com)
+as part of the Native Shell (NSH) project (https://github.com/longbridge/nsh).
+Copyright 2026 Longbridge.
+
+NativeSvelte is forked from Native Shell (NSH), adapted and extended to provide
+first-class native Svelte 5 ($state, $derived, $effect, $props) and SvelteKit
+file-based routing (+layout.svelte, +page.svelte, client load()) support while
+maintaining native platform views across iOS, Android, macOS, Windows, Linux,
+GPUI, and the web.
