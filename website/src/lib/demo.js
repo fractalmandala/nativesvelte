@@ -91,20 +91,20 @@ const COPY = {
     mobile: 'Mobile',
     desktop: 'Desktop',
   },
-  'zh-CN': {
-    preview: '预览',
-    source: '源码',
-    open: '在新标签页打开',
-    edit: '在线编辑',
-    frame: (name) => `在线示例：${name}`,
-    pending: '在线预览尚未构建。',
-    runLocally: '在模拟器或真机上运行：',
-    missing: (name) => `website/demos 中没有名为“${name}”的示例。`,
-    label: '示例',
-    live: '运行中',
-    layout: '布局',
-    mobile: '手机',
-    desktop: '桌面',
+  hi: {
+    preview: 'पूर्वावलोकन',
+    source: 'स्रोत संहिता',
+    open: 'नवीन पृष्ठ पर खोलें',
+    edit: 'संपादित करें',
+    frame: (name) => `सजीव निदर्शन: ${name}`,
+    pending: 'सजीव पूर्वावलोकन अभी निर्मित नहीं है।',
+    runLocally: 'अनुकारक अथवा वास्तविक उपकरण पर संचालित करें:',
+    missing: (name) => `website/demos में "${name}" नाम का निदर्शन उपलब्ध नहीं है।`,
+    label: 'निदर्शन',
+    live: 'सक्रिय',
+    layout: 'विन्यास',
+    mobile: 'दूरभाष',
+    desktop: 'संगणक',
   },
 };
 
@@ -174,7 +174,7 @@ export async function demoPanelHtml(name, { base = '/', lang = 'en' } = {}) {
       </div>
       <span class="demo__file">${escape(file)}</span>
       <div class="demo__actions" data-slot="button-group" role="group">
-        <a data-slot="button" data-variant="outline" data-size="icon-xs" href="${escape(`${base}${lang === 'zh-CN' ? 'zh-CN/' : ''}playground#demo=${encodeURIComponent(name)}`)}" title="${escape(t.edit)}" aria-label="${escape(t.edit)}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>
+        <a data-slot="button" data-variant="outline" data-size="icon-xs" href="${escape(`${base}${lang === 'hi' ? 'hi/' : ''}playground#demo=${encodeURIComponent(name)}`)}" title="${escape(t.edit)}" aria-label="${escape(t.edit)}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a>
         <a data-slot="button" data-variant="outline" data-size="icon-xs" href="${escape(playerHref(name, base))}" target="_blank" rel="noopener" title="${escape(t.open)}" aria-label="${escape(t.open)}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
       </div>
     </figcaption>

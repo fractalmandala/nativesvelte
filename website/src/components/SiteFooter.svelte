@@ -9,19 +9,19 @@
     hrefs?: Record<string, string>;
   }
   let { lang = 'en', hrefs = {} }: Props = $props();
-  const isZh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
 
   const copy = $derived(
-    isZh
+    isHi
       ? {
-          tagline: '一次构建，全平台 Native',
-          license: '代码以 Apache-2.0 许可发布，基于',
-          by: '的 Native Shell (NSH) 项目分支定制，适配 Svelte 5 与 SvelteKit。',
-          docs: '文档以',
-          docsAfter: ' 许可发布。',
-          nav: '页脚导航',
-          issues: '报告问题',
-          source: '源代码',
+          tagline: 'एक बार निर्माण करें, सर्वत्र देशीय (Native)।',
+          license: 'संहिता Apache-2.0 अनुज्ञप्ति के अंतर्गत प्रकाशित, ',
+          by: ' के Native Shell (NSH) प्रकल्प से अनुकूलित, Svelte 5 एवं SvelteKit हेतु विशेष रूप से सज्जित।',
+          docs: 'प्रलेखन ',
+          docsAfter: ' अनुज्ञप्ति के अंतर्गत प्रकाशित।',
+          nav: 'पाद संचलन',
+          issues: 'समस्या प्रतिवेदित करें',
+          source: 'स्रोत संहिता',
         }
       : {
           tagline: 'Build once with Svelte, native everywhere.',
@@ -38,7 +38,7 @@
 
 <footer class="site-footer">
   <div class="site-footer__brand">
-    <a href={url(isZh ? 'zh-CN' : '')} class="site-footer__name">
+    <a href={url(isHi ? 'hi' : '')} class="site-footer__name">
       <Logo class="site-footer__logo" /> NativeSvelte
     </a>
     <p>{copy.tagline}</p>
@@ -51,13 +51,13 @@
   </div>
   <nav aria-label={copy.nav}>
     {#each SECTIONS as section}
-      <a href={hrefs[section.id] ?? url(isZh ? `zh-CN/${section.id}` : section.id)}>{section.label[lang]}</a>
+      <a href={hrefs[section.id] ?? url(isHi ? `hi/${section.id}` : section.id)}>{section.label[lang]}</a>
     {/each}
-    <a href={url(isZh ? 'zh-CN/apps' : 'apps')}>{isZh ? '应用案例' : 'App Stories'}</a>
-    <a href={isLatestVersion ? url(isZh ? 'zh-CN/releases' : 'releases') : isZh ? '/zh-CN/releases' : '/releases'}>{isZh ? '版本发布' : 'Releases'}</a>
+    <a href={url(isHi ? 'hi/apps' : 'apps')}>{isHi ? 'अनुप्रयोग गाथा' : 'App Stories'}</a>
+    <a href={isLatestVersion ? url(isHi ? 'hi/releases' : 'releases') : isHi ? '/hi/releases' : '/releases'}>{isHi ? 'विमोचन' : 'Releases'}</a>
     <a href={REPO_URL} target="_blank" rel="noopener noreferrer">{copy.source}</a>
     <a href="{REPO_URL}/issues" target="_blank" rel="noopener noreferrer">{copy.issues}</a>
-    <a href={url(isZh ? 'zh-CN/brand' : 'brand')}>{isZh ? '品牌' : 'Brand'}</a>
+    <a href={url(isHi ? 'hi/brand' : 'brand')}>{isHi ? 'पहचान एवं प्रतीक' : 'Brand'}</a>
     <a href={url('llms.txt')}>llms.txt</a>
   </nav>
 </footer>

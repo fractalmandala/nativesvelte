@@ -12,7 +12,7 @@
   <meta name="description" content="Write a NativeSvelte app in the browser: the page compiles it and runs it right away." />
 </svelte:head>
 
-<Nav lang="en" currentPath="/playground" langHref={url('zh-CN/playground')} hrefs={data.hrefs} />
+<Nav lang="en" currentPath="/playground" langHref={url('hi/playground')} hrefs={data.hrefs} />
 <main id="main" data-pagefind-ignore>
   <Playground lang="en" demos={data.demos} />
 </main>

@@ -11,7 +11,7 @@
   <title>Gallery · NativeSvelte</title>
 </svelte:head>
 
-<Nav lang="en" currentPath="/gallery" langHref={url('zh-CN/gallery')} hrefs={data.hrefs} />
+<Nav lang="en" currentPath="/gallery" langHref={url('hi/gallery')} hrefs={data.hrefs} />
 <main id="main" data-pagefind-ignore>
   <Gallery lang="en" built={data.built} />
 </main>

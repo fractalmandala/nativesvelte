@@ -12,7 +12,7 @@
   <meta name="description" content="Apps built with Native Shell: native UI on iOS, Android, macOS, Windows, Linux and the web, from file sharing and system monitoring to reading Markdown." />
 </svelte:head>
 
-<Nav lang="en" currentPath="/apps" langHref={url('zh-CN/apps')} hrefs={data.hrefs} />
+<Nav lang="en" currentPath="/apps" langHref={url('hi/apps')} hrefs={data.hrefs} />
 <main id="main">
   <Apps apps={data.apps} lang="en" />
 </main>

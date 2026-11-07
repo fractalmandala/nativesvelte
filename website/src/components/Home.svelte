@@ -21,12 +21,12 @@ export interface Props {
   locale?: string;
 }
 let { lang = 'en', locale = lang }: Props = $props();
-const zh = lang === 'zh-CN';
+const isHi = lang === 'hi';
 const machine = locale !== lang;
 const { copy } = homeCopy(locale);
 // Machine locales have the documentation's sections; every other page is English.
 const link = (path: string) =>
-  url(zh ? `zh-CN/${path}` : machine && /^(docs|elements|modules)(\/|$)/.test(path) ? `${locale}/${path}` : path);
+  url(isHi ? `hi/${path}` : machine && /^(docs|elements|modules)(\/|$)/.test(path) ? `${locale}/${path}` : path);
 const player = hasPlayer();
 // Structured data for search engines and AI answers: the site, the
 // framework as a free developer application, and its source code.
@@ -728,7 +728,7 @@ perf commit: <b>10 ops, 7 mount items</b>, 24 nodes</code></pre>
   .band--dots::before { content: ""; position: absolute; inset: 0; background-image: var(--halftone); background-size: 15px 15px; mask-image: radial-gradient(52% 70% at 88% 12%, black, transparent); pointer-events: none; }
 
   h1, h2, h3, h4 { font-family: var(--font-display); text-wrap: balance; }
-  html[lang^="zh"] h2 { letter-spacing: 0; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
+  html[lang^="hi"] h2 { letter-spacing: 0; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
   .head { max-width: 40rem; margin-bottom: 3.25rem; }
   .head--wide { max-width: 48rem; }
   .head h2, .closing h2 { margin: 0; font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 600; line-height: 1.06; letter-spacing: -0.03em; }
@@ -745,7 +745,7 @@ perf commit: <b>10 ops, 7 mount items</b>, 24 nodes</code></pre>
   .hero h1 { margin: 0; font-size: clamp(3.4rem, 8.1vw, 7.25rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.035em; }
   .hero__title { width: max-content; max-width: 100%; }
   .hero__slogan { white-space: nowrap; margin: 1rem 0 0; color: var(--citrus); font-family: var(--font-display); font-size: clamp(1.5rem, 3.4vw, 3rem); font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; }
-  html[lang^="zh"] .hero__slogan { letter-spacing: 0; }
+  html[lang^="hi"] .hero__slogan { letter-spacing: 0; }
   .hero__platforms { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 1.5rem -0.45rem 0; padding: 0; list-style: none; }
   /* Spread across the title's width, each slash centred in its gap. */
   .hero__platforms li + li { display: flex; flex: 1 1 auto; align-items: center; }

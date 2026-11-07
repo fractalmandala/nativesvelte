@@ -22,59 +22,59 @@ export interface Props {
 }
 
 let { apps, lang }: Props = $props();
-const zh = lang === 'zh-CN';
+const isHi = lang === 'hi';
 
 const CATEGORIES: [string, string, string][] = [
-  ['all', 'All', '全部'],
-  ['dev', 'Developer Tools', '开发工具'],
-  ['finance', 'Finance & Trading', '金融与交易'],
-  ['work', 'Productivity & Business', '效率与商务'],
-  ['media', 'Media & Lifestyle', '媒体与生活'],
-  ['utility', 'Utilities & System', '实用工具与系统'],
+  ['all', 'All', 'समस्त'],
+  ['dev', 'Developer Tools', 'विकासक उपकरण'],
+  ['finance', 'Finance & Trading', 'वित्त एवं व्यापार'],
+  ['work', 'Productivity & Business', 'कार्यक्षमता एवं व्यवसाय'],
+  ['media', 'Media & Lifestyle', 'माध्यम एवं जीवनशैली'],
+  ['utility', 'Utilities & System', 'उपयोगिता एवं तंत्र'],
 ];
-const categories = CATEGORIES.map(([id, en, cn]) => ({
+const categories = CATEGORIES.map(([id, en, hi]) => ({
   id,
-  label: zh ? cn : en,
+  label: isHi ? hi : en,
   count: id === 'all' ? apps.length : apps.filter((app) => app.category === id).length,
 })).filter((category) => category.id === 'all' || category.count > 0);
 const featured = apps.filter((app) => app.featured);
 // The page as it first shows, before its script runs: newest first.
 const byNewest = [...apps].sort((a, b) => (Date.parse(b.publishedAt ?? '') || 0) - (Date.parse(a.publishedAt ?? '') || 0) || a.name.localeCompare(b.name));
 
-const t = zh
+const t = isHi
   ? {
-      kicker: '应用案例',
-      title: '用 Native Shell 做出来的真实应用。',
-      lead: '探索基于 Native Shell 构建的应用：手机、桌面与 Web 上的原生界面，从文件传输、系统监控到 Markdown 阅读。',
-      selectionLabel: '应用收录与精选规则',
-      selectionPolicy: '向 Showcase 仓库提交 PR，审核合并后，应用都会列在应用案例中，但不保证进入 Featured。',
-      rankingPolicy: 'Featured 由维护者结合项目历史、实现情况、完整度与品质挑选。我们会根据各应用后续更新和整体情况微调名单，尽量展示更完整、有代表性的应用。全部应用可按发布时间或 GitHub Stars 排序，也可搜索。',
-      signalCount: `${apps.length} 个应用`,
-      signalLicense: '开源与商业产品',
-      featured: 'Featured · 精选应用',
-      featuredLead: '由维护者挑选，展示完整、优质的应用案例。',
-      community: '全部应用',
-      communityLead: '探索社区应用，找到适合你的工具。GitHub Stars 每周及案例 PR 合并后更新。',
-      searchLabel: '搜索应用',
-      searchPlaceholder: '名称、作者、平台…',
-      sortLabel: '应用排序',
-      newest: '最新发布',
-      mostStars: 'GitHub Stars 最多',
-      filterLabel: '按类别筛选',
-      clearFilters: '清除筛选',
-      empty: '没有找到匹配的应用。',
-      emptyHint: '试试其他关键词或分类。',
-      catalogPending: '应用案例读取 nsh-showcases 仓库：把它克隆到本仓库旁边（../nsh-showcases），然后重新加载。',
-      ctaTitle: '你也用 Native Shell 做了应用？',
-      ctaLead: '请在 Showcase 仓库提交 PR，包含应用清单和清晰、完整、整洁的截图。审核合并后自动列在本页，Featured 由维护者另行挑选。',
-      ctaAction: '提交你的应用',
-      featuredPagination: '精选应用分页',
-      allPagination: '全部应用分页',
-      previousPage: '上一页',
-      nextPage: '下一页',
-      pageLabel: '第 {page} 页',
-      pageStatus: '第 {page} / {total} 页',
-      results: '找到 {count} 个应用',
+      kicker: 'अनुप्रयोग गाथा',
+      title: 'Native Shell द्वारा निर्मित वास्तविक अनुप्रयोग।',
+      lead: 'Native Shell आधारित अनुप्रयोगों का अन्वेषण करें: दूरभाष, कार्यपीठ एवं जाल (Web) पर देशीय अंतराफलक, संचिका प्रेषण व तंत्र निरीक्षण से लेकर मार्कडाउन पठन तक।',
+      selectionLabel: 'अनुप्रयोग चयन एवं विशिष्ट नियम',
+      selectionPolicy: 'Showcase कोष में समर्पित एवं स्वीकृत प्रत्येक अनुप्रयोग यहाँ सूचीबद्ध होता है, यद्यपि विशिष्ट (Featured) सूची में स्थान की प्रत्याभूति नहीं है।',
+      rankingPolicy: 'प्रबंधक प्रकल्प के इतिहास, कार्यान्वयन, पूर्णता एवं गुणवत्ता के आधार पर विशिष्ट अनुप्रयोगों का चयन करते हैं। समस्त अनुप्रयोगों को प्रकाशन तिथि अथवा GitHub नक्षत्रों (Stars) द्वारा क्रमबद्ध या खोजा जा सकता है।',
+      signalCount: `${apps.length} अनुप्रयोग`,
+      signalLicense: 'मुक्त स्रोत एवं व्यावसायिक उत्पाद',
+      featured: 'विशिष्ट · प्रमुख अनुप्रयोग',
+      featuredLead: 'प्रबंधकों द्वारा चयनित परिपूर्ण एवं गुणवत्तापूर्ण अनुप्रयोग।',
+      community: 'समस्त अनुप्रयोग',
+      communityLead: 'सामुदायिक अनुप्रयोगों का अन्वेषण करें और अपने अनुकूल साधन प्राप्त करें। GitHub Stars प्रति सप्ताह एवं PR स्वीकृति उपरांत अद्यतन होते हैं।',
+      searchLabel: 'अनुप्रयोग खोजें',
+      searchPlaceholder: 'नाम, निर्माता, मंच…',
+      sortLabel: 'अनुप्रयोग क्रम',
+      newest: 'नवीनतम प्रकाशित',
+      mostStars: 'सर्वाधिक GitHub नक्षत्र (Stars)',
+      filterLabel: 'श्रेणी अनुसार शोधन',
+      clearFilters: 'शोधन हटाएं',
+      empty: 'कोई सुसंगत अनुप्रयोग नहीं मिला।',
+      emptyHint: 'अन्य शब्द अथवा श्रेणी से प्रयास करें।',
+      catalogPending: 'अनुप्रयोग विवरण nsh-showcases कोष से प्राप्त होता है।',
+      ctaTitle: 'क्या आपने भी Native Shell से अनुप्रयोग बनाया है?',
+      ctaLead: 'Showcase कोष में स्पष्ट विवरण एवं चित्रों के साथ PR समर्पित करें। स्वीकृति उपरांत आपका अनुप्रयोग यहाँ स्वतः प्रदर्शित होगा।',
+      ctaAction: 'अपना अनुप्रयोग समर्पित करें',
+      featuredPagination: 'विशिष्ट अनुप्रयोग पृष्ठ संख्या',
+      allPagination: 'समस्त अनुप्रयोग पृष्ठ संख्या',
+      previousPage: 'पूर्ववर्ती पृष्ठ',
+      nextPage: 'अगला पृष्ठ',
+      pageLabel: 'पृष्ठ {page}',
+      pageStatus: 'पृष्ठ {page} / {total}',
+      results: '{count} अनुप्रयोग प्राप्त',
     }
   : {
       kicker: 'App Stories',
@@ -405,8 +405,8 @@ const data = JSON.stringify({
   .apps-cta p { margin: 0; max-width: 46rem; color: var(--muted-foreground); font-size: 0.875rem; line-height: 1.6; }
   .apps-page :is(a, summary):not([data-slot]):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   .apps-page .app-card__shot:focus-visible { outline-offset: -2px; }
-  html[lang^="zh"] :is(.apps-hero h1, .app-card__name, .apps-cta h2) { letter-spacing: normal; }
-  html[lang^="zh"] .apps-kicker { letter-spacing: 0.06em; }
+  html[lang^="hi"] :is(.apps-hero h1, .app-card__name, .apps-cta h2) { letter-spacing: normal; }
+  html[lang^="hi"] .apps-kicker { letter-spacing: 0.06em; }
   @media (prefers-reduced-motion: no-preference) {
     .app-card { transition: border-color 150ms ease; }
   }

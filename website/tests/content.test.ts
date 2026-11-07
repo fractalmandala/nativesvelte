@@ -3,7 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Content rules that the build cannot check on its own: frontmatter parses and
-// has what the schema needs, the Chinese pages mirror the English ones, and
+// has what the schema needs, the Hindi pages mirror the English ones, and
 // every `demo:` (and every section's `<!-- demo: … -->`) names a file in
 // demos/.
 
@@ -32,11 +32,11 @@ function pagesOf(dir: string): Map<string, Front | Error> {
 }
 
 const english = Object.fromEntries(SECTIONS.map((s) => [s, pagesOf(join(ROOT, s))]));
-const chinese = Object.fromEntries(SECTIONS.map((s) => [s, pagesOf(join(ROOT, 'zh-CN', s))]));
+const hindi = Object.fromEntries(SECTIONS.map((s) => [s, pagesOf(join(ROOT, 'hi', s))]));
 
 test('frontmatter parses and has a title and description', () => {
   const problems: string[] = [];
-  for (const [locale, sections] of [['', english], ['zh-CN/', chinese]] as const) {
+  for (const [locale, sections] of [['', english], ['hi/', hindi]] as const) {
     for (const section of SECTIONS) {
       for (const [name, front] of sections[section]) {
         const file = `${locale}${section}/${name}`;
@@ -53,22 +53,22 @@ test('frontmatter parses and has a title and description', () => {
   expect(problems).toEqual([]);
 });
 
-test('every English page has a Chinese counterpart with the same order, group and demo', () => {
+test('every English page has a Hindi counterpart with the same order, group and demo', () => {
   const problems: string[] = [];
   for (const section of SECTIONS) {
     for (const [name, en] of english[section]) {
-      const zh = chinese[section].get(name);
-      if (!zh) {
-        problems.push(`zh-CN/${section}/${name}: missing`);
+      const hi = hindi[section].get(name);
+      if (!hi) {
+        problems.push(`hi/${section}/${name}: missing`);
         continue;
       }
-      if (en instanceof Error || zh instanceof Error) continue;
-      if (en.order !== zh.order) problems.push(`zh-CN/${section}/${name}: order ${zh.order} ≠ ${en.order}`);
-      if (en.group !== zh.group) problems.push(`zh-CN/${section}/${name}: group ${zh.group} ≠ ${en.group}`);
-      if (en.demo !== zh.demo) problems.push(`zh-CN/${section}/${name}: demo ${zh.demo} ≠ ${en.demo}`);
+      if (en instanceof Error || hi instanceof Error) continue;
+      if (en.order !== hi.order) problems.push(`hi/${section}/${name}: order ${hi.order} ≠ ${en.order}`);
+      if (en.group !== hi.group) problems.push(`hi/${section}/${name}: group ${hi.group} ≠ ${en.group}`);
+      if (en.demo !== hi.demo) problems.push(`hi/${section}/${name}: demo ${hi.demo} ≠ ${en.demo}`);
     }
-    for (const name of chinese[section].keys()) {
-      if (!english[section].has(name)) problems.push(`zh-CN/${section}/${name}: no English page`);
+    for (const name of hindi[section].keys()) {
+      if (!english[section].has(name)) problems.push(`hi/${section}/${name}: no English page`);
     }
   }
   expect(problems).toEqual([]);
@@ -85,11 +85,11 @@ test('every element page names a demo (README "Demos")', () => {
 
 test('every demo named in frontmatter exists in demos/', () => {
   const missing: string[] = [];
-  for (const [locale, sections] of [['', english], ['zh-CN/', chinese]] as const) {
+  for (const [locale, sections] of [['', english], ['hi/', hindi]] as const) {
     for (const section of SECTIONS) {
       for (const [name, front] of sections[section]) {
         if (front instanceof Error || front.demo === undefined) continue;
-        if (typeof front.demo !== 'string' || !existsSync(join(ROOT, 'demos', `${front.demo}.tsx`))) {
+        if (typeof front.demo !== 'string' || (!existsSync(join(ROOT, 'demos', `${front.demo}.svelte`)) && !existsSync(join(ROOT, 'demos', `${front.demo}.tsx`)))) {
           missing.push(`${locale}${section}/${name}: demo ${String(front.demo)}`);
         }
       }
@@ -105,10 +105,10 @@ test("every section's demo exists in demos/, on both languages' pages", () => {
   for (const section of SECTIONS) {
     for (const name of english[section].keys()) {
       const en = sectionDemos(join(ROOT, section, name));
-      const zh = sectionDemos(join(ROOT, 'zh-CN', section, name));
-      if (en.join() !== zh.join()) problems.push(`zh-CN/${section}/${name}: section demos ${zh} ≠ ${en}`);
+      const hi = sectionDemos(join(ROOT, 'hi', section, name));
+      if (en.join() !== hi.join()) problems.push(`hi/${section}/${name}: section demos ${hi} ≠ ${en}`);
       for (const demo of en) {
-        if (!existsSync(join(ROOT, 'demos', `${demo}.tsx`))) problems.push(`${section}/${name}: demo ${demo}`);
+        if (!existsSync(join(ROOT, 'demos', `${demo}.svelte`)) && !existsSync(join(ROOT, 'demos', `${demo}.tsx`))) problems.push(`${section}/${name}: demo ${demo}`);
       }
     }
   }

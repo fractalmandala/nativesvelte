@@ -10,13 +10,13 @@
   }
 
   let { app, lang }: Props = $props();
-  const zh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const t = $derived(
-    zh
-      ? { building: '开发中', commercial: '商业产品', visit: '官网', source: '源码', published: '发布于', starsUpdated: 'Stars 更新于' }
+    isHi
+      ? { building: 'निर्माणाधीन', commercial: 'व्यावसायिक', visit: 'जालस्थल', source: 'स्रोत संहिता', published: 'प्रकाशित', starsUpdated: 'नक्षत्र अद्यतन' }
       : { building: 'In development', commercial: 'Commercial', visit: 'Website', source: 'Source', published: 'Published', starsUpdated: 'Stars updated' }
   );
-  const href = $derived(app.hasReadme ? url(`${zh ? 'zh-CN/' : ''}apps/${app.id}`) : (app.website ?? app.source)!);
+  const href = $derived(app.hasReadme ? url(`${isHi ? 'hi/' : ''}apps/${app.id}`) : (app.website ?? app.source)!);
   const external = $derived(!app.hasReadme);
   const date = $derived(app.publishedAt?.slice(0, 10).replaceAll('-', '/'));
   const stars = $derived(app.stars === null ? null : new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(app.stars));

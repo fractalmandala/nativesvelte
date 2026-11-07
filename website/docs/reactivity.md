@@ -115,7 +115,7 @@ For complex multi-statement derivations, use `$derived.by(() => ...)`:
 <p>Sum: {stats.sum}, Avg: {stats.avg}</p>
 ```
 
-## Effects
+## Effects <span id="cleanup"></span><span id="batch"></span><span id="resource"></span>
 
 Effects execute side effects when reactive state changes, such as timers, logging, or network calls:
 

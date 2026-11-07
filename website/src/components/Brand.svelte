@@ -7,43 +7,43 @@
   }
 
   let { lang }: Props = $props();
-  const isZh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const asset = (name: string) => url(`brand/${name}`);
 
   const t = $derived(
-    isZh
+    isHi
       ? {
-          title: '品牌',
-          usage: '使用 Logo',
-          usageLead: '采用 NativeSvelte 开发的应用，都可以自由使用 NativeSvelte 的品牌 Logo 进行宣传。',
-          logo: 'Logo',
-          logoLead: '外壳是一根发光的青柠色圆管，里面的圆珠是它运行的模块。深色背景和浅色背景各有一个版本。',
-          onDark: '深色背景',
-          onLight: '浅色背景',
-          solid: '纯色 Logo',
-          solidLead: '同样的轮廓，只用一种颜色。适合单色印刷、水印、图标字体，以及放在图片或彩色背景上。',
-          white: '白色',
-          black: '黑色',
-          citrusName: '青柠',
-          icon: 'App 图标',
-          iconLead: '1024×1024 的满版方形，圆角由系统裁切。适合应用商店和桌面图标。',
-          banners: 'README Banner',
-          bannersLead: '1600×500，以两倍分辨率导出，用于 README 和文章头图。',
-          social: '社交预览图',
-          socialLead: '1280×640，用于 GitHub 仓库的 Social preview。图案位于中间区域，话题页裁切后依然完整。',
-          link: '链接预览图',
-          linkLead: '1200×630，网站的 og:image。',
-          colors: '配色',
-          type: '字体',
-          typeLead: '标题、标语和平台名都使用 Figtree：标题 600，标语 400，平台名 300。',
-          name: '名称',
-          nameLead: '正式场合写 NativeSvelte，代码中使用小写的 nativesvelte 或 nsh。',
-          dark: '深色',
-          light: '浅色',
-          citrus: '青柠（深色背景）',
-          olive: '橄榄（浅色背景）',
-          inkDark: '深色背景',
-          inkLight: '浅色文字',
+          title: 'पहचान एवं प्रतीक',
+          usage: 'प्रतीक चिह्न (Logo) उपयोग',
+          usageLead: 'NativeSvelte द्वारा विकसित अनुप्रयोगों के प्रचार-प्रसार हेतु आप NativeSvelte के प्रतीक चिह्न का निःसंकोच उपयोग कर सकते हैं।',
+          logo: 'प्रतीक चिह्न (Logo)',
+          logoLead: 'बाह्य आवरण एक दीप्तिमान हरित नली है, जिसके भीतर के मणके संचालित मॉड्यूल दर्शाते हैं। श्याम एवं श्वेत पृष्ठभूमि हेतु पृथक संस्करण उपलब्ध हैं।',
+          onDark: 'श्याम पृष्ठभूमि',
+          onLight: 'प्रकाश पृष्ठभूमि',
+          solid: 'एकरंगी प्रतीक',
+          solidLead: 'समान रूपरेखा, केवल एक रंग में। एकरंगी मुद्रण, जलचिह्न एवं रंगीन पृष्ठभूमि हेतु उपयुक्त।',
+          white: 'श्वेत',
+          black: 'श्याम',
+          citrusName: 'हरित पीत',
+          icon: 'अनुप्रयोग प्रतीक (App Icon)',
+          iconLead: '1024×1024 पूर्ण वर्गाकार, जिसके किनारे तंत्र द्वारा सुडौल किए जाते हैं। अनुप्रयोग भंडार एवं कार्यपीठ हेतु उपयुक्त।',
+          banners: 'README शीर्ष पट्टिका (Banner)',
+          bannersLead: '1600×500, द्विगुण विभेदन में निर्यातित, README एवं लेखों के शीर्ष हेतु।',
+          social: 'सामाजिक पूर्वावलोकन चित्र',
+          socialLead: '1280×640, GitHub कोष के सामाजिक पूर्वावलोकन हेतु।',
+          link: 'संपर्क पूर्वावलोकन चित्र',
+          linkLead: '1200×630, जालस्थल का og:image चित्र।',
+          colors: 'रंग योजना',
+          type: 'मुद्रण लिपि (Typography)',
+          typeLead: 'शीर्षक, ध्येयवाक्य एवं मंच के नाम हेतु Figtree लिपि का प्रयोग: शीर्षक 600, ध्येयवाक्य 400, मंच 300।',
+          name: 'नामकरण',
+          nameLead: 'औपचारिक अवसरों पर NativeSvelte लिखें, संहिता में लघु अक्षरों में nativesvelte अथवा nsh प्रयुक्त करें।',
+          dark: 'श्याम (Dark)',
+          light: 'प्रकाश (Light)',
+          citrus: 'दीप्त हरित (श्याम पृष्ठभूमि)',
+          olive: 'जैतून हरित (प्रकाश पृष्ठभूमि)',
+          inkDark: 'श्याम पृष्ठभूमि',
+          inkLight: 'प्रकाश लेख',
         }
       : {
           title: 'Brand',
@@ -93,8 +93,8 @@
     { hex: '#4a6d0a', label: t.olive },
     { hex: '#0d1117', label: t.inkDark },
     { hex: '#1f2328', label: t.inkLight },
-    { hex: '#e6edf3', label: isZh ? '深色背景上的文字' : 'Ink, on dark' },
-    { hex: '#f2f4f4', label: isZh ? '浅色背景' : 'Light ground' },
+    { hex: '#e6edf3', label: isHi ? 'श्याम पृष्ठभूमि पर लेख' : 'Ink, on dark' },
+    { hex: '#f2f4f4', label: isHi ? 'प्रकाश पृष्ठभूमि' : 'Light ground' },
   ]);
 </script>
 

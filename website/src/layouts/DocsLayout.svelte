@@ -31,7 +31,7 @@
   const locale = $derived(page.lang);
   const machine = $derived(isMachine(locale));
   const lang: Lang = $derived(chromeLang(locale));
-  const isZh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const section = $derived(SECTIONS.find((s) => s.id === page.section)!);
 
   const sidebar = $derived(allPages.filter((p) => p.section === page.section));
@@ -40,15 +40,15 @@
   const next = $derived(at >= 0 && at < allPages.length - 1 ? allPages[at + 1] : undefined);
 
   const english = $derived(allPages.find((p) => p.section === page.section && p.slug === page.slug && p.lang === 'en') ?? page);
-  const otherLang: Lang = $derived(isZh ? 'en' : 'zh-CN');
+  const otherLang: Lang = $derived(isHi ? 'en' : 'hi');
   const counterpart = $derived(allPages.find((p) => p.section === page.section && p.slug === page.slug && p.lang === otherLang));
   const otherSection = $derived(allPages.find((p) => p.section === page.section && p.lang === otherLang));
   const langHref = $derived(counterpart?.href ?? otherSection?.href);
 
   const editUrl = $derived(`${EDIT_BASE}website/${machine ? english?.sourcePath : page.sourcePath}`);
   const t = $derived(
-    isZh
-      ? { prev: '上一页', next: '下一页', edit: '在 GitHub 上编辑此页', markdown: 'Markdown 原文', pager: '翻页' }
+    isHi
+      ? { prev: 'पूर्ववर्ती', next: 'आगामी', edit: 'GitHub पर यह पृष्ठ संपादित करें', markdown: 'मूल मार्कडाउन', pager: 'पृष्ठ संचलन' }
       : { prev: 'Previous', next: 'Next', edit: 'Edit this page on GitHub', markdown: 'View as Markdown', pager: 'Pagination' }
   );
   const prevLabel = $derived(machine ? ui(locale, 'prev') : t.prev);

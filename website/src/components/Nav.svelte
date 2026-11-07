@@ -27,19 +27,19 @@
     hrefs = {},
   }: Props = $props();
 
-  const isZh = $derived(lang === 'zh-CN');
-  const switchHref = $derived(langHref ?? url(isZh ? '' : 'zh-CN'));
+  const isHi = $derived(lang === 'hi');
+  const switchHref = $derived(langHref ?? url(isHi ? '' : 'hi'));
 
   const rest = $derived(currentPath.startsWith(BASE) ? currentPath.slice(BASE.length) : currentPath.replace(/^\/+/, ''));
-  const localeSegment = $derived(new RegExp(`^(?:${['zh-CN', ...machineLocales.map((l) => l.code)].join('|')})(/|$)`));
+  const localeSegment = $derived(new RegExp(`^(?:${['hi', ...machineLocales.map((l) => l.code)].join('|')})(/|$)`));
   const activeSection = $derived(rest.replace(localeSegment, '').split('/')[0]);
   const isMachinePage = $derived(locale !== lang);
-  const home = $derived(url(isMachinePage ? locale : isZh ? 'zh-CN' : ''));
+  const home = $derived(url(isMachinePage ? locale : isHi ? 'hi' : ''));
 
   const menu = $derived(
     languages ?? [
       { code: 'en', name: 'English', href: url('') },
-      { code: 'zh-CN', name: '简体中文', href: url('zh-CN') },
+      { code: 'hi', name: 'हिन्दी', href: url('hi') },
       ...machineLocales.map(({ code, name }) => ({ code, name, href: url(code) })),
     ]
   );
@@ -51,11 +51,11 @@
   const currentLabel = $derived(
     siteVersions.find((version) => version.id === currentVersion)?.label ?? currentVersion
   );
-  const appsHref = $derived(isLatestVersion ? url(isZh ? 'zh-CN/apps' : 'apps') : isZh ? '/zh-CN/apps' : '/apps');
+  const appsHref = $derived(isLatestVersion ? url(isHi ? 'hi/apps' : 'apps') : isHi ? '/hi/apps' : '/apps');
   const releasesHref = $derived(
-    isLatestVersion ? url(isZh ? 'zh-CN/releases' : 'releases') : isZh ? '/zh-CN/releases' : '/releases'
+    isLatestVersion ? url(isHi ? 'hi/releases' : 'releases') : isHi ? '/hi/releases' : '/releases'
   );
-  const onRootPage = $derived(/^\/(zh-CN\/)?(apps|releases)(\/|$)/.test(pagePath));
+  const onRootPage = $derived(/^\/(hi\/)?(apps|releases)(\/|$)/.test(pagePath));
 
   let isMenuOpen = $state(false);
 
@@ -92,7 +92,7 @@
     </a>
 
     <details class="site-nav__projects">
-      <summary aria-label={isZh ? '切换项目' : 'Switch project'} title={isZh ? '切换项目' : 'Switch project'}>
+      <summary aria-label={isHi ? 'प्रकल्प चुनें' : 'Switch project'} title={isHi ? 'प्रकल्प चुनें' : 'Switch project'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="m6 9 6 6 6-6" />
         </svg>
@@ -102,7 +102,7 @@
           <Logo class="site-nav__project-logo" />
           <div class="site-nav__project-copy">
             <strong>NativeSvelte</strong>
-            <span>{isZh ? 'Svelte 与 Rust 的全平台 Native UI 框架' : 'Svelte & Rust native UI framework for every platform'}</span>
+            <span>{isHi ? 'Svelte एवं Rust आधारित सर्व-मंच देशीय (Native) UI ढांचा' : 'Svelte & Rust native UI framework for every platform'}</span>
           </div>
         </a>
         <a href={GPUI_KIT_URL} target="_blank" rel="noopener noreferrer">
@@ -112,7 +112,7 @@
           </svg>
           <div class="site-nav__project-copy">
             <strong>GPUI Kit</strong>
-            <span>{isZh ? 'GPUI 桌面应用的组件与工具集' : 'Components and tools for GPUI desktop apps'}</span>
+            <span>{isHi ? 'GPUI डेस्कटॉप अनुप्रयोगों हेतु घटक एवं उपकरण' : 'Components and tools for GPUI desktop apps'}</span>
           </div>
         </a>
       </div>
@@ -122,11 +122,11 @@
       class="site-nav__links"
       class:is-open={isMenuOpen}
       id="site-nav-links"
-      aria-label={isZh ? '主导航' : 'Primary'}
+      aria-label={isHi ? 'मुख्य संचलन' : 'Primary'}
     >
       {#each SECTIONS as section}
         <a
-          href={hrefs[section.id] ?? url(isZh ? `zh-CN/${section.id}` : section.id)}
+          href={hrefs[section.id] ?? url(isHi ? `hi/${section.id}` : section.id)}
           class="site-nav__link"
           class:active={activeSection === section.id}
           aria-current={activeSection === section.id ? 'true' : undefined}
@@ -136,13 +136,13 @@
         </a>
       {/each}
       <a
-        href={url(isZh ? 'zh-CN/gallery' : 'gallery')}
+        href={url(isHi ? 'hi/gallery' : 'gallery')}
         class="site-nav__link"
         class:active={activeSection === 'gallery'}
         aria-current={activeSection === 'gallery' ? 'true' : undefined}
         onclick={() => (isMenuOpen = false)}
       >
-        {isZh ? '示例应用' : 'Gallery'}
+        {isHi ? 'निदर्शन' : 'Gallery'}
       </a>
       <a
         href={appsHref}
@@ -151,7 +151,7 @@
         aria-current={activeSection === 'apps' ? 'true' : undefined}
         onclick={() => (isMenuOpen = false)}
       >
-        {isZh ? '应用案例' : 'App Stories'}
+        {isHi ? 'अनुप्रयोग गाथा' : 'App Stories'}
       </a>
       <a
         href={releasesHref}
@@ -160,31 +160,31 @@
         aria-current={activeSection === 'releases' ? 'true' : undefined}
         onclick={() => (isMenuOpen = false)}
       >
-        {isZh ? '版本发布' : 'Releases'}
+        {isHi ? 'विमोचन' : 'Releases'}
       </a>
     </nav>
 
     <div class="site-nav__actions">
       {#if siteVersions.length > 1}
         <details class="site-nav__versions">
-          <summary title={isZh ? '文档版本' : 'Documentation version'}>
+          <summary title={isHi ? 'प्रलेखन संस्करण' : 'Documentation version'}>
             {currentLabel}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="m6 9 6 6 6-6" />
             </svg>
           </summary>
-          <div class="site-nav__versions-menu" aria-label={isZh ? '版本' : 'Versions'}>
+          <div class="site-nav__versions-menu" aria-label={isHi ? 'संस्करण' : 'Versions'}>
             {#each siteVersions as version}
               <a
                 href={onRootPage ? pagePath : versionHref(version, pagePath)}
                 data-version-link
-                data-version-home={versionHref(version, isZh ? '/zh-CN' : '/')}
+                data-version-home={versionHref(version, isHi ? '/hi' : '/')}
                 class:is-current={version.id === currentVersion}
                 aria-current={version.id === currentVersion ? 'page' : undefined}
               >
                 {version.label}
                 {#if version.id === latestVersion}
-                  <span>{isZh ? '最新' : 'latest'}</span>
+                  <span>{isHi ? 'नवीनतम' : 'latest'}</span>
                 {/if}
               </a>
             {/each}
@@ -196,13 +196,13 @@
 
       {#if machineLocales.length > 0}
         <details class="site-nav__versions site-nav__languages">
-          <summary title={isZh ? '语言' : 'Language'}>
+          <summary title={isHi ? 'भाषा' : 'Language'}>
             {currentLanguage}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="m6 9 6 6 6-6" />
             </svg>
           </summary>
-          <div class="site-nav__versions-menu" aria-label={isZh ? '语言' : 'Languages'}>
+          <div class="site-nav__versions-menu" aria-label={isHi ? 'भाषा' : 'Languages'}>
             {#each menu.filter((l) => l.href) as l}
               <a
                 href={l.href}
@@ -222,11 +222,11 @@
           size="sm"
           href={switchHref}
           class="site-nav__lang-btn"
-          hreflang={isZh ? 'en' : 'zh-CN'}
-          lang={isZh ? 'en' : 'zh-CN'}
-          title={isZh ? 'English' : '中文'}
+          hreflang={isHi ? 'en' : 'hi'}
+          lang={isHi ? 'en' : 'hi'}
+          title={isHi ? 'English' : 'हिन्दी'}
         >
-          {isZh ? 'EN' : '中文'}
+          {isHi ? 'EN' : 'हिन्दी'}
         </Button>
       {/if}
 
@@ -243,7 +243,7 @@
         size="icon-sm"
         id="nav-burger"
         class="site-nav__burger"
-        aria-label={isZh ? '菜单' : 'Menu'}
+        aria-label={isHi ? 'सूची' : 'Menu'}
         aria-expanded={String(isMenuOpen)}
         aria-controls="site-nav-links"
         onclick={() => (isMenuOpen = !isMenuOpen)}

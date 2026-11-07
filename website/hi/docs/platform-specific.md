@@ -1,0 +1,339 @@
+---
+title: मंचाधारित विशिष्ट संहिता (Platform Code)
+description: एक ही अनुप्रयोग में मंच-विशिष्ट व्यवहार, अनुकूलन एवं विस्तार का समावेश।
+order: 17
+group: platforms
+---
+
+
+# Platform-specific code <span id="platform-specific-code"></span>
+
+One NSH bundle runs on iOS, Android, macOS, Windows and Linux (and in Mac Catalyst), and in browsers through the [web runtime](./web.md). Most of an app needs no platform checks at all: elements, styles, layout and modules behave the same everywhere, and the components you draw from them look the same everywhere. When something really is specific to one platform, NSH gives it a clear place, so platform code stays visible and contained:
+
+| Rust | TSX | For |
+|---|---|---|
+| [Builder methods (`.ripple(..)`, `.input_accessory(..)`)](#platform-only-props) | [`ios={{…}}`, `android={{…}}`, `desktop={{…}}`, `web={{…}}`](#platform-only-props) | Props only one platform has. |
+| [`on_back_press`, `nsh_core::element::desktop`](#platform-modules) | [`nsh/mobile`, `nsh/desktop`](#platform-modules) | APIs only mobile platforms or only desktops have. |
+| [`os()`, `idiom()`, `is_desktop()`](#platformos-and-platformselect) | [`platform.os`, `platform.desktop`, `platform.select`](#platformos-and-platformselect) | Choosing values or code per platform. |
+| [`.when(os() == Os::Ios, ..)`](#platform-variants-in-tailwind) | [`ios:` / `android:` / `web:` classes](#platform-variants-in-tailwind) | Styles per platform. |
+
+## Desktop and mobile <span id="desktop-and-mobile"></span>
+
+Every platform is desktop or mobile, by one rule. Desktop is macOS, Windows, Linux, and browsers in the desktop idiom (a mouse and a wide window, [the web](./web.md)). Mobile is iOS, Android, and browsers in the phone or tablet idiom; Mac Catalyst runs the iOS backend, so it is mobile too, with `ios={{…}}` props. `desktop={{…}}` props, `platform.select({ desktop, mobile })`, `platform.desktop` and `platform.idiom === "desktop"` all follow this rule, as do `nsh/base`'s components (a menu is a popup on desktops and a sheet on mobile) and, in Rust, `is_desktop()`.
+
+`nsh/desktop`'s `isAvailable` answers a narrower question: whether that module's window and menu APIs work, which they do on macOS, Windows and Linux. Gate layout, density and input on `platform.desktop`, and calls of `Window` and `Menu` on `isAvailable`.
+
+## Platform-only props <span id="platform-only-props"></span>
+
+In Rust, a prop one platform has is a builder method like any other (`.ripple(..)`, `.elevation(..)` for Android, `.input_accessory(..)` for iOS, `.window_drag(..)` for the desktops); the other platforms leave it aside. In TSX, props that exist on one platform only are grouped in an object named after it. Each element accepts `ios`, `android`, `desktop` (macOS, Windows, Linux, and browsers in the desktop idiom) and `web` (browsers); on other platforms the object is ignored, and on its own platform only its keys are applied. A desktop browser applies both `desktop` and `web`.
+
+```rust tabs
+use nsh_base::dialog;
+use nsh_core::{
+    Ripple,
+    element::{AutoFill, Orientation}, prelude::*,
+};
+
+view()
+    .on_press(open)
+    .active(|s| s.opacity(0.6))
+    .ripple(Ripple {
+        color: Some(rgba(0x0000001f).into()),
+        ..Ripple::default()
+    })
+    .elevation(px(4.0))
+    .p_4()
+    .rounded(px(12.0))
+    .bg(white())
+    .child(text("Open"))
+
+input().placeholder("Code").auto_fill(AutoFill::OneTimeCode)
+
+when(shown, || {
+    dialog()
+        .supported_orientations([Orientation::Portrait])
+        .status_bar_translucent(true)
+        .child(…)
+})
+```
+
+```svelte tabs
+<div
+  onclick={open}
+  class="p-4 rounded-xl bg-white active:opacity-60"
+  android={{ ripple: { color: "rgba(0,0,0,0.12)" }, elevation: 4 }}
+>
+  <span>Open</span>
+</div>
+
+<Input
+  placeholder="Code"
+  ios={{ textContentType: "oneTimeCode" }}
+/>
+
+<Dialog open={open} ios={{ supportedOrientations: ["portrait"] }} android={{ statusBarTranslucent: true }}>
+  …
+</Dialog>
+```
+
+The TSX objects are reactive like any prop; a key removed from the object is cleared.
+
+What exists today:
+
+| Rust | TSX | On | Description |
+|---|---|---|---|
+| `.ripple(Ripple { .. })` | `android={{ ripple }}` | every element | The material ripple while pressed: color, borderless, radius, foreground. |
+| `.elevation(..)` | `android={{ elevation }}` | every element | The material shadow, in points, from the view's shape. |
+| | `android={{ accessibilityLiveRegion }}` | every element | `"none"`, `"polite"` or `"assertive"`: TalkBack announces the view's changes. |
+| `.status_bar_translucent(..)` | `android={{ statusBarTranslucent }}` | `Dialog` | The dialog's content reaches under the status bar. |
+| `.input_accessory(..)` | `ios={{ inputAccessoryViewID }}` | `Input` | The `InputAccessoryView` shown over the keyboard. |
+| `.auto_fill(..)` | `ios={{ textContentType }}` | `Input` | iOS's names for autofill types (Rust's `AutoFill` covers both platforms). |
+| `.supported_orientations(..)` | `ios={{ supportedOrientations }}` | `Dialog` | The orientations it allows. |
+| `.back_forward_gestures(..)` | `ios={{ allowsBackForwardNavigationGestures }}` | `WebView` | Swipe back and forward in the page history. |
+| `.header_right_system_item(..)` | `ios={{ headerRightSystemItem }}` | `NavPage` | UIKit's own bar button at the end of the header, pressing `headerRight`. |
+| `.header_left_system_item(..)` | `ios={{ headerLeftSystemItem }}` | `NavPage` | UIKit's own bar button at the start of the header, pressing `headerLeft`. |
+| `.header_right_symbol(..)` | `ios={{ headerRightSymbol }}` | `NavPage` | UIKit's own bar button showing an SF Symbol at the end of the header, pressing `headerRight`. |
+| `.header_left_symbol(..)` | `ios={{ headerLeftSymbol }}` | `NavPage` | UIKit's own bar button showing an SF Symbol at the start of the header, pressing `headerLeft`. |
+| `.back_forward_gestures(..)` | `desktop={{ allowsBackForwardNavigationGestures }}` | `WebView` | macOS: two-finger trackpad swipes go back and forward in the page history; Windows: touchscreen swipes; Linux: touchpad swipes. |
+| `.window_drag(..)` | `desktop={{ windowDrag }}` | every element | Pressing it drags the window, as the system's title bar would (see [nsh/desktop](../modules/nsh-desktop.md#a-title-bar-of-your-own)). |
+| `.window_control(..)` | `desktop={{ windowControl }}` | every element | The view is the window's minimize, maximize or close button, drawn by the app. |
+| `.window_resize(..)` | `desktop={{ windowResize }}` | every element | Pressing it resizes a frameless window by an edge or a corner. |
+
+In TSX, `desktop={{…}}` and `web={{…}}` are accepted everywhere. The types (`IOSProps`, `AndroidProps`, `DesktopProps` and their per-element forms) tell your editor what each element takes.
+
+What an element means on every platform is a top-level prop (in Rust a method of the same name), applied where it means something: `NavPage`'s `title`, `headerStyle`, `headerLargeTitle` and `headerBackTitle` set up the system header of iOS and Android, its `header` slot is the header of the desktops and the web, and `Dialog`'s `presentation` picks iOS's sheets. `AlertDialog.show`'s `closeOnBackdropPress`, `pagingEnabled`, `refreshing`, `hitSlop` and the rest work on every platform. A platform's own system feature goes in its object, and when several platforms have it, in each of theirs under the same name: `WebView`'s `allowsBackForwardNavigationGestures`, the system's swipes through the page history, is in `ios={{…}}` and `desktop={{…}}`.
+
+## Platform मॉड्यूल <span id="platform-modules"></span>
+
+In Rust, the APIs only one platform has are functions of `nsh_core::prelude` (`on_back_press`, `input_accessory_view`) and of `nsh_core::element::desktop` (windows: `window`, `current_window` and its `WindowHandle`, `title_bar`, `displays`; the app: `quit`, `restart`; menus: `set_application_menu`, `popup_menu`); elsewhere they do nothing. In TSX, `nsh/mobile` holds the APIs of iOS and Android (some of them one platform's), `nsh/desktop` those of the desktops. Both can be imported on every platform, so one bundle runs everywhere: on other platforms their functions return at once and their components take no room. Each exports `isAvailable`, which is `true` on its own platforms; `platform.os` tells them apart.
+
+### nsh/mobile <span id="nshmobile"></span>
+
+`isAvailable` is `true` on iOS (with Mac Catalyst) and Android. Both platforms have [`TabBar`](../modules/nsh-mobile.md#tabbar), the system's tab bar.
+
+#### BackHandler (Android) <span id="backhandler-android"></span>
+
+| Rust | TSX | Description |
+|---|---|---|
+| `on_back_press(listener)` | `BackHandler.on("press", listener)` | Listens to the back button after dialogs, before stacks; return `true` when handled. The listener goes with the component (or effect) that added it; in TSX the call also returns a function that stops it earlier. |
+| | `BackHandler.exitApp()` | Leaves the app. |
+
+```rust tabs
+use nsh_core::prelude::*;
+
+fn player() -> impl IntoElement {
+    let full_screen = signal(false);
+    // Back leaves full screen before it leaves the page. The listener goes
+    // with the view.
+    on_back_press(move || {
+        if !full_screen.get_untracked() {
+            return false;
+        }
+        full_screen.set(false);
+        true
+    });
+    // …
+}
+```
+
+```svelte tabs
+<script>
+  import { BackHandler } from "nsh/mobile";
+
+  let fullScreen = $state(false);
+
+  // Back leaves full screen before it leaves the page. The listener goes
+  // with the component.
+  BackHandler.on("press", () => {
+    if (!fullScreen) return false;
+    fullScreen = false;
+    return true;
+  });
+</script>
+```
+
+The back button is handled by the top dialog first, then the back listeners (most recent first), then the top navigation stack, and the app exits when nothing handled it. See [Navigation](./navigation.md#the-android-back-button).
+
+#### InputAccessoryView (iOS) <span id="inputaccessoryview-ios"></span>
+
+| Rust | TSX | Description |
+|---|---|---|
+| `input_accessory_view(native_id)` | `InputAccessoryView` | A bar over the keyboard of the inputs naming its native id (`.input_accessory(..)`, `ios={{ inputAccessoryViewID }}`). |
+
+See [Forms and the keyboard](./forms-and-keyboard.md#a-bar-over-the-keyboard-ios-inputaccessoryview).
+
+### nsh/desktop <span id="nshdesktop"></span>
+
+Rust apps draw their own title bars with `nsh_core::element::desktop` ([Building with Rust](./rust.md#desktop-title-bars)). TSX's module:
+
+| Export | Description |
+|---|---|
+| `Window` | Windows of the app's own: `<Window>` in the tree, `Window.open` imperatively, of five kinds (`normal`, `dialog`, `panel`, `popup`, `overlay`), rendered from the app's one engine. |
+| `currentWindow`, `windows`, `focusedWindow` | The `WindowRef`s of the main window and the app's own: `set({ title, titleBar, level, … })`, `setMode`, `setBounds`, `setPlacement` to open a window as the user left it, `close`, and events. |
+| `titleBar` | The hidden title bar's height and the room the system's window controls take (reactive). |
+| `windowState`, `displays` | The current window's bounds, mode and display, and the displays (reactive). |
+| `Menu` | `setApplicationMenu(items)` (the menu bar, with shortcuts) and `popup(items, at?)` (context menus). An item's `icon` is an image as `<Image>`'s `src` takes it, so menus show the app's own icon set: an SVG takes the color of the menu's text, a bitmap keeps its colors. macOS and Windows show it; GTK's menus show no icon beside a label. |
+| `isAvailable` | `true` where the window and menu APIs work: macOS, Windows and Linux. Desktop browsers have `platform.desktop` and keep the browser's window and menus. |
+
+See [nsh/desktop](../modules/nsh-desktop.md).
+
+### status bar <span id="the-status-bar"></span>
+
+On both platforms the status bar belongs to the page or dialog on top, as in UIKit, where the topmost view controller decides it: [`NavPage` and `Dialog` take `statusBar`](../modules/nsh-base.md#status-bar) (in Rust `.status_bar(StatusBarStyle::Light)`, or a `StatusBarSetting` for the other fields) with `foreground` (`"auto"`, `"light"` for dark backgrounds, `"dark"` for light ones), `hidden` and `animated`. The page or dialog shown most recently wins, field by field, and the one below it applies again when it goes away. `nsh.json`'s `"statusBar"` is the app's default under them.
+
+```rust tabs
+use nsh_base::nav_page;
+use nsh_core::prelude::*;
+
+fn photo_viewer() -> impl IntoElement {
+    nav_page()
+        .header_visible(false)
+        .status_bar(StatusBarStyle::Light)
+        .child(view().flex_1().bg(black()))
+}
+```
+
+```svelte tabs
+<script>
+  import { NavPage } from "nsh/base";
+</script>
+
+<NavPage headerVisible={false} statusBar={{ foreground: "light" }}>
+  <div class="flex-1 bg-black">…</div>
+</NavPage>
+```
+
+In an app embedded in a native one, the host app's view controller decides the status bar on iOS. An app that declares `"capabilities"` in `nsh.json` needs `"statusBar": true` to change it.
+
+## platform.os and platform.select <span id="platformos-and-platformselect"></span>
+
+`os()` in Rust and the `platform` constant from `nsh` in TSX tell you where the app runs: `Os::Ios`, `Os::Android`, `Os::MacOs`, `Os::Windows`, `Os::Linux` or `Os::Web`, and `platform.os` `"ios"`, `"android"`, `"macos"`, `"windows"`, `"linux"` or `"web"` (Mac Catalyst is `"ios"`, with `platform.catalyst` in either of its idioms; the [macOS backend](./macos.md) is `"macos"`, the [Linux backend](./linux.md) `"linux"` and the [Windows backend](./windows.md) `"windows"`, and their elements apply their `desktop` props; [browsers](./web.md) are `"web"`, and apply `desktop` props too when `platform.desktop` is `true`). See [Device and environment](./device-and-environment.md#the-platform) for the version, the idiom and the rest.
+
+```rust tabs
+use nsh_core::{element::Os, prelude::*};
+
+if os() == Os::Android {
+    // …
+}
+```
+
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+
+  if (platform.os === "android") {
+    // …
+  }
+</script>
+```
+
+### platform.select <span id="platformselect"></span>
+
+In Rust a `match os()` chooses the value, with `is_desktop()` for the desktops. In TSX, `platform.select(spec)` returns the value for this platform. It looks for the OS's own key, then `desktop` or `mobile` by [the rule above](#desktop-and-mobile) (`platform.desktop`), then `native` (every platform but the web), then `default`:
+
+```rust tabs
+use nsh_core::{element::Os, prelude::*};
+
+fn card() -> View {
+    let card = view().rounded(px(12.0)).bg(white());
+    match os() {
+        Os::Ios => card.shadow_md(),
+        Os::Android => card.border_1().border_color(rgb(0xe5e7eb)),
+        _ => card,
+    }
+}
+
+let hint = match os() {
+    Os::Ios => "Swipe down to close",
+    Os::Android => "Press back to close",
+    _ => "Close",
+};
+```
+
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+
+  const cardClass = platform.select({
+    ios: "shadow-md",
+    android: "border border-gray-200",
+    default: "",
+  });
+
+  const hint = platform.select({ ios: "Swipe down to close", android: "Press back to close", default: "Close" });
+</script>
+```
+
+It returns `undefined` when nothing matches and there is no `default`.
+
+### Rendering different components <span id="rendering-different-components"></span>
+
+Choose components the same way, at module level (TSX) when the choice never changes:
+
+```rust tabs
+fn spinner() -> AnyElement {
+    if os() == Os::Ios {
+        ios_spinner().into_element()
+    } else {
+        material_spinner().into_element()
+    }
+}
+```
+
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+  import IosSpinner from "./IosSpinner.svelte";
+  import MaterialSpinner from "./MaterialSpinner.svelte";
+
+  const Spinner = platform.select({ ios: IosSpinner, default: MaterialSpinner })!;
+</script>
+```
+
+or inline with [`when` / `<If>`](../elements/control-flow.md):
+
+```rust tabs
+when(os() == Os::Ios, || input_accessory_view("bar").child(…))
+    .otherwise(|| text("Android has no input accessories."))
+```
+
+```svelte tabs
+<script>
+  import { platform } from "nsh";
+</script>
+
+{#if platform.os === "ios"}
+  <InputAccessoryView nativeID="bar">…</InputAccessoryView>
+{:else}
+  <span>Android has no input accessories.</span>
+{/if}
+```
+
+## Platform variants in Tailwind <span id="platform-variants-in-tailwind"></span>
+
+Rust styles per platform with `.when(os() == Os::Ios, |v| ..)`; in TSX, the `ios:`, `android:` and `web:` variants apply classes on one platform:
+
+```rust tabs
+view()
+    .rounded_xl()
+    .bg(white())
+    .p_4()
+    .when(os() == Os::Ios, |v| v.shadow_md())
+    .when(os() == Os::Android, |v| v.border_1().border_color(rgb(0xe4e4e7)))
+```
+
+```svelte tabs
+<div class="rounded-xl bg-white p-4 ios:shadow-md android:border android:border-zinc-200">…</div>
+<span class="text-base android:font-medium">Title</span>
+```
+
+## Prefer shared behavior <span id="prefer-shared-behavior"></span>
+
+Before reaching for a platform check, consider whether the difference matters to your users. Elements and styles already map to each platform's native behavior where it should differ (scroll physics, text rendering, keyboards, accessibility), while staying the same where users expect consistency (your app's own look). Platform checks are best kept for platform conventions users rely on: Android's back button and toasts, iOS's sheets and large titles, autofill names, Android's ripple.
+
+## संबंधित प्रलेखन <span id="related"></span>
+
+- [`InputAccessoryView`](../modules/nsh-mobile.md#inputaccessoryview) and [`BackHandler`](../modules/nsh-mobile.md#backhandler): the references.
+- [`nsh`'s device API](../modules/nsh.md#device): `platform`.
+- [Native components](./native-components.md): using views your host app provides on each platform.
+- [Tailwind](./tailwind.md): every variant.

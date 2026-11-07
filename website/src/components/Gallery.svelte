@@ -12,23 +12,23 @@
   }
 
   let { lang = 'en', built = false }: Props = $props();
-  const zh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const src = `${BASE}play/gallery/index.html`;
-  const link = (path: string) => url(zh ? `zh-CN/${path}` : path);
+  const link = (path: string) => url(isHi ? `hi/${path}` : path);
 
   const t = $derived(
-    zh
+    isHi
       ? {
-          title: '示例应用',
-          intro: 'NativeSvelte 的示例应用 Gallery：涵盖列表、导航、表单、手势、动画、画布、文本和图片。这里运行的是用 nsh package --target web 发布的版本，与它在 iOS、Android 和桌面上运行的代码完全相同。',
-          view: '宽度',
-          desktop: '桌面',
-          phone: '手机',
-          open: '在新标签页打开',
-          frame: 'NativeSvelte 示例应用 Gallery',
-          pending: '示例应用尚未构建：运行 bun run dev（或 cargo xtask web）后刷新。',
-          how: '如何发布到 Web',
-          source: '源码',
+          title: 'निदर्शन (Gallery)',
+          intro: 'NativeSvelte का निदर्शन अनुप्रयोग: सूची, संचलन, प्रपत्र, संकेत-चेष्टा, सजीवन, चित्रपटल (Canvas), पाठ एवं छवियाँ। यहाँ nsh package --target web द्वारा प्रकाशित संस्करण संचालित है, वही संहिता जो iOS, Android एवं डेस्कटॉप पर चलती है।',
+          view: 'विस्तार',
+          desktop: 'संगणक / कार्यपीठ',
+          phone: 'दूरभाष',
+          open: 'नवीन पृष्ठ पर खोलें',
+          frame: 'NativeSvelte निदर्शन अनुप्रयोग',
+          pending: 'निदर्शन अनुप्रयोग निर्मित नहीं है: bun run dev (या cargo xtask web) चलाकर पुनः लोड करें।',
+          how: 'जाल (Web) पर अनुप्रयोग प्रकाशन',
+          source: 'स्रोत संहिता',
         }
       : {
           title: 'Gallery',
@@ -102,7 +102,7 @@
   </div>
 
   <p class="gallery__links">
-    <a href={link(zh ? 'docs/web#发布应用' : 'docs/web#publish-an-app')}>{t.how}</a>
+    <a href={link('docs/web')}>{t.how}</a>
     <span aria-hidden="true">·</span>
     <a href="{REPO_URL}/tree/main/examples/gallery" target="_blank" rel="noopener noreferrer">{t.source}</a>
   </p>

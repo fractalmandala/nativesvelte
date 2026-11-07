@@ -11,8 +11,8 @@
   let { lang = 'en' }: Props = $props();
 
   const names = $derived(
-    lang === 'zh-CN'
-      ? { label: '外观', system: '跟随系统', light: '浅色', dark: '深色' }
+    lang === 'hi'
+      ? { label: 'स्वरूप', system: 'तंत्रानुरूप', light: 'प्रकाश', dark: 'श्याम' }
       : { label: 'Appearance', system: 'System', light: 'Light', dark: 'Dark' }
   );
 

@@ -40,7 +40,7 @@ const idsOf = (file: string) => {
 test('the site is built', () => {
   expect(built).toBe(true);
   expect(pages.length).toBeGreaterThan(3);
-  for (const file of ['index.html', 'zh-CN/index.html', '404.html', 'llms.txt', 'llms-full.txt', 'sitemap.xml', 'robots.txt']) {
+  for (const file of ['index.html', 'hi/index.html', '404.html', 'llms.txt', 'llms-full.txt', 'sitemap.xml', 'robots.txt']) {
     expect(existsSync(join(dist, file))).toBe(true);
   }
 });
@@ -103,7 +103,7 @@ test('every content page has its Markdown twin', () => {
     // A former path's redirect (`redirects` in astro.config.mjs) has no content of its own.
     .filter((page) => !readFileSync(page, 'utf8').includes('http-equiv="refresh"'))
     .map((page) => page.slice(dist.length).replace(/\/index\.html$/, ''))
-    .filter((route) => /^\/(?:zh-CN\/)?(?:docs|elements|components|modules)(?:\/|$)/.test(route))
+    .filter((route) => /^\/(?:hi\/)?(?:docs|elements|components|modules)(?:\/|$)/.test(route))
     .filter((route) => !existsSync(join(dist, `${route}.md`)));
   expect(missing).toEqual([]);
 });

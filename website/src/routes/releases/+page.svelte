@@ -11,6 +11,6 @@
   <title>Releases · NativeSvelte</title>
 </svelte:head>
 
-<Nav lang="en" currentPath="/releases" langHref={url('zh-CN/releases')} hrefs={data.hrefs} />
+<Nav lang="en" currentPath="/releases" langHref={url('hi/releases')} hrefs={data.hrefs} />
 <Releases lang="en" releases={data.releases} />
 <SiteFooter lang="en" hrefs={data.hrefs} />

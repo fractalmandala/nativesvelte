@@ -4,7 +4,7 @@
 
 const LABELS = {
   en: { note: 'Note', tip: 'Tip', important: 'Important', warning: 'Warning', caution: 'Caution' },
-  'zh-CN': { note: '备注', tip: '提示', important: '重要', warning: '警告', caution: '注意' },
+  hi: { note: 'टिप्पणी', tip: 'सुझाव', important: 'महत्वपूर्ण', warning: 'चेतावनी', caution: 'सावधानी' },
 };
 
 const MARKER = /^\[!(note|tip|important|warning|caution)\][ \t]*(?:\r?\n|$)/i;
@@ -12,7 +12,7 @@ const MARKER = /^\[!(note|tip|important|warning|caution)\][ \t]*(?:\r?\n|$)/i;
 export function remarkCallouts() {
   return (tree, file) => {
     const path = file?.path ?? file?.history?.[0] ?? '';
-    const labels = /[\\/]zh-CN[\\/]/.test(path) ? LABELS['zh-CN'] : LABELS.en;
+    const labels = /[\\/]hi[\\/]/.test(path) ? LABELS.hi : LABELS.en;
 
     const walk = (node) => {
       for (const child of node.children ?? []) walk(child);

@@ -14,29 +14,29 @@
   }
 
   let { app, lang, html = '', currentPath = '' }: Props = $props();
-  const zh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const media = $derived(url(`apps/${app.id}`));
   const external = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>';
   const previews = $derived(app.previews.filter((name) => !html.includes(`${media}/${name}`)));
 </script>
 
 <svelte:head>
-  <title>{zh ? `${app.name} · 应用案例` : `${app.name} · App Stories`} · NativeSvelte</title>
+  <title>{isHi ? `${app.name} · अनुप्रयोग गाथा` : `${app.name} · App Stories`} · NativeSvelte</title>
   <meta name="description" content={app.description} />
 </svelte:head>
 
-<Nav {lang} {currentPath} langHref={url(zh ? `apps/${app.id}` : `zh-CN/apps/${app.id}`)} />
+<Nav {lang} {currentPath} langHref={url(isHi ? `apps/${app.id}` : `hi/apps/${app.id}`)} />
 
 <main id="main" class="showcase-detail">
-  <Button variant="ghost" size="sm" class="showcase-detail__back" href={url(zh ? 'zh-CN/apps' : 'apps')}>
+  <Button variant="ghost" size="sm" class="showcase-detail__back" href={url(isHi ? 'hi/apps' : 'apps')}>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
     </svg>
-    {zh ? '全部应用' : 'All apps'}
+    {isHi ? 'समस्त अनुप्रयोग' : 'All apps'}
   </Button>
   <header>
     {#if app.featured}
-      <Badge variant="secondary">Featured</Badge>
+      <Badge variant="secondary">{isHi ? 'विशिष्ट' : 'Featured'}</Badge>
     {/if}
     <h1>{app.name}</h1>
     <p class="showcase-detail__author">{app.author}</p>
@@ -47,16 +47,16 @@
         · ★ {app.stars.toLocaleString('en')} GitHub Stars
       {/if}
     </p>
-    <nav aria-label={zh ? '应用链接' : 'App links'}>
+    <nav aria-label={isHi ? 'अनुप्रयोग सूत्र' : 'App links'}>
       {#if app.website}
         <Button variant="secondary" size="sm" href={app.website} target="_blank" rel="noopener noreferrer">
-          {zh ? '官网' : 'Website'}
+          {isHi ? 'जालस्थल' : 'Website'}
           {@html external}
         </Button>
       {/if}
       {#if app.source}
         <Button variant="secondary" size="sm" href={app.source} target="_blank" rel="noopener noreferrer">
-          {zh ? '源码' : 'Source'}
+          {isHi ? 'स्रोत संहिता' : 'Source'}
           {@html external}
         </Button>
       {/if}

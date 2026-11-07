@@ -12,7 +12,7 @@
   }
 
   let { name, lang = 'en', variant = 'panel', eager = false, html }: Props = $props();
-  const zh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const live = hasPlayer();
 
   let renderedHtml = $state(html || '');
@@ -39,10 +39,10 @@
     <figcaption>
       {#if live}
         <span class="demo-phone__live" aria-hidden="true"></span>
-        <span>{zh ? '实时运行' : 'Running live'} · <code>{name}.tsx</code></span>
-        <a href={playerHref(name, BASE)} target="_blank" rel="noopener">{zh ? '新标签页打开' : 'Open'} ↗</a>
+        <span>{isHi ? 'सक्रिय संचालन' : 'Running live'} · <code>{name}.svelte</code></span>
+        <a href={playerHref(name, BASE)} target="_blank" rel="noopener">{isHi ? 'नवीन पृष्ठ पर खोलें' : 'Open'} ↗</a>
       {:else}
-        <span><code>{name}.tsx</code></span>
+        <span><code>{name}.svelte</code></span>
       {/if}
     </figcaption>
   </figure>

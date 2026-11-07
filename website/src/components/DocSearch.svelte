@@ -7,18 +7,18 @@
     lang?: Lang;
   }
   let { lang = 'en' }: Props = $props();
-  const isZh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
 
   const copy = $derived(
-    isZh
+    isHi
       ? {
-          label: '搜索',
-          title: '搜索文档',
-          emptyTitle: '搜索文档',
-          emptyBody: '查找指南、元素与 API。',
-          navigate: '选择',
-          enter: '打开',
-          esc: '关闭',
+          label: 'खोजें',
+          title: 'प्रलेखन खोजें',
+          emptyTitle: 'प्रलेखन खोजें',
+          emptyBody: 'मार्गदर्शिका, घटक एवं एपीआई (API) संदर्भ खोजें।',
+          navigate: 'संचलन',
+          enter: 'खोलें',
+          esc: 'बंद करें',
         }
       : {
           label: 'Search',

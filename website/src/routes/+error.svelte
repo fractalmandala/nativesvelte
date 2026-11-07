@@ -5,12 +5,12 @@
   import Button from '../components/ui/Button.svelte';
   import { url } from '$lib/site';
 
-  let isZh = $state(false);
+  let isHi = $state(false);
 
   onMount(() => {
-    if (typeof location !== 'undefined' && /^\/(?:[^/]+\/)*zh-CN(?:\/|$)/.test(location.pathname)) {
-      isZh = true;
-      document.documentElement.lang = 'zh-CN';
+    if (typeof location !== 'undefined' && /^\/(?:[^/]+\/)*hi(?:\/|$)/.test(location.pathname)) {
+      isHi = true;
+      document.documentElement.lang = 'hi';
     }
   });
 </script>
@@ -20,21 +20,21 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
-<Nav lang={isZh ? 'zh-CN' : 'en'} currentPath="/404" langHref={url(isZh ? '' : 'zh-CN')} />
+<Nav lang={isHi ? 'hi' : 'en'} currentPath="/404" langHref={url(isHi ? '' : 'hi')} />
 
 <main class="not-found" id="main">
   <p class="not-found__code">404</p>
-  <h1>{isZh ? '页面不存在。' : 'This page does not exist.'}</h1>
-  {#if !isZh}
-    <p class="not-found__zh" lang="zh-CN">页面不存在。</p>
+  <h1>{isHi ? 'यह पृष्ठ अस्तित्व में नहीं है।' : 'This page does not exist.'}</h1>
+  {#if !isHi}
+    <p class="not-found__hi" lang="hi">यह पृष्ठ अस्तित्व में नहीं है।</p>
   {/if}
   <div class="not-found__actions">
-    <Button size="lg" href={url(isZh ? 'zh-CN' : '')}>{isZh ? '返回首页' : 'Go home'}</Button>
-    <Button size="lg" variant="secondary" href={url(isZh ? 'zh-CN/docs' : 'docs')}>{isZh ? '阅读指南' : 'Read the guide'}</Button>
+    <Button size="lg" href={url(isHi ? 'hi' : '')}>{isHi ? 'मुख्य पृष्ठ पर जाएँ' : 'Go home'}</Button>
+    <Button size="lg" variant="secondary" href={url(isHi ? 'hi/docs' : 'docs')}>{isHi ? 'मार्गदर्शिका पढ़ें' : 'Read the guide'}</Button>
   </div>
 </main>
 
-<SiteFooter lang={isZh ? 'zh-CN' : 'en'} />
+<SiteFooter lang={isHi ? 'hi' : 'en'} />
 
 <style>
   .not-found {

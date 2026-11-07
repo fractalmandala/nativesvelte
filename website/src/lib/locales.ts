@@ -33,12 +33,12 @@ export function direction(locale: string): 'ltr' | 'rtl' {
 }
 
 export function isMachine(locale: string): boolean {
-  return locale !== 'en' && locale !== 'zh-CN';
+  return locale !== 'en' && locale !== 'hi';
 }
 
 /** The locale the site's own strings are written in, for a page in `locale`. */
 export function chromeLang(locale: string): Lang {
-  return locale === 'zh-CN' ? 'zh-CN' : 'en';
+  return locale === 'hi' ? 'hi' : 'en';
 }
 
 const UI_EN = {

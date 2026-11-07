@@ -16,7 +16,7 @@
 
   let { headings = [], lang = 'en', title }: Props = $props();
   const items = $derived(headings.filter((h) => h.depth === 2 || h.depth === 3));
-  const label = $derived(title ?? (lang === 'zh-CN' ? '本页内容' : 'On this page'));
+  const label = $derived(title ?? (lang === 'hi' ? 'इस पृष्ठ पर' : 'On this page'));
 
   onMount(() => {
     const links = new Map<string, HTMLAnchorElement>();

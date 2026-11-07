@@ -11,7 +11,7 @@
   <title>Brand · NativeSvelte</title>
 </svelte:head>
 
-<Nav lang="en" currentPath="/brand" langHref={url('zh-CN/brand')} hrefs={data.hrefs} />
+<Nav lang="en" currentPath="/brand" langHref={url('hi/brand')} hrefs={data.hrefs} />
 <main id="main">
   <Brand lang="en" />
 </main>

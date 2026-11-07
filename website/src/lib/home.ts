@@ -1,12 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import en from '../home/en.json';
-import zh from '../home/zh-CN.json';
+import hi from '../home/hi.json';
 import { isMachine, machineLocales } from './locales';
 import { url } from './site';
 
 /**
- * The home page's words (`src/home/<lang>.json`): English and Chinese are
+ * The home page's words (`src/home/<lang>.json`): English and Hindi are
  * written here, other languages are machine translated in
  * longbridge/nsh-website-translates from `en.json` (its `<code>/home.json`).
  * Numbers, commands and code stay in `Home.astro`, the same in every language.
@@ -40,7 +40,7 @@ function overlay<T>(english: T, translation: unknown): T {
 
 /** The home page's words in `locale`. */
 export function homeCopy(locale: string): Home {
-  if (locale === 'zh-CN') return { copy: zh as HomeCopy, translated: true };
+  if (locale === 'hi') return { copy: hi as HomeCopy, translated: true };
   if (!isMachine(locale)) return { copy: en, translated: true };
   const file = join(ROOT, locale, 'home.json');
   if (!existsSync(file)) return { copy: en, translated: false };
@@ -52,14 +52,14 @@ export function homeCopy(locale: string): Home {
 export function homeLanguages(): { code: string; name: string; href: string }[] {
   return [
     { code: 'en', name: 'English', href: url('') },
-    { code: 'zh-CN', name: '简体中文', href: url('zh-CN') },
+    { code: 'hi', name: 'हिन्दी', href: url('hi') },
     ...machineLocales.map(({ code, name }) => ({ code, name, href: url(code) })),
   ];
 }
 
 /** Routes of the home page in each language that has it, for hreflang. */
 export function homeAlternates(): Record<string, string> {
-  const routes: Record<string, string> = { en: '/', 'zh-CN': '/zh-CN' };
+  const routes: Record<string, string> = { en: '/', hi: '/hi' };
   for (const { code } of machineLocales) if (homeCopy(code).translated) routes[code] = `/${code}`;
   return routes;
 }

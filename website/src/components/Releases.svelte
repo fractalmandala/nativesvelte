@@ -21,15 +21,15 @@
   const releasesUrl = `${REPO_URL}/releases`;
 
   const t = $derived(
-    lang === 'zh-CN'
+    lang === 'hi'
       ? {
-          kicker: '版本发布',
-          title: '发布说明',
-          lead: 'NativeSvelte 最近的版本及其 GitHub Release 说明，最新版本在最前。说明为 GitHub 上的英文原文。',
-          all: '在 GitHub 上查看全部版本',
-          latest: '最新',
-          prerelease: '预发布',
-          empty: '构建时未能读取发布说明。',
+          kicker: 'विमोचन',
+          title: 'विमोचन विवरण',
+          lead: 'NativeSvelte के नवीनतम संस्करण एवं उनकी GitHub विमोचन टिप्पणियाँ, जिसमें सबसे नया संस्करण सर्वप्रथम है।',
+          all: 'GitHub पर समस्त विमोचन देखें',
+          latest: 'नवीनतम',
+          prerelease: 'पूर्व-विमोचन',
+          empty: 'निर्माण काल में विमोचन विवरण पढ़ा नहीं जा सका।',
         }
       : {
           kicker: 'Releases',

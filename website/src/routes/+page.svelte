@@ -22,7 +22,7 @@
 <Nav
   lang="en"
   currentPath="/"
-  langHref={url('zh-CN')}
+  langHref={url('hi')}
   languages={homeLanguages()}
   hrefs={data.hrefs}
 />

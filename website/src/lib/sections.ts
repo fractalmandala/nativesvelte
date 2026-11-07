@@ -16,26 +16,26 @@ export interface Section {
 export const SECTIONS: Section[] = [
   {
     id: 'docs',
-    label: { en: 'Docs', 'zh-CN': '文档' },
+    label: { en: 'Docs', hi: 'प्रलेखन' },
     blurb: {
       en: 'Install the toolchain, write a first app, and learn how state, layout, styles and navigation work.',
-      'zh-CN': '安装工具链、编写第一个应用，了解状态、布局、样式与导航的工作方式。',
+      hi: 'उपकरण-श्रृंखला स्थापित करें, प्रथम अनुप्रयोग लिखें, और अवस्था, विन्यास, शैली तथा मार्गनिर्देशन की कार्यप्रणाली समझें।',
     },
   },
   {
     id: 'elements',
-    label: { en: 'Elements', 'zh-CN': '元素' },
+    label: { en: 'Elements', hi: 'मूलतत्व' },
     blurb: {
       en: 'The primitives every UI is built from — View, Text, Image, scroll views, lists — and the base components of nsh/base, in Rust and TSX.',
-      'zh-CN': '构成所有界面的原语——View、Text、Image、滚动视图、列表——以及 nsh/base 的基础组件，均附 Rust 与 TSX 示例。',
+      hi: 'प्रत्येक अंतराफलक के निर्माण हेतु मूल तत्व — View, Text, Image, स्क्रॉल दृश्य, सूचियाँ — तथा nsh/base के आधार घटक, Rust एवं Svelte में।',
     },
   },
   {
     id: 'modules',
-    label: { en: 'API', 'zh-CN': 'API' },
+    label: { en: 'API', hi: 'एपीआई (API)' },
     blurb: {
       en: 'The modules apps import: nsh, nsh/base, navigation, storage, the platform modules and the global APIs.',
-      'zh-CN': '应用导入的模块：nsh、nsh/base、导航、存储、平台模块与全局 API。',
+      hi: 'अनुप्रयोगों द्वारा आयातित घटक: nsh, nsh/base, मार्गनिर्देशन, भंडारण, मंच मॉड्यूल तथा वैश्विक एपीआई।',
     },
   },
 ];
@@ -48,14 +48,14 @@ export const SECTIONS: Section[] = [
  * `order`, from the simplest, the base components by name.
  */
 export const GROUPS: Record<string, Record<Lang, string>> = {
-  start: { en: 'Start here', 'zh-CN': '入门' },
-  platforms: { en: 'Platforms', 'zh-CN': '平台' },
-  delivery: { en: 'Delivery and security', 'zh-CN': '下发与安全' },
-  ui: { en: 'Building UI', 'zh-CN': '构建界面' },
-  tools: { en: 'Tools and internals', 'zh-CN': '工具与原理' },
+  start: { en: 'Start here', hi: 'आरंभ' },
+  platforms: { en: 'Platforms', hi: 'मंच' },
+  delivery: { en: 'Delivery and security', hi: 'वितरण एवं सुरक्षा' },
+  ui: { en: 'Building UI', hi: 'अंतराफलक निर्माण' },
+  tools: { en: 'Tools and internals', hi: 'उपकरण एवं आंतरिक कार्यप्रणाली' },
   // Elements: the primitives of `nsh`, then the base components of `nsh/base`.
-  primitives: { en: 'Primitives', 'zh-CN': '原语' },
-  base: { en: 'Base', 'zh-CN': 'Base' },
+  primitives: { en: 'Primitives', hi: 'मूल प्ररूप' },
+  base: { en: 'Base', hi: 'आधार घटक' },
 };
 
 export interface PageEntry {
@@ -84,7 +84,7 @@ export interface Page {
   demo?: string;
   /** The sidebar group (a key of `GROUPS`), taken from the English page. */
   group?: string;
-  /** Route without the base: `/docs`, `/zh-CN/elements/view`. */
+  /** Route without the base: `/docs`, `/hi/elements/view`. */
   route: string;
   /** Link to the page, base included. */
   href: string;
@@ -159,7 +159,7 @@ async function loadMachine(locale: string): Promise<Page[]> {
 async function load(lang: Lang): Promise<Page[]> {
   const all: Page[] = [];
   for (const section of SECTIONS) {
-    const baseDir = lang === 'zh-CN' ? `zh-CN/${section.id}` : section.id;
+    const baseDir = lang === 'hi' ? `hi/${section.id}` : section.id;
     const entries = readEntries(baseDir);
     const english = lang === 'en' ? entries : readEntries(section.id);
     const groups = Object.keys(GROUPS);
@@ -191,7 +191,7 @@ async function load(lang: Lang): Promise<Page[]> {
         demo: entry.data.demo,
         route,
         href: url(route),
-        filePath: `${lang === 'zh-CN' ? 'zh-CN/' : ''}${section.id}/${entry.id}.md`,
+        filePath: `${lang === 'hi' ? 'hi/' : ''}${section.id}/${entry.id}.md`,
         sourcePath: `${section.id}/${entry.id}.md`,
         entry,
       });
@@ -215,7 +215,7 @@ export async function sectionHref(section: SectionId, lang: string): Promise<str
   const own = (await pages(lang)).find((page) => page.section === section);
   if (own) return own.href;
   const english = (await pages('en')).find((page) => page.section === section);
-  return english?.href ?? url(`${lang === 'zh-CN' ? 'zh-CN/' : ''}${section}`);
+  return english?.href ?? url(`${lang === 'hi' ? 'hi/' : ''}${section}`);
 }
 
 export async function sectionHrefs(lang: string): Promise<Record<SectionId, string>> {

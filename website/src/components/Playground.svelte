@@ -12,28 +12,28 @@
   }
 
   let { lang = 'en', demos = [] }: Props = $props();
-  const zh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const player = `${BASE}play/index.html?playground&theme=dark`;
 
   const t = $derived(
-    zh
+    isHi
       ? {
-          title: '在线试用',
-          intro: '在浏览器里编写 NativeSvelte 应用：代码直接在本页编译并立即运行。',
-          example: '示例',
-          run: '运行',
-          share: '分享',
-          copied: '链接已复制',
-          reset: '重置',
-          output: '输出',
-          clear: '清空',
-          empty: '没有输出。console.log 和错误会显示在这里。',
-          compiled: '已编译并运行',
-          loading: '正在加载运行时…',
-          dark: '深色',
-          live: '运行中',
-          noPlayer: '播放器尚未构建：运行 bun run dev（或 cargo xtask web）后刷新。',
-          note: '只能导入 nsh 的模块（nsh、nsh/*）；无网络、无相对导入。',
+          title: 'प्रयोगशाला (Playground)',
+          intro: 'ब्राउज़र में NativeSvelte अनुप्रयोग लिखें: संहिता इसी पृष्ठ पर संकलित होकर तत्काल चलती है।',
+          example: 'उदाहरण',
+          run: 'चलाएँ',
+          share: 'साझा करें',
+          copied: 'संपर्क प्रतिलिपि हो गया',
+          reset: 'पुनः स्थापित करें',
+          output: 'परिणाम',
+          clear: 'रिक्त करें',
+          empty: 'कोई परिणाम नहीं। console.log और त्रुटियाँ यहाँ दिखेंगी।',
+          compiled: 'संकलित एवं संचालित',
+          loading: 'संचालन तंत्र लोड हो रहा है…',
+          dark: 'श्याम (Dark)',
+          live: 'सक्रिय',
+          noPlayer: 'प्लेयर निर्मित नहीं है: bun run dev (या cargo xtask web) चलाएँ।',
+          note: 'केवल nsh के मॉड्यूल (nsh, nsh/*) आयात किए जा सकते हैं; कोई नेटवर्क या सापेक्ष आयात नहीं।',
         }
       : {
           title: 'Playground',

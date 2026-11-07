@@ -3,7 +3,7 @@ import { dirname, relative, resolve, sep } from 'node:path';
 // Pages link to each other as files, the way they read on GitHub:
 // `[List](../elements/list.md)`, `[signals](./reactivity.md#signals)`. The
 // content directories mirror the routes — `elements/list.md` is
-// `/elements/list`, `zh-CN/docs/x.md` is `/zh-CN/docs/x` — so a link resolves to
+// `/elements/list`, `hi/docs/x.md` is `/hi/docs/x` — so a link resolves to
 // the file it names relative to the page, and the route is that file's path
 // without `.md` (`index` dropped). A Chinese page linking `../elements/list.md`
 // therefore stays in Chinese. A link that leaves `website/` points at the file

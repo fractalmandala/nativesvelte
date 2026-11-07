@@ -33,7 +33,7 @@ const LABELS = {
   yaml: 'YAML',
 };
 
-const LIST_LABEL = { en: 'Language', 'zh-CN': '语言' };
+const LIST_LABEL = { en: 'Language', hi: 'भाषा' };
 
 /** The tab's label for a fence's language: `rust` → "Rust", `tsx` → "TSX", others capitalized. */
 export function tabLabel(lang) {
@@ -56,7 +56,7 @@ export function stripTabsMeta(markdown) {
 export function remarkCodeTabs() {
   return (tree, file) => {
     const path = file?.path ?? file?.history?.[0] ?? '';
-    const listLabel = /(?:^|[\\/])zh-CN[\\/]/.test(path) ? LIST_LABEL['zh-CN'] : LIST_LABEL.en;
+    const listLabel = /(?:^|[\\/])hi[\\/]/.test(path) ? LIST_LABEL.hi : LIST_LABEL.en;
     let groups = 0;
 
     const walk = (node) => {

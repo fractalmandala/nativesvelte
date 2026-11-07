@@ -11,29 +11,29 @@ const escapeXml = (value: string) =>
 
 export async function GET() {
   const en = await pages('en');
-  const zh = await pages('zh-CN');
+  const hi = await pages('hi');
   const abs = (href: string) => new URL(href, SITE_URL).href;
 
-  const entries: { href: string; en?: string; zh?: string }[] = [];
+  const entries: { href: string; en?: string; hi?: string }[] = [];
   const showcaseApps = (await getShowcaseApps()).filter((app) => app.hasReadme);
   const baseRoutes = [
-    [url(''), url('zh-CN')],
-    [url('playground'), url('zh-CN/playground')],
-    [url('gallery'), url('zh-CN/gallery')],
-    [url('apps'), url('zh-CN/apps')],
-    [url('releases'), url('zh-CN/releases')],
-    [url('brand'), url('zh-CN/brand')],
-    ...showcaseApps.map((app) => [url(`apps/${app.id}`), url(`zh-CN/apps/${app.id}`)]),
+    [url(''), url('hi')],
+    [url('playground'), url('hi/playground')],
+    [url('gallery'), url('hi/gallery')],
+    [url('apps'), url('hi/apps')],
+    [url('releases'), url('hi/releases')],
+    [url('brand'), url('hi/brand')],
+    ...showcaseApps.map((app) => [url(`apps/${app.id}`), url(`hi/apps/${app.id}`)]),
   ];
 
-  for (const [e, z] of baseRoutes) {
-    entries.push({ href: e, en: e, zh: z }, { href: z, en: e, zh: z });
+  for (const [e, h] of baseRoutes) {
+    entries.push({ href: e, en: e, hi: h }, { href: h, en: e, hi: h });
   }
 
-  for (const page of [...en, ...zh]) {
+  for (const page of [...en, ...hi]) {
     const enPage = en.find((p) => p.section === page.section && p.slug === page.slug);
-    const zhPage = zh.find((p) => p.section === page.section && p.slug === page.slug);
-    entries.push({ href: page.href, en: enPage?.href, zh: zhPage?.href });
+    const hiPage = hi.find((p) => p.section === page.section && p.slug === page.slug);
+    entries.push({ href: page.href, en: enPage?.href, hi: hiPage?.href });
   }
 
   for (const { code } of machineLocales) {
@@ -44,10 +44,10 @@ export async function GET() {
   }
 
   const urls = entries
-    .map(({ href, en: e, zh: z }) => {
+    .map(({ href, en: e, hi: h }) => {
       const links =
-        e && z
-          ? `<xhtml:link rel="alternate" hreflang="en" href="${escapeXml(abs(e))}"/><xhtml:link rel="alternate" hreflang="zh-CN" href="${escapeXml(abs(z))}"/><xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(abs(e))}"/>`
+        e && h
+          ? `<xhtml:link rel="alternate" hreflang="en" href="${escapeXml(abs(e))}"/><xhtml:link rel="alternate" hreflang="hi" href="${escapeXml(abs(h))}"/><xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(abs(e))}"/>`
           : '';
       return `<url><loc>${escapeXml(abs(href))}</loc>${links}</url>`;
     })

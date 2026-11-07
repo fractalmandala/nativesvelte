@@ -1,0 +1,557 @@
+---
+title: जाल दृश्य एवं चलचित्र (WebView & Video)
+description: WebView द्वारा जाल पृष्ठों का अंतःस्थापन एवं देशीय वीडियो प्लेयर संचालन।
+order: 45
+group: ui
+---
+
+
+# Web view and video <span id="web-view-and-video"></span>
+
+The web view and the video player embed the platform's own web engine and media player as ordinary views: `web_view` and `video` in Rust (`nsh_core::prelude`), `WebView` and `Video` from `nsh` in TSX. Because NSH renders with native views, they sit in your layout like any other element: they scroll with their parent, take rounded corners and clipping, and other views can overlap them without layering problems.
+
+| Component | iOS | Android | macOS | Linux | Windows |
+|---|---|---|---|---|---|
+| `WebView` | WKWebView | `android.webkit.WebView` | WKWebView | WebKitGTK 6.0's `WebKitWebView` | WebView2, in a child window |
+| `Video` | AVPlayerLayer; AVPlayerViewController with `controls` | MediaPlayer on a TextureView; MediaController with `controls` | AVPlayerLayer; AVKit's AVPlayerView with `controls` | GTK's media stream (GStreamer) in a `GtkPicture`; `GtkVideo` with `controls` | Media Foundation's media engine, frames drawn with Direct2D; NSH's own control bar with `controls` |
+
+The frameworks behind them (WebKit, AVFoundation) are loaded the first time an app uses one, so apps that never show a web page or a video do not pay for them at launch.
+
+On [macOS](./macos.md) the web view has no scroll view of its own: with `scrollable={false}` the mouse wheel and the
+trackpad scroll the app's scroll views around it instead of the page, which still scrolls with its keyboard and its
+own scripts.
+
+On [Linux](./linux.md) a web view is a WebKitGTK page drawn inside its view: NSH content over it (a dialog, a sheet)
+covers it, and its parents clip it. The `webview` capability also applies to the navigations of frames there (an
+`iframe` of a host that is not granted stays empty), and `scrollable: false` stops the page itself from scrolling
+(elements inside it still scroll). Apps need WebKitGTK 6.0 installed; a runtime built without it shows a neutral
+placeholder. Videos play the formats the installed GStreamer plugins decode; `rate` is not supported (they
+play at 1×), and `onEnd` only comes for videos that do not loop.
+
+On [Windows](./windows.md) a web view is a WebView2 control in a child window that follows its view: it is clipped to
+its parents and rounded corners, but NSH content drawn over it (a dialog, a sheet) stays under it. It needs the
+WebView2 Runtime (part of Windows 11; installed with Edge on Windows 10), else it shows a placeholder;
+`baseUrl` for HTML, `scrollable` and `allowsBackForwardNavigationGestures` are not supported. Videos are
+ordinary content (clipped, transformed and covered like any view) and play the formats the installed Media Foundation
+codecs decode; `rate` works, there is no poster, and the control bar always shows while `controls` is on.
+
+## WebView <span id="webview"></span>
+
+```rust tabs
+use nsh_core::prelude::*;
+
+#[component]
+pub fn App() -> impl IntoElement {
+    web_view("https://en.m.wikipedia.org/wiki/Swift_(programming_language)").flex_1()
+}
+```
+
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+</script>
+
+<WebView src="https://en.m.wikipedia.org/wiki/Swift_(programming_language)" class="flex-1" />
+```
+
+### Sources <span id="sources"></span>
+
+A web view shows one of `src` and `html`:
+
+| Props | Shows |
+|---|---|
+| `src="https://…"` | A web page. |
+| `html="<!doctype html>…"` | HTML from a string, shown instead of `src`. |
+| `html` with `baseUrl="https://example.com/"` | HTML whose relative URLs resolve against `baseUrl`. |
+
+In Rust, `web_view(url)` shows a page and `web_view_html(html, base_url)` shows HTML (`base_url` an `Option<&str>`); the URL and the HTML can be a signal or a closure, which loads the page again when what it reads changes. Changing `src` or `html` loads the new page.
+
+### Props <span id="props"></span>
+
+In Rust each prop is a builder method in snake case (`injected_java_script`, `java_script_enabled`, `scrollable`, `user_agent`, `incognito`; `injected_java_script_before_content` for `injectedJavaScriptBeforeContentLoaded`, `back_forward_gestures` for iOS's `allowsBackForwardNavigationGestures`) and each event an `on_…` method (`on_navigation_state_change`) whose listener gets a `WebNavigation` (`url`, `title`, `loading`, `can_go_back`, `can_go_forward`) or, for `on_error` and `on_message`, a `&str`.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `src` | `string` | | The URL of the page to show. |
+| `html` | `string` | | Inline HTML, shown instead of `src`. |
+| `baseUrl` | `string` | | What `html`'s relative URLs resolve against. |
+| `injectedJavaScript` | `string` | | Runs after each page loads. |
+| `injectedJavaScriptBeforeContentLoaded` | `string` | | Runs before each page's own scripts. |
+| `javaScriptEnabled` | `boolean` | `true` | Pages run scripts. |
+| `scrollable` | `boolean` | `true` | The user can scroll the page. |
+| `userAgent` | `string` | | The browser's user agent string. |
+| `incognito` | `boolean` | `false` | The pages' website data lives only as long as the web view, as each platform keeps it ([below](#website-data)). Read when the web view is made. |
+| `ios={{ allowsBackForwardNavigationGestures }}` | `boolean` | | iOS: swipe back and forward through the page history. |
+| `desktop={{ allowsBackForwardNavigationGestures }}` | `boolean` | | macOS: swipe with two fingers on the trackpad to go back and forward; Windows: swipe on a touchscreen; Linux: swipe on the touchpad. |
+
+Events:
+
+| Event | Payload | When |
+|---|---|---|
+| `onLoadStart` | `WebViewNavigation` | A page started loading. |
+| `onLoad` | `WebViewNavigation` | A page finished loading. |
+| `onError` | `{ message }` | Loading failed. |
+| `onNavigationStateChange` | `WebViewNavigation` | The URL, title, loading state or history changed. |
+| `onMessage` | `{ data: string }` | The page posted a message (below). |
+
+`WebViewNavigation` is `{ url, title, loading, canGoBack, canGoForward }`.
+
+### A browser with back and forward <span id="a-browser-with-back-and-forward"></span>
+
+The web view's ref (an `element_ref()` put on it with `.element_ref(&web)` in Rust, `ref` in TSX) has `reload`, `go_back` / `goBack`, `go_forward` / `goForward`, `stop_loading` / `stopLoading`, `inject_java_script` / `injectJavaScript(script)`, `post_message` / `postMessage(data)`, `load` / `load({ src, headers })` ([below](#signed-in-pages-request-headers)) and `send_input` / `sendInput(input)` ([below](#input-as-the-users-own)):
+
+```rust tabs
+use nsh_core::prelude::*;
+
+pub fn browser() -> impl IntoElement {
+    let web = element_ref();
+    let nav = signal(None::<WebNavigation>);
+    let button = move |label: &'static str, enabled: fn(&WebNavigation) -> bool, action: fn(&ElementRef)| {
+        let enabled = move || nav.with(|n| n.as_ref().is_some_and(enabled));
+        text(label)
+            .p(px(12.0))
+            .text_color(move || if enabled() { rgb(0x0969da) } else { rgb(0x8c959f) })
+            .disabled(move || !enabled())
+            .on_press(move || action(&web))
+    };
+    view()
+        .flex_1()
+        .pt(px(50.0))
+        .child(
+            text(move || {
+                nav.with(|n| match n {
+                    Some(n) if n.loading => "Loading…".to_owned(),
+                    Some(n) => n.title.clone(),
+                    None => String::new(),
+                })
+            })
+            .number_of_lines(1)
+            .px(px(12.0))
+            .text_color(rgb(0x57606a)),
+        )
+        .child(
+            web_view("https://developer.mozilla.org/")
+                .element_ref(&web)
+                .flex_1()
+                .on_navigation_state_change(move |n: &WebNavigation| nav.set(Some(n.clone())))
+                .back_forward_gestures(true),
+        )
+        .child(
+            view()
+                .flex_row()
+                .justify_around()
+                .child(button("Back", |n| n.can_go_back, |web| web.go_back()))
+                .child(button("Forward", |n| n.can_go_forward, |web| web.go_forward()))
+                .child(button("Reload", |_| true, |web| web.reload())),
+        )
+}
+```
+
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+  import type { WebViewNavigation, WebViewRef } from "nsh";
+
+  let web: WebViewRef | undefined = $state();
+  let nav = $state<WebViewNavigation | null>(null);
+</script>
+
+<div class="flex-1 pt-[50px]">
+  <span class="truncate px-3 text-[#57606a]">
+    {nav?.loading ? "Loading…" : (nav?.title ?? "")}
+  </span>
+  <WebView
+    bind:this={web}
+    src="https://developer.mozilla.org/"
+    class="flex-1"
+    onnavigationstatechange={(n) => (nav = n)}
+    ios={{ allowsBackForwardNavigationGestures: true }}
+  />
+  <div class="flex-row justify-around">
+    <button
+      disabled={!nav?.canGoBack}
+      onclick={() => web?.goBack()}
+      class="p-3 text-[#0969da] disabled:text-[#8c959f]"
+    >
+      Back
+    </button>
+    <button
+      disabled={!nav?.canGoForward}
+      onclick={() => web?.goForward()}
+      class="p-3 text-[#0969da] disabled:text-[#8c959f]"
+    >
+      Forward
+    </button>
+    <button onclick={() => web?.reload()} class="p-3 text-[#0969da]">
+      Reload
+    </button>
+  </div>
+</div>
+```
+
+### Messaging between  page and  app <span id="messaging-between-the-page-and-the-app"></span>
+
+Pages talk to the app with `window.nsh.postMessage(string)`, which arrives as `on_message` (`onMessage`). The app talks to the page with the ref's `post_message` (`postMessage(string)`), which arrives in the page as a `message` event on `window`. Messages are strings; send JSON for structured data.
+
+```rust tabs
+use nsh_core::prelude::*;
+
+const PAGE: &str = r#"<!doctype html>
+<html><head><meta name="viewport" content="width=device-width"></head>
+<body style="font-family: -apple-system, sans-serif; margin: 16px">
+  <button onclick="window.nsh.postMessage(JSON.stringify({ type: 'hello', at: Date.now() }))">
+    Post to the app
+  </button>
+  <p id="got">Nothing from the app yet.</p>
+  <script>
+    window.addEventListener("message", (e) => {
+      document.getElementById("got").textContent = "The app says: " + e.data;
+    });
+  </script>
+</body></html>"#;
+
+#[component]
+pub fn App() -> impl IntoElement {
+    let web = element_ref();
+    let last = signal(String::new());
+    view()
+        .flex_1()
+        .pt(px(50.0))
+        .gap(px(12.0))
+        .child(
+            web_view_html(PAGE, None)
+                .element_ref(&web)
+                .h(px(240.0))
+                .on_message(move |data: &str| {
+                    let message: serde_json::Value = serde_json::from_str(data).unwrap_or_default();
+                    last.set(message["type"].as_str().unwrap_or_default().to_owned());
+                }),
+        )
+        .child(
+            text("Post to the page")
+                .p(px(16.0))
+                .text_color(rgb(0x0969da))
+                .on_press(move || web.post_message("hi from nsh")),
+        )
+        .child(text(move || format!("Last message: {}", last.get())).px(px(16.0)))
+}
+```
+
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+  import type { WebViewRef } from "nsh";
+
+  const page = `<!doctype html>
+<html><head><meta name="viewport" content="width=device-width"></head>
+<body style="font-family: -apple-system, sans-serif; margin: 16px">
+  <button onclick="window.nsh.postMessage(JSON.stringify({ type: 'hello', at: Date.now() }))">
+    Post to the app
+  </button>
+  <p id="got">Nothing from the app yet.</p>
+  <script>
+    window.addEventListener("message", (e) => {
+      document.getElementById("got").textContent = "The app says: " + e.data;
+    });
+  </script>
+</body></html>`;
+
+  let web: WebViewRef | undefined = $state();
+  let last = $state("");
+</script>
+
+<div class="flex-1 pt-[50px] gap-3">
+  <WebView
+    bind:this={web}
+    html={page}
+    class="h-60"
+    onmessage={(e) => (last = JSON.parse(e.data).type)}
+  />
+  <button onclick={() => web?.postMessage("hi from NativeSvelte")} class="p-4 text-[#0969da]">
+    Post to the page
+  </button>
+  <span class="px-4">Last message: {last}</span>
+</div>
+```
+
+The ref's `inject_java_script` (`injectJavaScript(script)`) runs code in the current page at any time; `injected_java_script` and `injected_java_script_before_content` (`injectedJavaScript`, `injectedJavaScriptBeforeContentLoaded`) run on every page load, before or after the page's own scripts, which is the place to install hooks:
+
+```rust tabs
+web_view("https://example.com")
+    .injected_java_script_before_content("window.isNativeApp = true;")
+    .injected_java_script("window.nsh.postMessage(document.title);")
+    .on_message(|title: &str| log::info!("title {title}"))
+```
+
+```svelte tabs
+<WebView
+  src="https://example.com"
+  injectedJavaScriptBeforeContentLoaded={`window.isNativeApp = true;`}
+  injectedJavaScript={`window.nsh.postMessage(document.title);`}
+  onmessage={(e) => console.log("title", e.data)}
+/>
+```
+
+### Signed-in pages: request headers <span id="signed-in-pages-request-headers"></span>
+
+To show a page of a service the app has signed in to, send the credential as a header of the page's request rather than in its URL, where history, logs and `Referer` would keep it. The ref's `load` loads a page with headers on that one request:
+
+```rust tabs
+use nsh_core::{WebLoad, prelude::*};
+
+fn open(web: &ElementRef, token: &str) {
+    let headers = vec![("Authorization".to_owned(), format!("Bearer {token}"))];
+    if let Some(load) = WebLoad::new("https://docs.example.com/", headers) {
+        web.load(load);
+    }
+}
+```
+
+```ts tabs
+web.load({ src: "https://docs.example.com/", headers: { Authorization: `Bearer ${token}` } });
+```
+
+- Only the page's own request carries the headers: not its images, scripts or other subresources, not its later navigations and not a `reload()`, so a credential reaches no other host the page uses. A page that needs it again (a link, a reload) is loaded again with `load`, with values made for that request (a DPoP proof is bound to its URL).
+- The page then shows as one from `src` does; a later change of the `src` prop loads that page instead.
+- Its host must be one `webview.hosts` allows ([`webview`](./sandbox-and-capabilities.md#webview)), as for `src`; otherwise nothing loads and the core logs which host to add.
+- A header whose name is not an HTTP token or whose value holds a line break throws a `TypeError` (`WebLoad::new` returns `None`), so one header cannot start another. NSH logs the headers' names, never their values.
+- macOS, iOS, Mac Catalyst, Android, Windows, Linux and the GPUI backend send the headers; the browser backend cannot (an iframe has no way to) and does nothing.
+
+### Input as  user's own <span id="input-as-the-users-own"></span>
+
+`injectJavaScript` can only make synthetic events, which a page sees as untrusted (`event.isTrusted` is `false`) and some widgets ignore. The ref's `send_input` (`sendInput(input)`) gives the page input as the user's own hands would, so its events are trusted:
+
+- `{ type: "click", x, y }` clicks a point of the viewport, in CSS pixels (what `getBoundingClientRect()` reports).
+- `{ type: "text", text }` types the text into what has the page's focus, a key at a time: each character on the US layout's key for it, a line break as Enter, and what no US key types (`é`, CJK, emoji) on no key (`code` is `"Unidentified"`).
+- `{ type: "key", key }` presses `Enter`, `Tab`, `Escape` or `Backspace`.
+
+```rust tabs
+use nsh_core::{WebInput, WebKey, prelude::*};
+use std::time::Duration;
+
+fn search(web: &ElementRef) {
+    web.send_input(WebInput::Click { x: px(120.0), y: px(40.0) });
+    let web = *web;
+    set_timeout(Duration::from_millis(50), move || {
+        web.send_input(WebInput::Text("espresso".into()));
+        web.send_input(WebInput::Key(WebKey::Enter));
+    });
+}
+```
+
+```ts tabs
+web.sendInput({ type: "click", x: 120, y: 40 });
+setTimeout(() => {
+  web.sendInput({ type: "text", text: "espresso" });
+  web.sendInput({ type: "key", key: "Enter" });
+}, 50);
+```
+
+In Rust these are `WebInput::Click { x, y }`, `WebInput::Text(text)` and `WebInput::Key(WebKey::Enter)`.
+
+Trusted input carries user activation (it may open windows, write the clipboard, open the system's file panel or press a page's confirm button), so it is a capability of its own: the app needs `"webview": { "input": true }` in `nsh.json`'s `capabilities` ([`webview`](./sandbox-and-capabilities.md#webview)), also when it declares none, and the core drops the call otherwise.
+
+Like a click, `sendInput` takes the keyboard focus for the web view, away from the app's own `Input`. The page handles input on its own schedule: a click's events can still be on their way when the next call starts, so let a click settle (a frame or so) before typing after it. macOS delivers the input; the other platforms ignore it for now.
+
+Before offering anything that depends on it, ask whether it works here: `web_input_available()` (`WebView.inputAvailable()`) resolves `true` only where the platform delivers the input and the app holds `webview.input`, so it is `false` on platforms that ignore the call and in apps without the grant.
+
+```rust tabs
+use nsh_core::prelude::*;
+
+let input = signal(false);
+spawn(async move { input.set(web_input_available().await) });
+```
+
+```svelte tabs
+<script>
+  import { WebView } from "nsh";
+
+  let input = $state(false);
+  WebView.inputAvailable().then((available) => (input = available));
+</script>
+```
+
+### Website data <span id="website-data"></span>
+
+A web view keeps the website data of its pages (cookies, local storage, IndexedDB, the cache) with the app's, so a
+sign-in in one web view is there in the next and after the app restarts. A web view that shows pages the app does not
+trust (HTML someone else made, a one-time sign-in) takes `incognito`: its pages get a store of their own, kept in
+memory and gone with the web view.
+
+```rust tabs
+web_view("https://example.com/preview").incognito(true).flex_1()
+```
+
+```svelte tabs
+<WebView src="https://example.com/preview" incognito class="flex-1" />
+```
+
+`incognito` is read when the web view is made, so it takes a value in Rust; a later change in TSX keeps the store the
+web view has and logs a warning. To switch, show a new web view. Each platform keeps the store this way:
+
+| Platform | An incognito web view's store |
+|---|---|
+| iOS, macOS | A non-persistent `WKWebsiteDataStore` of its own. |
+| Linux | An ephemeral WebKit network session of its own. |
+| Windows | An InPrivate WebView2 controller. The incognito web views open at the same time share one store in memory, cleared when the last of them closes. |
+| Android | Cookies and web storage are the app's, shared by every web view and kept after it closes. An incognito web view loads without the HTTP cache and saves no form data. |
+| Web | The browser's storage for the page's origin, as for any `iframe`. |
+
+### Which sites a web view may show <span id="which-sites-a-web-view-may-show"></span>
+
+If your `nsh.json` declares `"capabilities"`, a web view may only show and navigate to the hosts listed under `webview`:
+
+```json
+{
+  "capabilities": {
+    "webview": { "hosts": ["example.com", "*.example.com"] }
+  }
+}
+```
+
+The check covers the web view's `src` and every top-level navigation the page makes (links, redirects, `location` changes); it is decided natively when the platform asks whether a navigation may proceed. A page's own subresources (scripts, images, frames) are the web content's business and are not checked. `*.example.com` matches subdomains only; list `example.com` as well for the bare domain. An app without a `"capabilities"` key may show any page. See [Sandbox and capabilities](./sandbox-and-capabilities.md).
+
+## Video <span id="video"></span>
+
+```rust tabs
+use nsh_core::prelude::*;
+
+pub fn player() -> impl IntoElement {
+    let player = element_ref();
+    let paused = signal(true);
+    let time = signal(String::new());
+    let link = |label: &'static str| text(label).text_color(rgb(0x0969da));
+    view()
+        .flex_1()
+        .justify_center()
+        .p(px(16.0))
+        .gap(px(12.0))
+        .child(
+            video("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4")
+                .element_ref(&player)
+                .paused(paused)
+                .repeat(true)
+                .object_fit(ResizeMode::Contain)
+                .h(px(220.0))
+                .rounded(px(12.0))
+                .overflow_hidden()
+                .bg(rgb(0x000000))
+                .on_progress(move |e: &VideoProgress| {
+                    time.set(format!("{:.1} / {:.1} s", e.current_time, e.duration))
+                })
+                .on_end(move || paused.set(true)),
+        )
+        .child(
+            view()
+                .flex_row()
+                .gap(px(16.0))
+                .items_center()
+                .child(
+                    text(move || if paused.get() { "Play" } else { "Pause" })
+                        .text_color(rgb(0x0969da))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .on_press(move || paused.update(|p| *p = !*p)),
+                )
+                .child(link("Restart").on_press(move || player.seek(0.0)))
+                .child(text(move || time.get()).text_color(rgb(0x57606a))),
+        )
+}
+```
+
+```svelte tabs
+<script>
+  import { Video } from "nsh";
+  import type { VideoRef } from "nsh";
+
+  let video: VideoRef | undefined = $state();
+  let paused = $state(true);
+  let time = $state("");
+</script>
+
+<div class="flex-1 justify-center p-4 gap-3">
+  <Video
+    bind:this={video}
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    {paused}
+    repeat
+    class="h-[220px] rounded-xl overflow-hidden bg-black"
+    onprogress={(e) => (time = `${e.currentTime.toFixed(1)} / ${e.duration.toFixed(1)} s`)}
+    onend={() => (paused = true)}
+  />
+  <div class="flex-row gap-4 items-center">
+    <button onclick={() => (paused = !paused)} class="text-[#0969da] font-semibold">
+      {paused ? "Play" : "Pause"}
+    </button>
+    <button onclick={() => video?.seek(0)} class="text-[#0969da]">
+      Restart
+    </button>
+    <span class="text-[#57606a]">{time}</span>
+  </div>
+</div>
+```
+
+Playback is controlled by props: set `paused`, `muted`, `volume` and `rate` from signals and the player follows. The ref has `seek(seconds)`.
+
+In Rust, `video(url)` makes the player (the URL a value, a signal or a closure) and each prop is a builder method in snake case (`paused`, `repeat(true)`, `object_fit(ResizeMode::Contain)` (the `objectFit` style), `progress_interval` for `progressUpdateInterval`); `on_load` gets a `VideoInfo` (`duration`, `size`), `on_progress` a `VideoProgress` (`current_time`, `duration`) and `on_buffer` a `bool`.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `src` | `string` | | The video's URL. |
+| `paused` | `boolean` | `false` | Playback is paused. |
+| `muted` | `boolean` | `false` | No sound. |
+| `volume` | `number` | `1` | 0..1. |
+| `rate` | `number` | `1` | The playback speed. |
+| `repeat` | `boolean` | `false` | Plays again from the start at the end. |
+| `objectFit` (style), `object-*` classes | `"cover" \| "contain" \| "fill" \| "none" \| "scale-down"` | `"contain"` | How the picture fits the view, as CSS's `object-fit` (`class="object-cover"`). |
+| `controls` | `boolean` | `false` | The platform's playback controls. |
+| `progressUpdateInterval` | `number` | `250` | Milliseconds between `onProgress` events. |
+
+| Event | Payload | When |
+|---|---|---|
+| `onLoadStart` | | Loading started. |
+| `onLoad` | `{ duration, size }` | The video is ready: its length in seconds and its size. |
+| `onProgress` | `{ currentTime, duration }` | While playing, every `progressUpdateInterval` ms. |
+| `onBuffer` | `{ isBuffering }` | Playback stalled waiting for data, or resumed. |
+| `onEnd` | | Playback reached the end. |
+| `onError` | `{ message }` | Loading or playback failed. |
+
+With `controls`, the platform draws its own play button, scrubber and full-screen button. Without, draw your own with views over or below the video; since the video is a native view in your layout, overlays work naturally:
+
+```rust tabs
+view()
+    .h(px(220.0))
+    .child(video(url).paused(paused).flex_1())
+    .child(
+        view()
+            .absolute()
+            .inset_0()
+            .items_center()
+            .justify_center()
+            .on_press(move || paused.update(|p| *p = !*p))
+            .child(when(move || paused.get(), || {
+                text("▶").text_size(px(48.0)).text_color(rgb(0xffffff))
+            })),
+    )
+```
+
+```svelte tabs
+<div class="h-[220px] relative">
+  <Video src={url} {paused} class="flex-1" />
+  <button
+    onclick={() => (paused = !paused)}
+    class="absolute inset-0 items-center justify-center"
+  >
+    {#if paused}
+      <span class="text-5xl text-white">▶</span>
+    {/if}
+  </button>
+</div>
+```
+
+Video sources are network requests: with declared capabilities, the video's host must be allowed under `network` in `nsh.json`, as for `fetch` and remote images. A refused source shows nothing, and the refusal is logged once with the key to add.
+
+## संबंधित प्रलेखन <span id="related"></span>
+
+- [`WebView`](../elements/web-view.md) and [`Video`](../elements/video.md): the element references.
+- [Sandbox and capabilities](./sandbox-and-capabilities.md): `webview` and `network` grants.
+- [Native components](./native-components.md): embedding other native views your host app provides.

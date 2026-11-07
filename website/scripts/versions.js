@@ -4,7 +4,7 @@
 //
 // Every version is built with this checkout's site (layouts, components,
 // styles, the version menu); only what a release documents comes from its
-// tag: the pages (`docs`, `elements`, `modules`, `zh-CN`) and the demos, which
+// tag: the pages (`docs`, `elements`, `modules`, `hi`) and the demos, which
 // run on that release's own WebAssembly runtime (its `cargo xtask web`, in a
 // worktree of the tag), so a page and its live demo always match.
 //
@@ -32,7 +32,7 @@ const cache = process.env.NSH_SITE_VERSION_CACHE ?? join(website, '.versions');
 const showcases = process.env.SHOWCASES_DIR ?? resolve(root, '..', 'nsh-showcases');
 
 /** What a release takes from its tag; everything else is this checkout's. */
-const CONTENT = ['docs', 'elements', 'modules', 'zh-CN', 'demos'];
+const CONTENT = ['docs', 'elements', 'modules', 'hi', 'demos'];
 /** The first release whose site this one can build. */
 const FIRST = [0, 2, 0];
 const MAX_RELEASES = 20;
@@ -182,7 +182,7 @@ function build(version, copy, out) {
   // App Stories and the release notes are the latest's alone: both change
   // apart from a version's content, so other versions link to the root's.
   if (version !== latest) {
-    for (const dir of ['apps', 'zh-CN/apps', 'releases', 'zh-CN/releases']) rmSync(join(out, dir), { recursive: true, force: true });
+    for (const dir of ['apps', 'hi/apps', 'releases', 'hi/releases']) rmSync(join(out, dir), { recursive: true, force: true });
   }
   run('bunx', ['pagefind', '--site', out]);
 }

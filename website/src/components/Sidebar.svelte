@@ -13,7 +13,7 @@
   }
 
   let { title, pages, current, lang = 'en', locale = lang }: Props = $props();
-  const isZh = $derived(lang === 'zh-CN');
+  const isHi = $derived(lang === 'hi');
   const currentPage = $derived(pages.find((page) => page.route === current));
 
   const groupLabel = (index: number) => {
@@ -44,7 +44,7 @@
   class:data-mobile-open={isMobileOpen}
   data-mobile-open={String(isMobileOpen)}
   data-nav-ready=""
-  aria-label={isZh ? '文档目录' : 'Documentation'}
+  aria-label={isHi ? 'प्रलेखन अनुक्रमणिका' : 'Documentation'}
 >
   <button
     class="docs-sidebar__toggle"

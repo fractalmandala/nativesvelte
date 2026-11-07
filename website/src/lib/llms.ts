@@ -7,12 +7,12 @@ const HEADER = `# ${SITE_TITLE}\n\n> ${SITE_DESCRIPTION}\n\nApps are written in 
 /** `llms.txt`: the table of contents, one line per page, linking its Markdown. */
 export async function buildLlmsIndex(): Promise<string> {
   const parts = [HEADER];
-  for (const lang of ['en', 'zh-CN'] as Lang[]) {
+  for (const lang of ['en', 'hi'] as Lang[]) {
     const all = await pages(lang);
     for (const section of SECTIONS) {
       const list = all.filter((page) => page.section === section.id);
       if (list.length === 0) continue;
-      const heading = lang === 'en' ? section.label.en : `${section.label['zh-CN']}（中文）`;
+      const heading = lang === 'en' ? section.label.en : `${section.label.hi} (हिन्दी)`;
       parts.push(`## ${heading}\n\n${list.map((p) => `- [${p.title}](${SITE_URL}${p.href}.md): ${p.description}`).join('\n')}\n`);
     }
   }

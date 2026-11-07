@@ -23,7 +23,7 @@ export const EDIT_BASE = (import.meta.env?.PUBLIC_SITE_VERSION ?? 'main') === 'm
   ? `${REPO_URL}/edit/main/`
   : `${REPO_URL}/blob/${import.meta.env?.PUBLIC_SITE_VERSION}/`;
 
-export type Lang = 'en' | 'zh-CN';
+export type Lang = 'en' | 'hi';
 
 /** `BASE_URL` with exactly one trailing slash. */
 const rawBase = import.meta.env?.BASE_URL || '/';
@@ -37,5 +37,5 @@ export function url(path = ''): string {
 
 /** The same route in the other locale. */
 export function localePrefix(lang: Lang): string {
-  return lang === 'zh-CN' ? 'zh-CN/' : '';
+  return lang === 'hi' ? 'hi/' : '';
 }

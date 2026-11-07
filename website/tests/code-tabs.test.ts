@@ -58,8 +58,8 @@ test('consecutive tabbed fences become one accessible group', async () => {
   expect(html).toMatch(/data-tab="sh"[^>]*>Shell<\/button>/);
 });
 
-test('Chinese pages label the tab list in Chinese', async () => {
-  expect(await render(SOURCE, 'zh-CN/elements/view.md')).toContain('aria-label="语言"');
+test('Hindi pages label the tab list in Hindi', async () => {
+  expect(await render(SOURCE, 'hi/elements/view.md')).toContain('aria-label="भाषा"');
 });
 
 test('labels name the language', () => {

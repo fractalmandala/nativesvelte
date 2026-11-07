@@ -212,5 +212,5 @@ pub fn Root() -> impl IntoElement {
 ## Related
 
 - [Text](./text.md): text styles, sizes and the system text size setting.
-- [Tailwind](./tailwind.md#theme): the theme keys.
+- [Tailwind](./tailwind.md#theme-tokens): the theme keys.
 - [Images and assets](./images-and-assets.md): how the app's files are shipped.
