@@ -574,12 +574,18 @@ impl Plugin for NshPlugin {
         args: &HookTransformArgs<'_>,
     ) -> HookTransformReturn {
         let jsx_module = matches!(args.module_type, ModuleType::Tsx | ModuleType::Jsx);
+        let is_root_page = args.id == "\0sveltekit-root-page";
         // Rolldown's own helpers.
-        if args.id.starts_with('\0') {
+        if args.id.starts_with('\0') && !is_root_page {
             return Ok(None);
         }
-        let path = Path::new(args.id);
-        let entry = path == self.entry;
+        let entry_path = self.entry.clone();
+        let path = if is_root_page {
+            &entry_path
+        } else {
+            Path::new(args.id)
+        };
+        let entry = !is_root_page && path == self.entry;
         let script = matches!(args.module_type, ModuleType::Ts | ModuleType::Js);
         // A module that reads `import.meta` gets its own URL (`metaUrl`).
         // (JSON, text and CSS modules are not code, whatever they say.)

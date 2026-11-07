@@ -91,6 +91,6 @@ jobs:
       - name: Build the apps
         run: |
           cargo build -p nsh-cli
-          for entry in $(grep -l "mount(" examples/*/*.tsx) $(grep -l '"root"' examples/*/nsh.json); do
+          for entry in $(grep -l "mount(" examples/*/*.tsx) $(find examples -name "App.svelte" | sort) $(find examples -name "+page.svelte" | sort) $(grep -l '"root"' examples/*/nsh.json); do
             ./target/debug/nsh build "$entry" -o "$RUNNER_TEMP/bundles/${entry//\//_}"
           done
