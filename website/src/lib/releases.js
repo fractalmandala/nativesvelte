@@ -1,7 +1,6 @@
 // The release notes page's data: the newest GitHub releases, read when the
 // site is built. `scripts/versions.js` also digests them, so an edited note
 // rebuilds the root.
-import { createHash } from 'node:crypto';
 
 export const RELEASE_REPO = 'longbridge/nsh';
 export const MAX_RELEASES = 20;
@@ -19,8 +18,9 @@ export function latestReleases(items) {
  * `NSH_REQUIRE_RELEASES`: it fails here instead of publishing an empty page.
  */
 export async function fetchReleases() {
+  const env = typeof process !== 'undefined' ? process.env || {} : {};
   const headers = { Accept: 'application/vnd.github+json' };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  if (env.GITHUB_TOKEN) headers.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
   try {
     // A page wider than the limit, so drafts cannot push out published releases.
     const response = await fetch(`https://api.github.com/repos/${RELEASE_REPO}/releases?per_page=${MAX_RELEASES + 10}`, { headers });
@@ -28,7 +28,7 @@ export async function fetchReleases() {
     if (!response.ok || !Array.isArray(items)) throw new Error(`GitHub API returned ${response.status}`);
     return latestReleases(items);
   } catch (error) {
-    if (process.env.NSH_REQUIRE_RELEASES) throw error;
+    if (env.NSH_REQUIRE_RELEASES) throw error;
     console.warn(`[releases] ${error}`);
     return [];
   }
@@ -37,7 +37,16 @@ export async function fetchReleases() {
 /** Changes whenever the page's content does. */
 export function releasesDigest(items) {
   const content = items.map((item) => [item.tag_name, item.name, item.published_at, item.prerelease, item.body]);
-  return createHash('sha256').update(JSON.stringify(content)).digest('hex').slice(0, 16);
+  const str = JSON.stringify(content);
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(16, '0');
 }
 
 // GitHub links `#123` and `@login` when it shows a release; the API returns

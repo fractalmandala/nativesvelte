@@ -14,7 +14,7 @@ import { remarkCodeTabs } from './remark-code-tabs.js';
 import { remarkDocLinks } from './remark-doc-links.js';
 import { remarkDemo } from './remark-demo.js';
 import { rehypeHeadingAnchors } from './rehype-heading-anchors.js';
-import { demoState } from './demo.js';
+import { demoState } from './demo.server';
 import { themes } from './markdown.js';
 import { BASE } from './site.js';
 

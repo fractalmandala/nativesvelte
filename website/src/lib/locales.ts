@@ -1,5 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { Lang } from './site';
 
 /**
@@ -15,17 +13,27 @@ export interface MachineLocale {
   dir?: 'ltr' | 'rtl';
 }
 
-const ROOT = join(process.cwd(), 'translations');
-const REGISTRY = join(ROOT, 'locales.json');
+function loadLocales(): MachineLocale[] {
+  if (typeof window !== 'undefined') return [];
+  try {
+    const proc = (globalThis as any).process;
+    if (!proc?.versions?.node && !proc?.versions?.bun) return [];
+    const req = (globalThis as any).require || eval('require');
+    const fs = req('node:fs');
+    const path = req('node:path');
+    const root = path.join(process.cwd(), 'translations');
+    const registry = path.join(root, 'locales.json');
+    if (!fs.existsSync(registry)) return [];
+    const list = JSON.parse(fs.readFileSync(registry, 'utf8')) as MachineLocale[];
+    return list
+      .filter((l: MachineLocale) => fs.existsSync(path.join(root, l.code, 'ui.json')))
+      .sort((a: MachineLocale, b: MachineLocale) => Number(b.code.startsWith('zh-')) - Number(a.code.startsWith('zh-')));
+  } catch {
+    return [];
+  }
+}
 
-// Chinese scripts lead the machine locales, so Traditional Chinese sits right
-// after Simplified Chinese in the language menu; the rest keep the registry's
-// order (the sort is stable).
-export const machineLocales: MachineLocale[] = existsSync(REGISTRY)
-  ? (JSON.parse(readFileSync(REGISTRY, 'utf8')) as MachineLocale[])
-      .filter((l) => existsSync(join(ROOT, l.code, 'ui.json')))
-      .sort((a, b) => Number(b.code.startsWith('zh-')) - Number(a.code.startsWith('zh-')))
-  : [];
+export const machineLocales: MachineLocale[] = loadLocales();
 
 /** The direction a page in `locale` is written in. */
 export function direction(locale: string): 'ltr' | 'rtl' {
@@ -56,8 +64,16 @@ const cache = new Map<string, Record<string, string>>();
 function uiOf(locale: string): Record<string, string> {
   let strings = cache.get(locale);
   if (!strings) {
-    strings = JSON.parse(readFileSync(join(ROOT, locale, 'ui.json'), 'utf8')) as Record<string, string>;
-    cache.set(locale, strings);
+    if (typeof window !== 'undefined') return {};
+    try {
+      const req = (globalThis as any).require || eval('require');
+      const fs = req('node:fs');
+      const path = req('node:path');
+      strings = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'translations', locale, 'ui.json'), 'utf8')) as Record<string, string>;
+      cache.set(locale, strings);
+    } catch {
+      return {};
+    }
   }
   return strings;
 }

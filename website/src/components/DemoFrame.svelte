@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { demoPanelHtml, hasPlayer, phoneHtml, playerHref } from '../lib/demo.js';
+  import { hasPlayer, phoneHtml, playerHref } from '../lib/demo';
   import { BASE, type Lang } from '../lib/site';
 
   interface Props {
@@ -19,10 +19,7 @@
 
   onMount(async () => {
     if (!renderedHtml) {
-      renderedHtml =
-        variant === 'panel'
-          ? await demoPanelHtml(name, { base: BASE, lang })
-          : phoneHtml(name, { base: BASE, lang, eager });
+      renderedHtml = phoneHtml(name, { base: BASE, lang, eager });
     }
     if (variant === 'panel') {
       const { initDemos } = await import('../lib/demo-client');

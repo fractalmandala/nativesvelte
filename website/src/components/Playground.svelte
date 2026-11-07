@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { BASE, type Lang } from '../lib/site';
-  import { frameBar, hasPlayer } from '../lib/demo.js';
+  import { frameBar, hasPlayer } from '../lib/demo';
   import Button from './ui/Button.svelte';
   import Select from './ui/Select.svelte';
   import Toggle from './ui/Toggle.svelte';

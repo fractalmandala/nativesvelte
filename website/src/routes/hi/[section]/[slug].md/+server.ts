@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { markdownResponse } from '$lib/markdown-endpoint';
-import { pages } from '$lib/sections';
+import { pages } from '$lib/sections.server';
 
 export const prerender = true;
 

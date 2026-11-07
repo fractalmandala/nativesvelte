@@ -1,6 +1,6 @@
 import { homeCopy } from '$lib/home';
 import { machineLocales } from '$lib/locales';
-import { pages } from '$lib/sections';
+import { pages } from '$lib/sections.server';
 import { getShowcaseApps } from '$lib/showcases';
 import { SITE_URL, url } from '$lib/site';
 

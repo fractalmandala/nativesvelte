@@ -1,4 +1,4 @@
-import { demoPanelHtml } from './demo.js';
+import { demoPanelHtml } from './demo.server';
 
 // A page whose frontmatter names a demo (`demo: counter`) shows it after its
 // first paragraph: the reader gets the one-line introduction, then the thing

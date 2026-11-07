@@ -9,7 +9,7 @@ import { onMount } from 'svelte';
 // Every number is from website/docs/performance-report.md or web.md.
 import { BASE, REPO_URL, SITE_TITLE, SITE_URL, url, type Lang } from '../lib/site';
 import { homeCopy } from '../lib/home';
-import { hasPlayer } from '../lib/demo.js';
+import { hasPlayer } from '../lib/demo';
 import HeroArches from './HeroArches.svelte';
 import Logo from './Logo.svelte';
 import Button from './ui/Button.svelte';
