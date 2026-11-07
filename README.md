@@ -201,7 +201,7 @@ Logs and errors show in the terminal. What each platform needs:
 
 | Example | What it shows |
 |---|---|
-| [`examples/sveltebench`](examples/sveltebench) | Flagship developer workbench & IDE in Svelte 5: multi-pane docking workspace, reactive AST diff viewer, interactive live component preview, agent copilot panel, terminal dock, and real-time telemetry (28 MB RAM, 120 FPS) |
+| [`sveltebench`](https://github.com/fractaldesign/sveltebench) | Standalone flagship developer workbench & IDE in Svelte 5: multi-pane docking workspace, reactive AST diff viewer, interactive live component preview, agent copilot panel, terminal dock, and real-time telemetry (28 MB RAM, 120 FPS) |
 | [`examples/counter-svelte`](examples/counter-svelte) | Svelte 5 counter app: runes (`$state`), Tailwind utility classes, and direct native view compilation |
 | [`examples/tasks-svelte`](examples/tasks-svelte) | Complete task manager in pure Svelte 5: runes (`$state`, `$derived`, `$props`), `bind:value`, navigation, dialogs, and native list recycling |
 | [`examples/components-svelte`](examples/components-svelte) | Reusable Svelte 5 component suite: custom Button, Card, Badge, Switch, TextInput, and Segmented controls with `$props()`, `$state()`, slots, and reactivity |

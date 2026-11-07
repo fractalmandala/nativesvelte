@@ -1736,7 +1736,10 @@ mount(App);
     #[test]
     fn bundle_sveltebench_example() {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let entry = manifest_dir.join("../../examples/sveltebench/App.svelte");
+        let mut entry = manifest_dir.join("../../examples/sveltebench/App.svelte");
+        if !entry.exists() {
+            entry = manifest_dir.join("../../../apps/sveltebench/App.svelte");
+        }
         if !entry.exists() {
             return;
         }
