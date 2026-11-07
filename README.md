@@ -1,5 +1,7 @@
 # NativeSvelte
 
+> ! This project is a complete experiment, mostly vibe coded, and I might not really know what I'm doing. What I'm trying to do is NativeShell except it works with Svelte out-of-the-box. You are currently safer going to NativeShell directly !
+
 **Build once with Svelte, native everywhere.** NativeSvelte is a native UI framework for iOS, Android, macOS, Windows,
 Linux and the web, built in Rust. It unifies components, fine-grained state, logic and APIs, with app-owned visual design and
 platform rendering: native views on iOS (UIKit), Android (Views), macOS (AppKit), Windows (Win32/Direct2D), and Linux (GTK 4),
